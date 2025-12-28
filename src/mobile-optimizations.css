@@ -1,0 +1,143 @@
+/* Mobile-First Responsive Utilities */
+
+/* Touch Target Minimum - 44x44px */
+.touch-target {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+/* Prevent horizontal scroll and improve scaling */
+html,
+body {
+    overflow-x: hidden !important;
+    position: relative;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    /* Base size */
+}
+
+/* Systemic Scale Reduction for Mobile */
+@media (max-width: 480px) {
+    html {
+        font-size: 14px;
+        /* Systematically scale down everything by ~12.5% */
+    }
+}
+
+/* Fluid Typography */
+h1 {
+    font-size: clamp(1.875rem, 5vw, 3rem);
+}
+
+h2 {
+    font-size: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+h3 {
+    font-size: clamp(1.25rem, 3.5vw, 1.875rem);
+}
+
+/* Mobile-optimized spacing */
+@media (max-width: 640px) {
+
+    /* Global padding reduction */
+    .mobile\:px-reduced {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .mobile\:py-reduced {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    /* Stack elements on mobile */
+    .mobile\:stack {
+        flex-direction: column !important;
+    }
+
+    /* Full width on mobile */
+    .mobile\:full {
+        width: 100% !important;
+    }
+
+    /* Compact icons */
+    .material-symbols-outlined {
+        font-size: 20px !important;
+    }
+}
+
+/* Scrollable table wrapper - improved */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    max-width: 100%;
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+/* Mobile-friendly forms - ensure no zoom and compact */
+@media (max-width: 640px) {
+
+    input,
+    select,
+    textarea,
+    button {
+        font-size: 16px !important;
+        /* Prevents zoom on iOS */
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    .btn-mobile-compact {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        height: 40px !important;
+    }
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Better tap highlight */
+* {
+    -webkit-tap-highlight-color: rgba(30, 58, 138, 0.1);
+}
+
+/* Compact Mobile Navigation Item */
+.mobile-nav-item {
+    transition: all 0.2s ease-in-out;
+}
+
+.mobile-nav-item:active {
+    transform: scale(0.95);
+    background-color: rgba(30, 58, 138, 0.05);
+}
+
+/* Table Card View Logic - standardized */
+.mobile-card {
+    @apply bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-800 rounded-xl p-4 mb-3;
+}

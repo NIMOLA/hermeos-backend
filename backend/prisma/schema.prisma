@@ -1,0 +1,331 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum KYCStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum PropertyStatus {
+  DRAFT
+  LISTED
+  FULLY_SUBSCRIBED
+  DELISTED
+}
+
+enum TransactionType {
+  OWNERSHIP_REGISTRATION
+  DISTRIBUTION
+  TRANSFER_REQUEST
+  WALLET_DEPOSIT
+  WALLET_WITHDRAWAL
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum TransferStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  role              UserRole          @default(USER)
+  tier              String            @default("basic") // basic, premium, institutional
+  isVerified        Boolean           @default(false)
+  kycStatus         KYCStatus         @default(PENDING)
+  googleId          String?           @unique
+  appleId           String?           @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  lastLogin         DateTime?
+  
+  // Relations
+  kyc               KYC?
+  ownerships        Ownership[]
+  transactions      Transaction[]
+  transferRequests  TransferRequest[] @relation("UserTransferRequests")
+  notifications     Notification[]
+  documents         Document[]
+  supportTickets    SupportTicket[]
+  walletBalance     Decimal           @default(0) @db.Decimal(15, 2)
+  
+  @@index([email])
+  @@index([kycStatus])
+  @@map("users")
+}
+
+model KYC {
+  id                String      @id @default(uuid())
+  userId            String      @unique
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Identity Documents
+  idType            String      // passport, drivers_license, nin
+  idNumber          String
+  idDocumentUrl     String?
+  
+  // Proof of Address
+  proofOfAddressUrl String?
+  
+  // BVN/NIN
+  bvn               String?
+  nin               String?
+  
+  // Verification Status
+  status            KYCStatus   @default(PENDING)
+  rejectionReason   String?
+  verifiedAt        DateTime?
+  verifiedBy        String?     // Admin ID
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@map("kyc_records")
+}
+
+model Property {
+  id                String          @id @default(uuid())
+  name              String
+  description       String          @db.Text
+  location          String
+  address           String
+  
+  // Financial Details
+  totalValue        Decimal         @db.Decimal(15, 2)
+  totalUnits        Int
+  pricePerUnit      Decimal         @db.Decimal(15, 2)
+  availableUnits    Int
+  
+  // Property Details
+  propertyType      String          // residential, commercial, mixed
+  size              String          // in sqm
+  bedrooms          Int?
+  bathrooms         Int?
+  
+  // Income Details
+  expectedAnnualIncome    Decimal?  @db.Decimal(15, 2)
+  lastDistributionDate    DateTime?
+  
+  // Status
+  status            PropertyStatus  @default(DRAFT)
+  listedAt          DateTime?
+  
+  // Media
+  images            String[]
+  documents         String[]
+  
+  // Legal
+  titleDeedUrl      String?
+  certificateUrl    String?
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Relations
+  ownerships        Ownership[]
+  distributions     Distribution[]
+  transactions      Transaction[]
+  
+  @@index([status])
+  @@index([listedAt])
+  @@map("properties")
+}
+
+model Ownership {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId        String
+  property          Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  units             Int
+  acquisitionPrice  Decimal   @db.Decimal(15, 2)
+  acquisitionDate   DateTime  @default(now())
+  
+  certificateUrl    String?   // Digital ownership certificate
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  transferRequests  TransferRequest[]
+  
+  @@unique([userId, propertyId])
+  @@index([userId])
+  @@index([propertyId])
+  @@map("ownerships")
+}
+
+model Transaction {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  propertyId        String?
+  property          Property?           @relation(fields: [propertyId], references: [id])
+  
+  type              TransactionType
+  amount            Decimal             @db.Decimal(15, 2)
+  fee               Decimal             @default(0) @db.Decimal(15, 2)
+  status            TransactionStatus   @default(PENDING)
+  
+  // Payment Details
+  paymentReference  String?             @unique
+  paymentMethod     String?             // paystack, bank_transfer
+  paymentMetadata   Json?
+  
+  description       String?
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  completedAt       DateTime?
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+model Distribution {
+  id                String    @id @default(uuid())
+  propertyId        String
+  property          Property  @relation(fields: [propertyId], references: [id])
+  
+  amount            Decimal   @db.Decimal(15, 2)
+  distributionDate  DateTime
+  period            String    // e.g., "Q1 2024"
+  
+  description       String?
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([propertyId])
+  @@index([distributionDate])
+  @@map("distributions")
+}
+
+model TransferRequest {
+  id                String          @id @default(uuid())
+  userId            String
+  user              User            @relation("UserTransferRequests", fields: [userId], references: [id])
+  ownershipId       String
+  ownership         Ownership       @relation(fields: [ownershipId], references: [id])
+  
+  units             Int
+  requestedPrice    Decimal?        @db.Decimal(15, 2)
+  
+  status            TransferStatus  @default(PENDING)
+  reason            String?
+  
+  // Bank Details for payout
+  bankName          String?
+  accountNumber     String?
+  
+  reviewedBy        String?         // Admin ID
+  reviewedAt        DateTime?
+  rejectionReason   String?
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@map("transfer_requests")
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  message     String    @db.Text
+  type        String    // info, warning, success, distribution
+  isRead      Boolean   @default(false)
+  
+  metadata    Json?     // Additional data
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Document {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  type        String    // ownership_certificate, statement, agreement, kyc
+  url         String
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+  @@map("documents")
+}
+
+model SupportTicket {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  category    String
+  subject     String
+  message     String    @db.Text
+  status      String    @default("open") // open, in_progress, resolved, closed
+  
+  assetRef    String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+model AdminAuditLog {
+  id          String    @id @default(uuid())
+  adminId     String
+  action      String    // e.g., "APPROVED_KYC", "REJECTED_TRANSFER"
+  entityType  String    // e.g., "USER", "PROPERTY", "TRANSFER"
+  entityId    String
+  details     Json?
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("admin_audit_logs")
+}
