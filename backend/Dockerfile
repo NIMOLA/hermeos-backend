@@ -1,6 +1,9 @@
 # Base image
 FROM node:20-alpine AS builder
 
+# Install dependencies for Prisma
+RUN apk add --no-cache openssl libc6-compat
+
 # Create app directory
 WORKDIR /app
 
@@ -20,9 +23,10 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
-
 WORKDIR /app
+
+# Install dependencies for Prisma
+RUN apk add --no-cache openssl libc6-compat
 
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
