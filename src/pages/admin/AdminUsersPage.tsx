@@ -1,4 +1,3 @@
-```
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 
@@ -74,7 +73,7 @@ export default function AdminUsersPage() {
                         </select>
                     </div>
                 </div>
-                <div className="table-wrapper">
+                <div className="table-wrapper text-slate-900 dark:text-white">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
@@ -97,17 +96,16 @@ export default function AdminUsersPage() {
                                     <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{user.role}</td>
                                     <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{user.joined}</td>
                                     <td className="p-4">
-                                        <span className={`inline - flex items - center px - 2.5 py - 0.5 rounded - full text - xs font - medium border ${
-    user.kyc === 'Verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30' :
-        user.kyc === 'Pending' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30' :
-            user.kyc === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30' :
-                'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-} `}>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.kyc === 'Verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30' :
+                                                user.kyc === 'Pending' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30' :
+                                                    user.kyc === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30' :
+                                                        'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                                            }`}>
                                             {user.kyc}
                                         </span>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <Link to={`/ admin / users / ${ user.id } `}>
+                                        <Link to={`/admin/users/${user.id}`}>
                                             <button className="text-slate-400 hover:text-primary transition-colors p-1">
                                                 <span className="material-symbols-outlined text-[20px]">visibility</span>
                                             </button>
