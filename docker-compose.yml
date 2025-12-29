@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
+    env_file: .env
     depends_on:
       - backend
 
@@ -14,11 +15,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://postgres.arxajzcgbvbuxnxvdwcu:a6806cQ3Mh4DZvnm@db.arxajzcgbvbuxnxvdwcu.supabase.co:6543/postgres?pgbouncer=true
-      DIRECT_URL: postgresql://postgres.arxajzcgbvbuxnxvdwcu:a6806cQ3Mh4DZvnm@db.arxajzcgbvbuxnxvdwcu.supabase.co:5432/postgres
-      # Add other envs here as needed
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy
@@ -26,15 +23,15 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: hermeos
-    #    ports:
-    #      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-hermeos}
+    # Removed public port mapping 5432 for security. 
+    # Internal services connect using the service name 'db'.
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
