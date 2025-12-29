@@ -23,6 +23,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production stage
+FROM node:20-alpine
 WORKDIR /app
 
 # Install dependencies for Prisma
