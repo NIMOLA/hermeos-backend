@@ -67,6 +67,7 @@ function App() {
             <Route path="/support" element={<SupportPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/kyc" element={<KYCInfoPage />} />
+            <Route path="/kyc/info" element={<KYCInfoPage />} />
             <Route path="/kyc/status" element={<KYCStatusPage />} />
             <Route path="/exit-request" element={<ExitRequestPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
