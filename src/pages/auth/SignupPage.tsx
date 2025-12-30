@@ -47,6 +47,13 @@ export default function SignupPage() {
             const firstName = nameParts[0] || '';
             const lastName = nameParts.slice(1).join(' ') || 'Partner';
 
+            // Map frontend tier names to backend expected values
+            const tierMap: Record<string, string> = {
+                'Starter': 'basic',
+                'Pro': 'premium',
+                'Institutional': 'institutional'
+            };
+
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: {
@@ -58,7 +65,7 @@ export default function SignupPage() {
                     firstName,
                     lastName,
                     phone: formData.phone,
-                    tier: formData.accountType.toLowerCase(),
+                    tier: tierMap[formData.accountType] || 'basic',
                 }),
             });
 
