@@ -14,13 +14,70 @@ export default function SignupPage() {
         confirmPassword: '',
         accountType: 'Starter'
     });
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        if (error) setError(null);
     };
 
     const handleNext = () => setStep((prev) => Math.min(prev + 1, 3));
     const handleBack = () => setStep((prev) => Math.max(prev - 1, 1));
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Basic validation
+        if (!formData.name || !formData.email || !formData.password) {
+            setError('Please fill in all required fields');
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        setError(null);
+        setLoading(true);
+
+        try {
+            const nameParts = formData.name.trim().split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || 'Partner';
+
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                    firstName,
+                    lastName,
+                    phone: formData.phone,
+                    tier: formData.accountType.toLowerCase(),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Registration failed');
+            }
+
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            window.location.href = '/kyc/info';
+        } catch (err: any) {
+            setError(err.message || 'Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSocialSignup = async (provider: 'google' | 'apple') => {
         try {
@@ -71,17 +128,23 @@ export default function SignupPage() {
                         </div>
                     </div>
 
-                    <form className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {error && (
+                            <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
+                                {error}
+                            </div>
+                        )}
+
                         {step === 1 && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Basic Information</h3>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Full Legal Name</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="e.g. Chinedu Okeke" />
+                                    <input type="text" name="name" required value={formData.name} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="e.g. Chinedu Okeke" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email address</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="you@example.com" />
+                                    <input type="email" name="email" required value={formData.email} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="you@example.com" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
@@ -95,14 +158,14 @@ export default function SignupPage() {
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Account Security</h3>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
-                                    <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="••••••••" />
+                                    <input type="password" name="password" required minLength={8} value={formData.password} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="••••••••" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
-                                    <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="••••••••" />
+                                    <input type="password" name="confirmPassword" required value={formData.confirmPassword} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="••••••••" />
                                 </div>
                                 <div className="flex items-start">
-                                    <input id="terms" type="checkbox" className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mt-1" />
+                                    <input id="terms" type="checkbox" required className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mt-1" />
                                     <label htmlFor="terms" className="ml-2 block text-sm text-slate-600 dark:text-slate-400">
                                         I agree to the <a href="#" className="font-medium text-primary hover:underline">Terms of Service</a> and <a href="#" className="font-medium text-primary hover:underline">Privacy Policy</a>.
                                     </label>
@@ -131,14 +194,19 @@ export default function SignupPage() {
 
                         <div className="flex gap-3 pt-4">
                             {step > 1 && (
-                                <Button type="button" variant="outline" className="flex-1" onClick={handleBack}>Back</Button>
+                                <Button type="button" variant="outline" className="flex-1" onClick={handleBack} disabled={loading}>Back</Button>
                             )}
                             {step < 3 ? (
                                 <Button type="button" className="flex-1" onClick={handleNext}>Next Step</Button>
                             ) : (
-                                <Link to="/kyc/info" className="flex-1">
-                                    <Button type="button" className="w-full">Create Account</Button>
-                                </Link>
+                                <Button type="submit" className="flex-1" disabled={loading}>
+                                    {loading ? (
+                                        <span className="flex items-center gap-2">
+                                            <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                            Creating...
+                                        </span>
+                                    ) : 'Create Account'}
+                                </Button>
                             )}
                         </div>
                     </form>
