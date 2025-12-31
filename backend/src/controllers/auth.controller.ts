@@ -25,6 +25,15 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
 
         const { email, password, firstName, lastName, phone, tier } = req.body;
 
+        // Password complexity validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return next(new AppError(
+                'Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)',
+                400
+            ));
+        }
+
         // Check if user exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -78,22 +87,69 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
         const { email, password } = req.body;
 
         // Check user exists
-        const user = await prisma.user.findUnique({ where: { email } });
+        let user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
             return next(new AppError('Invalid credentials', 401));
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return next(new AppError('Invalid credentials', 401));
+        // Check if account is locked
+        if (user.lockedUntil && user.lockedUntil > new Date()) {
+            const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / (1000 * 60));
+            return next(new AppError(
+                `Account locked due to multiple failed login attempts. Try again in ${minutesLeft} minutes.`,
+                423
+            ));
         }
 
-        // Update last login
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() }
-        });
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            // Increment failed attempts
+            const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+
+            if (failedAttempts >= 5) {
+                // Lock account for 30 minutes
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: {
+                        failedLoginAttempts: failedAttempts,
+                        lockedUntil: new Date(Date.now() + 30 * 60 * 1000)
+                    }
+                });
+                return next(new AppError(
+                    'Account locked due to multiple failed login attempts. Try again in 30 minutes.',
+                    423
+                ));
+            } else {
+                // Just increment failed attempts
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { failedLoginAttempts: failedAttempts }
+                });
+                return next(new AppError(
+                    `Invalid credentials. ${5 - failedAttempts} attempts remaining.`,
+                    401
+                ));
+            }
+        }
+
+        // Reset failed attempts on successful login
+        if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    failedLoginAttempts: 0,
+                    lockedUntil: null,
+                    lastLogin: new Date() // Update last login here
+                }
+            });
+        } else {
+            // Update last login if no failed attempts to reset
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: { lastLogin: new Date() }
+            });
+        }
 
         // Generate token
         const token = generateToken(user.id, user.email, user.role);
