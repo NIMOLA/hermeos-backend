@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient, ApiError } from '../lib/api-client';
+import { apiClient } from '../lib/api-client';
+import type { ApiError } from '../lib/api-client';
 
 interface UseApiOptions {
     /**
