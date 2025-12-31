@@ -4,7 +4,8 @@ import {
     getDashboardStats,
     getRecentActivity,
     getAllUsers,
-    getUserStats
+    getUserStats,
+    getFinancialTransactions
 } from '../controllers/adminDashboard.controller';
 
 const router = Router();
@@ -20,5 +21,8 @@ router.get('/activity', getRecentActivity);
 // User management
 router.get('/users', getAllUsers);
 router.get('/users/stats', getUserStats);
+
+// Financials
+router.get('/transactions', getFinancialTransactions);
 
 export default router;

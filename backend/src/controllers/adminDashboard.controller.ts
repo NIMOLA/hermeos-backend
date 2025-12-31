@@ -109,6 +109,94 @@ export const getDashboardStats = async (req: AuthRequest, res: Response, next: N
 };
 
 /**
+ * Get financial transactions for admin view
+ */
+export const getFinancialTransactions = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const type = req.query.type as string;
+        const status = req.query.status as string;
+        const search = req.query.search as string;
+
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+
+        if (type && type !== 'all') {
+            where.type = type;
+        }
+
+        if (status && status !== 'all') {
+            where.status = status;
+        }
+
+        if (search) {
+            where.OR = [
+                {
+                    user: {
+                        OR: [
+                            { firstName: { contains: search, mode: 'insensitive' } },
+                            { lastName: { contains: search, mode: 'insensitive' } },
+                            { email: { contains: search, mode: 'insensitive' } }
+                        ]
+                    }
+                },
+                {
+                    property: {
+                        name: { contains: search, mode: 'insensitive' }
+                    }
+                },
+                { id: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        const [transactions, total] = await Promise.all([
+            prisma.transaction.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true
+                        }
+                    },
+                    property: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }),
+            prisma.transaction.count({ where })
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                transactions,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * Get recent system activity
  */
 export const getRecentActivity = async (req: AuthRequest, res: Response, next: NextFunction) => {

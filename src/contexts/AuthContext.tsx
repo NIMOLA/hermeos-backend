@@ -1,5 +1,9 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { apiClient } from '../lib/api-client';
+import { jwtDecode } from 'jwt-decode';
+
+const APP_VERSION = '1.0.0'; // Bump this to force logout
+const VERSION_KEY = 'app_version';
 
 export interface User {
     id: string;
@@ -49,14 +53,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const initAuth = () => {
             const storedToken = localStorage.getItem('token');
             const storedUser = localStorage.getItem('user');
+            const storedVersion = localStorage.getItem(VERSION_KEY);
+
+            // Force logout if version mismatch
+            if (storedVersion !== APP_VERSION) {
+                localStorage.clear();
+                localStorage.setItem(VERSION_KEY, APP_VERSION);
+                setIsLoading(false);
+                return;
+            }
 
             if (storedToken && storedUser) {
                 try {
-                    const parsedUser = JSON.parse(storedUser);
-                    setToken(storedToken);
-                    setUser(parsedUser);
+                    // Check token expiration
+                    const decoded: any = jwtDecode(storedToken);
+                    const currentTime = Date.now() / 1000;
+
+                    if (decoded.exp < currentTime) {
+                        console.log('Token expired');
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                    } else {
+                        const parsedUser = JSON.parse(storedUser);
+                        setToken(storedToken);
+                        setUser(parsedUser);
+                    }
                 } catch (error) {
-                    console.error('Failed to parse stored user:', error);
+                    console.error('Failed to restore auth:', error);
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                 }
@@ -84,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
+            localStorage.setItem(VERSION_KEY, APP_VERSION);
         } catch (error) {
             throw error;
         } finally {
@@ -104,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
+            localStorage.setItem(VERSION_KEY, APP_VERSION);
         } catch (error) {
             throw error;
         } finally {

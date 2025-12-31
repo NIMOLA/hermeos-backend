@@ -1,11 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import { apiClient } from '../../lib/api-client';
+
+interface Transaction {
+    id: string;
+    type: string;
+    amount: number;
+    status: string;
+    createdAt: string;
+    user: {
+        firstName: string;
+        lastName: string;
+    } | null;
+    property: {
+        name: string;
+    } | null;
+    fee?: number;
+}
 
 export default function AdminFinancialsPage() {
     const [selectedPeriod, setSelectedPeriod] = useState('current_month');
     const [showExportModal, setShowExportModal] = useState(false);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                const response = await apiClient.get<{ transactions: Transaction[] }>('/admin/dashboard/transactions');
+                // The backend returns { data: { transactions: [...] } } but apiClient.get returns response.data if wrapped?
+                // Wait, apiClient.request returns data.
+                // My backend returns { success: true, data: { transactions: [...] } }
+                // apiClient returns the whole JSON?
+                // Let's check api-client.ts again.
+                // const data = await response.json(); return data;
+                // So response is { success: true, data: { transactions: [...] } }
+                // But Typescript might need casting.
+                // Let's assume apiClient returns the full response object as T.
+                setTransactions((response as any).data.transactions);
+            } catch (error) {
+                console.error('Failed to fetch transactions:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTransactions();
+    }, []);
 
     const handleExport = (format: string) => {
         console.log(`Exporting financials as ${format}`);
@@ -13,13 +56,17 @@ export default function AdminFinancialsPage() {
         // In a real app, this would trigger a download
     };
 
-    const transactions = [
-        { id: 'TXN-2024-001', date: 'Dec 23, 2024', type: 'Acquisition', user: 'Aisha Bello', asset: 'Oceanview Apartments', amount: '₦500,000', status: 'Completed', fee: '₦7,500' },
-        { id: 'TXN-2024-002', date: 'Dec 22, 2024', type: 'Distribution', user: 'All Partners', asset: 'Greenfield Estate', amount: '₦2,400,000', status: 'Completed', fee: '₦0' },
-        { id: 'TXN-2024-003', date: 'Dec 20, 2024', type: 'Exit', user: 'David Okafor', asset: 'Lekki Heights', amount: '₦350,000', status: 'Processing', fee: '₦5,250' },
-        { id: 'TXN-2024-004', date: 'Dec 19, 2024', type: 'Acquisition', user: 'Emeka Balogun', asset: 'Victoria Island Plaza', amount: '₦1,200,000', status: 'Completed', fee: '₦18,000' },
-        { id: 'TXN-2024-005', date: 'Dec 18, 2024', type: 'Wallet Deposit', user: 'John Doe', asset: 'N/A', amount: '₦750,000', status: 'Completed', fee: '₦0' },
-    ];
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
 
     return (
         <div className="space-y-6">
@@ -174,26 +221,40 @@ export default function AdminFinancialsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {transactions.map((txn) => (
-                                    <tr key={txn.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                        <td className="p-4 text-sm font-medium text-primary">{txn.id}</td>
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{txn.date}</td>
-                                        <td className="p-4">
-                                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400">
-                                                {txn.type}
-                                            </Badge>
-                                        </td>
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{txn.user}</td>
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{txn.asset}</td>
-                                        <td className="p-4 text-sm font-bold text-slate-900 dark:text-white">{txn.amount}</td>
-                                        <td className="p-4 text-sm text-emerald-600">{txn.fee}</td>
-                                        <td className="p-4">
-                                            <Badge className={txn.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}>
-                                                {txn.status}
-                                            </Badge>
-                                        </td>
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={8} className="p-8 text-center text-slate-500">Loading transactions...</td>
                                     </tr>
-                                ))}
+                                ) : transactions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="p-8 text-center text-slate-500">No transactions found</td>
+                                    </tr>
+                                ) : (
+                                    transactions.map((txn) => (
+                                        <tr key={txn.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                            <td className="p-4 text-sm font-medium text-primary truncate max-w-[150px]" title={txn.id}>{txn.id}</td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{formatDate(txn.createdAt)}</td>
+                                            <td className="p-4">
+                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400">
+                                                    {txn.type}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                                                {txn.user ? `${txn.user.firstName} ${txn.user.lastName}` : 'System'}
+                                            </td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                                                {txn.property ? txn.property.name : 'N/A'}
+                                            </td>
+                                            <td className="p-4 text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(txn.amount)}</td>
+                                            <td className="p-4 text-sm text-emerald-600">{txn.fee ? formatCurrency(txn.fee) : '-'}</td>
+                                            <td className="p-4">
+                                                <Badge className={txn.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}>
+                                                    {txn.status}
+                                                </Badge>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>

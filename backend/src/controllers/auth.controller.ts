@@ -26,10 +26,10 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
         const { email, password, firstName, lastName, phone, tier } = req.body;
 
         // Password complexity validation
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
         if (!passwordRegex.test(password)) {
             return next(new AppError(
-                'Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)',
+                'Password must be at least 8 characters with uppercase, lowercase, number, and a special character',
                 400
             ));
         }

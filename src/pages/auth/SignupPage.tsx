@@ -83,7 +83,11 @@ export default function SignupPage() {
             // Navigate to KYC page
             navigate('/kyc/info');
         } catch (err: any) {
-            setError(err.message || 'Something went wrong. Please try again.');
+            let errorMessage = err.message || 'Something went wrong. Please try again.';
+            if (err.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+                 errorMessage = err.errors[0].msg || err.errors[0].message || errorMessage;
+            }
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
