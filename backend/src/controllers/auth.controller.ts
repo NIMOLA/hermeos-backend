@@ -44,33 +44,49 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
         const hashedPassword = await bcrypt.hash(password, 12);
 
         // Create user
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                firstName,
-                lastName,
-                phone,
-                tier: tier || 'basic'
-            },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                role: true,
-                tier: true,
-                createdAt: true
+        try {
+            const user = await prisma.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    firstName,
+                    lastName,
+                    phone,
+                    tier: tier || 'basic'
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    tier: true,
+                    createdAt: true
+                }
+            });
+
+            // Generate token
+            const token = generateToken(user.id, user.email, user.role);
+
+            res.status(201).json({
+                success: true,
+                data: { user, token }
+            });
+        } catch (dbError: any) {
+            // Handle Prisma unique constraint violations (race condition)
+            if (dbError.code === 'P2002') {
+                return next(new AppError('Email already registered', 400));
             }
-        });
-
-        // Generate token
-        const token = generateToken(user.id, user.email, user.role);
-
-        res.status(201).json({
-            success: true,
-            data: { user, token }
-        });
+            // Re-throw other errors to be handled by global error handler
+            // But wrap them in AppError to ensure message is visible in dev/prod for debugging this issue
+            if (process.env.NODE_ENV === 'production') {
+                // In production, we might want to be careful, but for this specific bug fix, we need to know.
+                // However, let's log it and return a slightly more descriptive error if possible.
+                console.error('Registration Error:', dbError);
+                return next(new AppError(`Registration failed: ${dbError.message || 'Database error'}`, 500));
+            }
+            throw dbError;
+        }
     } catch (error) {
         next(error);
     }
