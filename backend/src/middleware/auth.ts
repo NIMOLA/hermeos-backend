@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient, UserRole } from '@prisma/client';
 import { AppError } from './errorHandler';
+export { requireRole } from './requireRole';
 
 const prisma = new PrismaClient();
 
