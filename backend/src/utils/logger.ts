@@ -47,3 +47,18 @@ export const logger = winston.createLogger({
     format,
     transports,
 });
+
+// Security event logging
+export function logSecurityEvent(event: string, data: Record<string, any>) {
+    logger.warn(`SECURITY: ${event}`, data);
+}
+
+// Authentication event logging  
+export function logAuthEvent(event: string, userId: string | null, ip: string, success: boolean) {
+    logger.info(`AUTH: ${event}`, { userId, ip, success });
+}
+
+// Financial transaction logging
+export function logFinancialEvent(event: string, userId: string, amount: number, data: Record<string, any>) {
+    logger.warn(`FINANCIAL: ${event}`, { userId, amount, ...data });
+}
