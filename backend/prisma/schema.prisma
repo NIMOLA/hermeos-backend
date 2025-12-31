@@ -12,11 +12,14 @@ datasource db {
 }
 
 enum UserRole {
+  USER
   FREE_USER
   BASIC
   PREMIUM
   INSTITUTIONAL
   ADMIN
+  MODERATOR
+  SUPPORT
   SUPER_ADMIN
 }
 
@@ -344,4 +347,20 @@ model AdminAuditLog {
 
   @@index([adminId])
   @@index([createdAt])
+}
+
+model AdminInvitation {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  role        String
+  permissions String[]
+  token       String   @unique
+  used        Boolean  @default(false)
+  createdBy   String
+  creator     User     @relation("AdminCreator", fields: [createdBy], references: [id])
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
 }
