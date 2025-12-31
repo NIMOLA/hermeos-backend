@@ -63,12 +63,18 @@ model User {
   role                  UserRole  @default(FREE_USER)
   tier                  String    @default("free")
   isVerified            Boolean   @default(false)
+  kycStatus             String?   @default("not_submitted")
   
   // Security fields
   failedLoginAttempts   Int       @default(0)
   lockedUntil           DateTime?
   twoFactorSecret       String?
   twoFactorEnabled      Boolean   @default(false)
+  lastLogin             DateTime?
+  
+  // OAuth fields
+  googleId              String?   @unique
+  appleId               String?   @unique
   
   // Financial
   walletBalance         Decimal   @default(0) @db.Decimal(15, 2)
