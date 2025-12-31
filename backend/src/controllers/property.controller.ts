@@ -212,8 +212,7 @@ export const getFeaturedProperty = async (req: AuthRequest, res: Response, next:
     try {
         const featured = await prisma.property.findFirst({
             where: {
-                status: 'LISTED',
-                isFeatured: true
+                status: 'LISTED'
             },
             select: {
                 id: true,
