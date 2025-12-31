@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFetch, useMutation } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
