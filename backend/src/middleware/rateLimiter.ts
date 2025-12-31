@@ -1,5 +1,19 @@
 import rateLimit from 'express-rate-limit';
 
+// Extend Express Request type to include rateLimit
+declare global {
+    namespace Express {
+        interface Request {
+            rateLimit: {
+                limit: number;
+                current: number;
+                remaining: number;
+                resetTime: Date;
+            };
+        }
+    }
+}
+
 // Strict rate limiter for authentication endpoints
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
