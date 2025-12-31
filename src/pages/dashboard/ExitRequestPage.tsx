@@ -49,13 +49,13 @@ export default function ExitRequestPage() {
     const [error, setError] = useState('');
 
     // Fetch user's holdings
-    const { data: holdings, loading: loadingHoldings } = useFetch<Ownership[]>('/user/portfolio/holdings');
+    const { data: holdings, isLoading: loadingHoldings } = useFetch<Ownership[]>('/user/portfolio/holdings');
 
     // Fetch existing exit requests
-    const { data: exitRequests, loading: loadingRequests, refetch } = useFetch<ExitRequest[]>('/exit-requests/my-requests');
+    const { data: exitRequests, isLoading: loadingRequests, refetch } = useFetch<ExitRequest[]>('/exit-requests/my-requests');
 
     // Submit mutation
-    const { mutate: submitRequest, loading: submitting } = useMutation('POST', '/exit-requests');
+    const { mutate: submitRequest, isLoading: submitting } = useMutation('/exit-requests', 'POST');
 
     const selectedHolding = holdings?.find(h => h.id === selectedOwnership);
     const maxUnits = selectedHolding?.units || 0;
