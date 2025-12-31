@@ -138,12 +138,25 @@ export default function AdminUsersPage() {
                                                     user.kycStatus === 'pending' || user.kycStatus === 'submitted' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30' :
                                                         'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30'
                                                 }`}>
-                                            </tr>
-                            ))}
-                                        </tbody>
-                                    </table>
-                </div>
+                                                {user.kycStatus || 'Not Submitted'}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <Link to={`/admin/users/${user.id}`} className="text-primary hover:text-blue-700 text-sm font-medium">View →</Link>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-slate-500">
+                                        No users found
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            );
+        </div>
+    );
 }
