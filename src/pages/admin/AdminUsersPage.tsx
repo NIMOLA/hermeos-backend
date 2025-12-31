@@ -1,14 +1,45 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
+import { useState, useEffect } from 'react';
 
 export default function AdminUsersPage() {
-    const users = [
-        { id: 1, name: "Chinedu Okeke", email: "chinedu@example.com", kyc: "Verified", role: "Partner", joined: "Oct 24, 2024" },
-        { id: 2, name: "Sarah Williams", email: "sarah.w@example.com", kyc: "Pending", role: "Partner", joined: "Nov 12, 2024" },
-        { id: 3, name: "Emeka Balogun", email: "emeka.b@example.com", kyc: "Verified", role: "Partner", joined: "Dec 01, 2024" },
-        { id: 4, name: "Grace Adeyemi", email: "grace.a@example.com", kyc: "Verified", role: "Admin", joined: "Sep 15, 2024" },
-        { id: 5, name: "Amina Yusuf", email: "amina.y@example.com", kyc: "Rejected", role: "Partner", joined: "Dec 20, 2024" },
-    ];
+    const [users, setUsers] = useState<any[]>([]);
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Fetch user stats
+        fetch('/api/admin/dashboard/users/stats', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setStats(data.data);
+                }
+            })
+            .catch(err => console.error('Error fetching user stats:', err));
+
+        // Fetch users
+        fetch('/api/admin/dashboard/users?limit=50', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setUsers(data.data.users);
+                }
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Error fetching users:', err);
+                setLoading(false);
+            });
+    }, []);
 
     return (
         <div className="flex flex-col gap-6">
@@ -30,7 +61,7 @@ export default function AdminUsersPage() {
                     </div>
                     <div>
                         <p className="text-xs text-slate-500 uppercase font-bold">Total Users</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">1,248</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats ? stats.totalUsers.toLocaleString() : '...'}</p>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center gap-4">
@@ -39,7 +70,7 @@ export default function AdminUsersPage() {
                     </div>
                     <div>
                         <p className="text-xs text-slate-500 uppercase font-bold">Verified KYC</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">982</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats ? stats.verifiedKYC.toLocaleString() : '...'}</p>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center gap-4">
@@ -48,7 +79,7 @@ export default function AdminUsersPage() {
                     </div>
                     <div>
                         <p className="text-xs text-slate-500 uppercase font-bold">Pending Review</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">45</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats ? stats.pendingReview.toLocaleString() : '...'}</p>
                     </div>
                 </div>
             </div>
@@ -85,38 +116,34 @@ export default function AdminUsersPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map((user) => (
-                                <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-slate-900 dark:text-white">{user.name}</span>
-                                            <span className="text-xs text-slate-500">{user.email}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{user.role}</td>
-                                    <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{user.joined}</td>
-                                    <td className="p-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.kyc === 'Verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30' :
-                                                user.kyc === 'Pending' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30' :
-                                                    user.kyc === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30' :
-                                                        'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                                            }`}>
-                                            {user.kyc}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <Link to={`/admin/users/${user.id}`}>
-                                            <button className="text-slate-400 hover:text-primary transition-colors p-1">
-                                                <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                            </button>
-                                        </Link>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="p-8 text-center text-slate-500">
+                                        Loading users...
                                     </td>
                                 </tr>
+                            ) : users.length > 0 ? (
+                                users.map((user) => (
+                                    <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td className="p-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{user.firstName} {user.lastName}</span>
+                                                <span className="text-xs text-slate-500">{user.email}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{user.role}</td>
+                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{new Date(user.createdAt).toLocaleDateString()}</td>
+                                        <td className="p-4">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.kycStatus === 'verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30' :
+                                                    user.kycStatus === 'pending' || user.kycStatus === 'submitted' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30' :
+                                                        'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30'
+                                                }`}>
+                                            </tr>
                             ))}
-                        </tbody>
-                    </table>
+                                        </tbody>
+                                    </table>
+                </div>
                 </div>
             </div>
-        </div>
-    );
+            );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 
@@ -9,6 +9,43 @@ export default function AdminDashboardPage() {
         subject: '',
         message: ''
     });
+    const [kpis, setKpis] = useState<any>(null);
+    const [activities, setActivities] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Fetch dashboard stats
+        fetch('/api/admin/dashboard/stats', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setKpis(data.data);
+                }
+            })
+            .catch(err => console.error('Error fetching dashboard stats:', err));
+
+        // Fetch recent activity
+        fetch('/api/admin/dashboard/activity?limit=5', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setActivities(data.data);
+                }
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Error fetching activity:', err);
+                setLoading(false);
+            });
+    }, []);
 
     const handleSendAnnouncement = () => {
         // Mock send functionality
@@ -17,6 +54,37 @@ export default function AdminDashboardPage() {
         setAnnouncementData({ recipient: 'all', subject: '', message: '' });
         // In a real app, this would call an API
     };
+
+    const kpiData = kpis ? [
+        {
+            label: "Total Partners",
+            value: kpis.totalPartners.value.toLocaleString(),
+            sub: kpis.totalPartners.label,
+            icon: "group",
+            color: "blue"
+        },
+        {
+            label: "Assets Under Mgmt",
+            value: kpis.assetsUnderManagement.formatted,
+            sub: kpis.assetsUnderManagement.label,
+            icon: "account_balance",
+            color: "emerald"
+        },
+        {
+            label: "Active Distributions",
+            value: kpis.activeDistributions.value.toString(),
+            sub: kpis.activeDistributions.label,
+            icon: "payments",
+            color: "purple"
+        },
+        {
+            label: "Pending KYC",
+            value: kpis.pendingKYC.value.toString(),
+            sub: kpis.pendingKYC.label,
+            icon: "badge",
+            color: "amber"
+        }
+    ] : [];
 
     return (
         <div className="max-w-7xl mx-auto flex flex-col gap-8">
@@ -27,25 +95,24 @@ export default function AdminDashboardPage() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                    { label: "Total Partners", value: "2,405", sub: "+12% this month", icon: "group", color: "blue" },
-                    { label: "Assets Under Mgmt", value: "₦ 1.2B", sub: "+5% vs last month", icon: "account_balance", color: "emerald" },
-                    { label: "Active Distributions", value: "8", sub: "Next payout: Oct 30", icon: "payments", color: "purple" },
-                    { label: "Pending KYC", value: "14", sub: "Requires review", icon: "badge", color: "amber" }
-                ].map((kpi, i) => (
-                    <div key={i} className="bg-white dark:bg-[#1a2632] p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between h-32">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{kpi.label}</p>
-                                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{kpi.value}</h3>
+                {loading ? (
+                    <div className="col-span-4 text-center py-8 text-slate-500">Loading dashboard stats...</div>
+                ) : (
+                    kpiData.map((kpi, i) => (
+                        <div key={i} className="bg-white dark:bg-[#1a2632] p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between h-32">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{kpi.label}</p>
+                                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{kpi.value}</h3>
+                                </div>
+                                <div className={`p-2 rounded-lg bg-${kpi.color}-50 text-${kpi.color}-600 dark:bg-${kpi.color}-900/20 dark:text-${kpi.color}-400`}>
+                                    <span className="material-symbols-outlined text-xl">{kpi.icon}</span>
+                                </div>
                             </div>
-                            <div className={`p-2 rounded-lg bg-${kpi.color}-50 text-${kpi.color}-600 dark:bg-${kpi.color}-900/20 dark:text-${kpi.color}-400`}>
-                                <span className="material-symbols-outlined text-xl">{kpi.icon}</span>
-                            </div>
+                            <span className="text-xs font-medium text-slate-400">{kpi.sub}</span>
                         </div>
-                        <span className="text-xs font-medium text-slate-400">{kpi.sub}</span>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -56,25 +123,25 @@ export default function AdminDashboardPage() {
                         <Link to="/admin/audit-trail" className="text-sm text-primary font-medium hover:underline">View All</Link>
                     </div>
                     <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {[
-                            { user: "System", action: "processed monthly dividends", target: "Batch #9921", time: "2 hours ago" },
-                            { user: "Sarah Johnson", action: "uploaded new valuation report", target: "Lekki Gardens", time: "4 hours ago" },
-                            { user: "New User", action: "registered an account", target: "user@example.com", time: "5 hrs ago" },
-                            { user: "Admin", action: "updated asset status", target: "Ikeja Heights -> Active", time: "Yesterday" },
-                            { user: "System", action: "flagged failed login attempt", target: "IP: 192.168.1.1", time: "Yesterday" }
-                        ].map((item, i) => (
-                            <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500">
-                                        {item.user.charAt(0)}
+                        {loading ? (
+                            <div className="px-6 py-8 text-center text-slate-500">Loading activity...</div>
+                        ) : activities.length > 0 ? (
+                            activities.map((item, i) => (
+                                <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500">
+                                            {item.user.charAt(0)}
+                                        </div>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                                            <span className="font-semibold text-slate-900 dark:text-white">{item.user}</span> {item.action} <span className="font-medium text-slate-800 dark:text-slate-200">{item.target}</span>
+                                        </p>
                                     </div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                                        <span className="font-semibold text-slate-900 dark:text-white">{item.user}</span> {item.action} <span className="font-medium text-slate-800 dark:text-slate-200">{item.target}</span>
-                                    </p>
+                                    <span className="text-xs text-slate-400 whitespace-nowrap">{item.time}</span>
                                 </div>
-                                <span className="text-xs text-slate-400 whitespace-nowrap">{item.time}</span>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <div className="px-6 py-8 text-center text-slate-500">No recent activity</div>
+                        )}
                     </div>
                 </div>
 
