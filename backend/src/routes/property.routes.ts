@@ -1,13 +1,21 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import * as propertyController from '../controllers/property.controller';
-import { protect, authorize } from '../middleware/auth';
+import * as propertyDetailsController from '../controllers/propertyDetails.controller';
+import { protect, authorize, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
 // Public routes
 router.get('/', propertyController.getAllProperties);
+router.get('/featured', propertyController.getFeaturedProperty);
+router.get('/marketplace', propertyController.getMarketplaceProperties);
 router.get('/:id', propertyController.getPropertyById);
+router.get('/:id/distributions', propertyController.getPropertyDistributions);
+
+// Property details (optional auth to check ownership)
+router.get('/:id/details', optionalAuth, propertyDetailsController.getPropertyDetails);
+router.get('/:id/performance', protect, propertyDetailsController.getPropertyPerformanceMetrics);
 
 // Protected routes
 router.post(
@@ -37,7 +45,5 @@ router.delete(
     authorize('SUPER_ADMIN'),
     propertyController.deleteProperty
 );
-
-router.get('/:id/distributions', propertyController.getPropertyDistributions);
 
 export default router;

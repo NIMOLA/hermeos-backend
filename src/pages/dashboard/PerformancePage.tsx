@@ -1,6 +1,136 @@
-import { Link } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useFetch } from '../../hooks/useApi';
+
+// Interfaces
+interface IncomeData {
+    month: string;
+    revenue: number;
+    expenses: number;
+}
+
+interface AllocationData {
+    name: string;
+    value: number;
+    color: string;
+}
+
+interface Transaction {
+    id: string;
+    date: string;
+    description: string;
+    category: string;
+    status: string;
+    amount: number;
+}
+
+interface PerformanceData {
+    property: {
+        id: string;
+        name: string;
+        location: string;
+    };
+    kpis: {
+        totalIncome: number;
+        netDistributions: number;
+        occupancyRate: number;
+        nextPayout: {
+            date: string;
+            estimatedAmount: number;
+        } | null;
+    };
+    incomeTrends: IncomeData[];
+    allocations: {
+        partnerDistribution: number;
+        maintenanceOps: number;
+        proptechFees: number;
+    };
+    transactions: Transaction[];
+}
+
+interface IncomeTrendData {
+    month: string;
+    income: number;
+    cumulativeIncome: number;
+}
+
+// Custom tooltip for charts
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-lg">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{label}</p>
+                {payload.map((entry: any, index: number) => (
+                    <p key={index} className="text-xs text-slate-600 dark:text-slate-300">
+                        <span style={{ color: entry.color }} className="font-bold">{entry.name}:</span>{' '}
+                        ₦{(entry.value / 1000).toFixed(1)}k
+                    </p>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
+const formatCurrency = (value: number) => {
+    if (value >= 1000000) return `₦${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `₦${(value / 1000).toFixed(0)}k`;
+    return `₦${value.toFixed(0)}`;
+};
 
 export default function PerformancePage() {
+    const { propertyId } = useParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const period = searchParams.get('period') || 'ytd';
+
+    // Fetch performance data for specific property
+    const { data: performanceData, loading, error } = useFetch<PerformanceData>(
+        propertyId ? `/performance/property/${propertyId}?period=${period}` : null
+    );
+
+    // Fetch overall income trends
+    const { data: incomeTrends } = useFetch<IncomeTrendData[]>('/performance/income-trends?months=12');
+
+    // Prepare allocation data
+    const allocationData: AllocationData[] = performanceData ? [
+        { name: 'Partner Distribution', value: performanceData.allocations.partnerDistribution, color: '#197fe6' },
+        { name: 'Maintenance & Ops', value: performanceData.allocations.maintenanceOps, color: '#cbd5e1' },
+        { name: 'Proptech Fees', value: performanceData.allocations.proptechFees, color: '#f59e0b' },
+    ] : [];
+
+    const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setSearchParams({ period: e.target.value });
+    };
+
+    if (loading) {
+        return (
+            <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="animate-pulse space-y-8">
+                    <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="h-32 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                        ))}
+                    </div>
+                    <div className="h-96 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !performanceData) {
+        return (
+            <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+                    <p className="text-red-700 dark:text-red-400 font-medium">
+                        {error || 'Failed to load performance data'}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Breadcrumbs */}
@@ -9,7 +139,7 @@ export default function PerformancePage() {
                 <span className="material-symbols-outlined text-[16px] text-[#4e7397] dark:text-slate-500">chevron_right</span>
                 <Link to="/portfolio" className="text-[#4e7397] dark:text-slate-400 hover:text-primary transition-colors font-medium">Portfolio</Link>
                 <span className="material-symbols-outlined text-[16px] text-[#4e7397] dark:text-slate-500">chevron_right</span>
-                <Link to="/properties" className="text-[#4e7397] dark:text-slate-400 hover:text-primary transition-colors font-medium">Lekki Phase 1 Apartments</Link>
+                <Link to="/properties" className="text-[#4e7397] dark:text-slate-400 hover:text-primary transition-colors font-medium">{performanceData.property.name}</Link>
                 <span className="material-symbols-outlined text-[16px] text-[#4e7397] dark:text-slate-500">chevron_right</span>
                 <span className="text-[#0e141b] dark:text-slate-100 font-semibold">Performance</span>
             </div>
@@ -18,29 +148,18 @@ export default function PerformancePage() {
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
                 <div className="flex flex-col gap-2 max-w-2xl">
                     <h1 className="text-[#0e141b] dark:text-white text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">Property Performance</h1>
-                    <p className="text-[#4e7397] dark:text-slate-400 text-base md:text-lg font-normal">Detailed financial insights and ownership returns for <span className="font-semibold text-slate-700 dark:text-slate-300">Lekki Phase 1 Apartments</span>.</p>
+                    <p className="text-[#4e7397] dark:text-slate-400 text-base md:text-lg font-normal">Detailed financial insights and ownership returns for <span className="font-semibold text-slate-700 dark:text-slate-300">{performanceData.property.name}</span>.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    {/* Property Selector */}
-                    <div className="relative group min-w-[200px]">
-                        <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
-                            <span className="material-symbols-outlined text-[20px]">apartment</span>
-                        </span>
-                        <select className="w-full h-11 pl-10 pr-8 bg-white dark:bg-[#1a2632] border border-[#d0dbe7] dark:border-slate-600 rounded-lg text-sm font-medium text-[#0e141b] dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none cursor-pointer">
-                            <option value="lekki">Lekki Phase 1 Apts</option>
-                            <option value="vi">Victoria Island Heights</option>
-                            <option value="ikoyi">Ikoyi Bridge View</option>
-                        </select>
-                        <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-slate-500">
-                            <span className="material-symbols-outlined text-[20px]">expand_more</span>
-                        </span>
-                    </div>
                     {/* Date Range */}
                     <div className="relative group min-w-[160px]">
                         <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
                             <span className="material-symbols-outlined text-[20px]">calendar_month</span>
                         </span>
-                        <select className="w-full h-11 pl-10 pr-8 bg-white dark:bg-[#1a2632] border border-[#d0dbe7] dark:border-slate-600 rounded-lg text-sm font-medium text-[#0e141b] dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none cursor-pointer">
+                        <select
+                            value={period}
+                            onChange={handlePeriodChange}
+                            className="w-full h-11 pl-10 pr-8 bg-white dark:bg-[#1a2632] border border-[#d0dbe7] dark:border-slate-600 rounded-lg text-sm font-medium text-[#0e141b] dark:text-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none cursor-pointer">
                             <option value="ytd">Year to Date</option>
                             <option value="12m">Last 12 Months</option>
                             <option value="q3">Q3 2023</option>
@@ -60,10 +179,43 @@ export default function PerformancePage() {
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[
-                    { title: "Total Income Generated", icon: "payments", val: "₦ 45,230,000", sub: "+12.5% vs last year", color: "primary", track: "trending_up", trackColor: "text-emerald-600" },
-                    { title: "Net Distributions", icon: "account_balance_wallet", val: "₦ 3,850,000", sub: "Deposited to Wallet", color: "purple-600", bg: "bg-purple-50 dark:bg-purple-900/20", trackColor: "text-slate-400" },
-                    { title: "Occupancy Rate", icon: "key", val: "94%", sub: "Above target (90%)", color: "amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", track: "check_circle", trackColor: "text-emerald-600" },
-                    { title: "Next Payout", icon: "event", val: "Oct 31, 2023", sub: "Approx. ₦ 245,000", color: "blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", trackColor: "text-slate-400" }
+                    {
+                        title: "Total Income Generated",
+                        icon: "payments",
+                        val: formatCurrency(performanceData.kpis.totalIncome),
+                        sub: "+12.5% vs last year",
+                        color: "primary",
+                        track: "trending_up",
+                        trackColor: "text-emerald-600"
+                    },
+                    {
+                        title: "Net Distributions",
+                        icon: "account_balance_wallet",
+                        val: formatCurrency(performanceData.kpis.netDistributions),
+                        sub: "Deposited to Wallet",
+                        color: "purple-600",
+                        bg: "bg-purple-50 dark:bg-purple-900/20",
+                        trackColor: "text-slate-400"
+                    },
+                    {
+                        title: "Occupancy Rate",
+                        icon: "key",
+                        val: `${performanceData.kpis.occupancyRate}%`,
+                        sub: "Above target (90%)",
+                        color: "amber-500",
+                        bg: "bg-amber-50 dark:bg-amber-900/20",
+                        track: "check_circle",
+                        trackColor: "text-emerald-600"
+                    },
+                    {
+                        title: "Next Payout",
+                        icon: "event",
+                        val: performanceData.kpis.nextPayout ? new Date(performanceData.kpis.nextPayout.date).toLocaleDateString() : "N/A",
+                        sub: performanceData.kpis.nextPayout ? `Approx. ${formatCurrency(performanceData.kpis.nextPayout.estimatedAmount)}` : "No upcoming payout",
+                        color: "blue-500",
+                        bg: "bg-blue-50 dark:bg-blue-900/20",
+                        trackColor: "text-slate-400"
+                    }
                 ].map((item, index) => (
                     <div key={index} className="bg-white dark:bg-[#1a2632] p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col justify-between h-32">
                         <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
@@ -82,7 +234,7 @@ export default function PerformancePage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* Income Trends Chart (CSS Only) */}
+                {/* Income Trends Bar Chart */}
                 <div className="lg:col-span-2 bg-white dark:bg-[#1a2632] p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold text-[#0e141b] dark:text-white">Income Trends</h3>
@@ -91,73 +243,69 @@ export default function PerformancePage() {
                                 <span className="w-2 h-2 rounded-full bg-primary"></span> Revenue
                             </span>
                             <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                                <span className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-600"></span> Expenses
+                                <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span> Expenses
                             </span>
                         </div>
                     </div>
-                    <div className="overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
-                        <div className="h-64 min-w-[500px] flex items-end justify-between gap-4 pt-4 border-b border-slate-200 dark:border-slate-700 relative">
-                            {/* Background Grid Lines */}
-                            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-0">
-                                <div className="w-full h-px bg-slate-100 dark:bg-slate-700/50"></div>
-                                <div className="w-full h-px bg-slate-100 dark:bg-slate-700/50"></div>
-                                <div className="w-full h-px bg-slate-100 dark:bg-slate-700/50"></div>
-                                <div className="w-full h-px bg-slate-100 dark:bg-slate-700/50"></div>
-                                <div className="w-full h-px bg-transparent"></div>
-                            </div>
-
-                            {/* Bars */}
-                            {[
-                                { m: 'May', h1: '60%', h2: '30%', v: '₦2.4M' },
-                                { m: 'Jun', h1: '75%', h2: '35%', v: '₦3.1M' },
-                                { m: 'Jul', h1: '65%', h2: '40%', v: '₦2.8M' },
-                                { m: 'Aug', h1: '85%', h2: '25%', v: '₦3.5M' },
-                                { m: 'Sep', h1: '80%', h2: '32%', v: '₦3.3M' },
-                                { m: 'Oct', h1: '92%', h2: '28%', v: '₦3.9M', active: true },
-                            ].map((d, i) => (
-                                <div key={i} className="flex flex-col items-center gap-2 flex-1 min-w-[60px] group cursor-pointer z-10">
-                                    <div className="w-full max-w-[40px] flex items-end h-[180px] gap-1">
-                                        <div
-                                            className={`w-1/2 ${d.active ? 'bg-primary shadow-lg shadow-primary/20' : 'bg-primary/80 group-hover:bg-primary'} rounded-t-sm transition-all relative`}
-                                            style={{ height: d.h1 }}
-                                        >
-                                            <div className={`${d.active ? '' : 'opacity-0 group-hover:opacity-100'} absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap z-20 transition-opacity`}>{d.v}</div>
-                                        </div>
-                                        <div
-                                            className={`w-1/2 ${d.active ? 'bg-slate-300 dark:bg-slate-500' : 'bg-slate-200 dark:bg-slate-600'} rounded-t-sm`}
-                                            style={{ height: d.h2 }}
-                                        ></div>
-                                    </div>
-                                    <span className={`text-xs ${d.active ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-400 font-medium'}`}>{d.m}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <ResponsiveContainer width="100%" height={280}>
+                        <BarChart data={performanceData.incomeTrends} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} />
+                            <XAxis
+                                dataKey="month"
+                                stroke="#94a3b8"
+                                style={{ fontSize: '12px', fontWeight: 500 }}
+                            />
+                            <YAxis
+                                stroke="#94a3b8"
+                                style={{ fontSize: '12px' }}
+                                tickFormatter={(value) => formatCurrency(value)}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="revenue" fill="#197fe6" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="expenses" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
 
-                {/* Allocation Chart */}
+                {/* Allocation Pie Chart */}
                 <div className="bg-white dark:bg-[#1a2632] p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col">
                     <h3 className="text-lg font-bold text-[#0e141b] dark:text-white mb-6">Revenue Allocations</h3>
-                    <div className="flex-1 flex flex-col items-center justify-center gap-8">
-                        <div className="relative size-48 rounded-full" style={{ background: "conic-gradient(#197fe6 0% 65%, #cbd5e1 65% 85%, #f59e0b 85% 100%)" }}>
-                            <div className="absolute inset-4 bg-white dark:bg-[#1a2632] rounded-full flex flex-col items-center justify-center">
-                                <span className="text-3xl font-bold text-[#0e141b] dark:text-white">65%</span>
-                                <span className="text-xs text-slate-500 font-medium">Net Distribution</span>
-                            </div>
-                        </div>
+                    <div className="flex-1 flex flex-col items-center justify-center gap-6">
+                        <ResponsiveContainer width="100%" height={200}>
+                            <PieChart>
+                                <Pie
+                                    data={allocationData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={2}
+                                    dataKey="value"
+                                >
+                                    {allocationData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    formatter={(value: number) => `${value}%`}
+                                    contentStyle={{
+                                        background: '#1a2632',
+                                        border: '1px solid #334155',
+                                        borderRadius: '8px',
+                                        fontSize: '12px'
+                                    }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
                         {/* Legend */}
-                        <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-                            {[
-                                { label: "Partner Distribution", val: "65%", color: "bg-[#197fe6]" },
-                                { label: "Maintenance & Ops", val: "20%", color: "bg-slate-300" },
-                                { label: "Proptech Fees", val: "15%", color: "bg-amber-500" }
-                            ].map((l, i) => (
+                        <div className="w-full grid grid-cols-1 gap-3">
+                            {allocationData.map((item, i) => (
                                 <div key={i} className="flex items-center justify-between text-sm">
                                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                                        <span className={`size-3 rounded-full ${l.color}`}></span>
-                                        <span>{l.label}</span>
+                                        <span className="size-3 rounded-full" style={{ backgroundColor: item.color }}></span>
+                                        <span>{item.name}</span>
                                     </div>
-                                    <span className="font-bold text-[#0e141b] dark:text-white">{l.val}</span>
+                                    <span className="font-bold text-[#0e141b] dark:text-white">{item.value}%</span>
                                 </div>
                             ))}
                         </div>
@@ -165,21 +313,54 @@ export default function PerformancePage() {
                 </div>
             </div>
 
-            {/* Detailed Ledger Table */}
+            {/* Cumulative Income Area Chart */}
+            {incomeTrends && incomeTrends.length > 0 && (
+                <div className="bg-white dark:bg-[#1a2632] p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm mb-8">
+                    <h3 className="text-lg font-bold text-[#0e141b] dark:text-white mb-6">Cumulative Income Growth</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={incomeTrends} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                            <defs>
+                                <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#197fe6" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#197fe6" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} />
+                            <XAxis
+                                dataKey="month"
+                                stroke="#94a3b8"
+                                style={{ fontSize: '12px', fontWeight: 500 }}
+                            />
+                            <YAxis
+                                stroke="#94a3b8"
+                                style={{ fontSize: '12px' }}
+                                tickFormatter={(value) => formatCurrency(value)}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Area
+                                type="monotone"
+                                dataKey="cumulativeIncome"
+                                stroke="#197fe6"
+                                fillOpacity={1}
+                                fill="url(#colorIncome)"
+                                strokeWidth={2}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="income"
+                                stroke="#10b981"
+                                strokeWidth={2}
+                                dot={{ fill: '#10b981', r: 4 }}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
+            {/* Transaction Ledger */}
             <div className="flex flex-col bg-white dark:bg-[#1a2632] border border-slate-100 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
                     <h3 className="text-lg font-bold text-[#0e141b] dark:text-white">Transaction Ledger</h3>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <div className="relative flex-1 sm:flex-none">
-                            <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
-                                <span className="material-symbols-outlined text-[18px]">search</span>
-                            </span>
-                            <input className="pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm text-[#0e141b] dark:text-white focus:ring-2 focus:ring-primary/20 w-full sm:w-48 md:w-64 placeholder:text-slate-400" placeholder="Search transactions..." type="text" />
-                        </div>
-                        <button className="p-2 text-slate-500 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
-                            <span className="material-symbols-outlined">filter_list</span>
-                        </button>
-                    </div>
                 </div>
 
                 {/* Desktop View */}
@@ -195,55 +376,32 @@ export default function PerformancePage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
-                            {[
-                                { date: "Oct 24, 2023", desc: "Monthly Rental Distribution - Unit 4B", cat: "Income", status: "Processing", amt: "+ ₦ 125,000.00", amtColor: "text-emerald-600 dark:text-emerald-400", catColor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800", catDot: "bg-emerald-500", statusColor: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" },
-                                { date: "Oct 15, 2023", desc: "Emergency Plumbing Repair - Block C", cat: "Expense", status: "Paid", amt: "- ₦ 45,000.00", amtColor: "text-slate-600 dark:text-slate-400", catColor: "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border-red-100 dark:border-red-800", catDot: "bg-red-500", statusColor: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-                                { date: "Sep 30, 2023", desc: "Q3 Quarterly Dividend Payout", cat: "Distribution", status: "Completed", amt: "+ ₦ 450,000.00", amtColor: "text-emerald-600 dark:text-emerald-400", catColor: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 border-purple-100 dark:border-purple-800", catDot: "bg-purple-500", statusColor: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" }
-                            ].map((row, i) => (
-                                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">{row.date}</td>
-                                    <td className="px-6 py-4 text-[#0e141b] dark:text-white font-medium">{row.desc}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${row.catColor}`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full ${row.catDot}`}></span>
-                                            {row.cat}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${row.statusColor}`}>
-                                            {row.status}
-                                        </span>
-                                    </td>
-                                    <td className={`px-6 py-4 text-right font-bold ${row.amtColor}`}>{row.amt}</td>
-                                </tr>
-                            ))}
+                            {performanceData.transactions.map((row) => {
+                                const isPositive = row.amount > 0;
+                                return (
+                                    <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
+                                            {new Date(row.date).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-[#0e141b] dark:text-white font-medium">{row.description}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-100">
+                                                {row.category}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
+                                                {row.status}
+                                            </span>
+                                        </td>
+                                        <td className={`px-6 py-4 text-right font-bold ${isPositive ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                            {isPositive ? '+' : '-'} {formatCurrency(Math.abs(row.amount))}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
-                </div>
-
-                {/* Mobile Card View */}
-                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-                    {[
-                        { date: "Oct 24, 2023", desc: "Monthly Rental Distribution - Unit 4B", cat: "Income", status: "Processing", amt: "+ ₦ 125,000.00", amtColor: "text-emerald-600 dark:text-emerald-400", catColor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800", catDot: "bg-emerald-500", statusColor: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300" },
-                        { date: "Oct 15, 2023", desc: "Emergency Plumbing Repair - Block C", cat: "Expense", status: "Paid", amt: "- ₦ 45,000.00", amtColor: "text-slate-600 dark:text-slate-400", catColor: "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border-red-100 dark:border-red-800", catDot: "bg-red-500", statusColor: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-                        { date: "Sep 30, 2023", desc: "Q3 Quarterly Dividend Payout", cat: "Distribution", status: "Completed", amt: "+ ₦ 450,000.00", amtColor: "text-emerald-600 dark:text-emerald-400", catColor: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 border-purple-100 dark:border-purple-800", catDot: "bg-purple-500", statusColor: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" }
-                    ].map((row, i) => (
-                        <div key={i} className="p-4 bg-white dark:bg-[#1a2632]">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs text-slate-500 font-medium">{row.date}</span>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${row.statusColor}`}>
-                                    {row.status}
-                                </span>
-                            </div>
-                            <h4 className="text-sm font-bold text-[#0e141b] dark:text-white mb-3">{row.desc}</h4>
-                            <div className="flex justify-between items-center">
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${row.catColor}`}>
-                                    {row.cat}
-                                </span>
-                                <span className={`text-sm font-bold ${row.amtColor}`}>{row.amt}</span>
-                            </div>
-                        </div>
-                    ))}
                 </div>
             </div>
         </div>

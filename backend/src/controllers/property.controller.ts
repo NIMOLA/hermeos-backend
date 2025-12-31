@@ -206,3 +206,103 @@ export const getPropertyDistributions = async (req: AuthRequest, res: Response, 
         next(error);
     }
 };
+
+// NEW: Get featured property (for frontend Phase 2)
+export const getFeaturedProperty = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const featured = await prisma.property.findFirst({
+            where: {
+                status: 'LISTED',
+                isFeatured: true
+            },
+            select: {
+                id: true,
+                name: true,
+                location: true,
+                propertyType: true,
+                expectedAnnualIncome: true,
+                totalValue: true,
+                images: true
+            }
+        });
+
+        if (!featured) {
+            return res.status(204).send();
+        }
+
+        // Calculate target yield
+        const targetYield = featured.totalValue > 0
+            ? `${Math.round((Number(featured.expectedAnnualIncome) / Number(featured.totalValue)) * 100)}%`
+            : '10-12%';
+
+        res.json({
+            id: featured.id,
+            name: featured.name,
+            location: featured.location,
+            type: getPropertyTypeLabel(featured.propertyType),
+            targetYield,
+            imageUrl: featured.images?.[0] || ''
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// NEW: Get marketplace properties (for frontend Phase 3)
+export const getMarketplaceProperties = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const properties = await prisma.property.findMany({
+            where: {
+                status: 'LISTED'
+            },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                name: true,
+                location: true,
+                propertyType: true,
+                expectedAnnualIncome: true,
+                totalValue: true,
+                pricePerUnit: true,
+                totalUnits: true,
+                availableUnits: true,
+                images: true
+            }
+        });
+
+        const marketplaceData = properties.map(p => {
+            const targetYield = p.totalValue > 0
+                ? `${Math.round((Number(p.expectedAnnualIncome) / Number(p.totalValue)) * 100)}-${Math.round((Number(p.expectedAnnualIncome) / Number(p.totalValue)) * 100) + 2}%`
+                : '10-12%';
+
+            const fundingProgress = Math.round(((p.totalUnits - p.availableUnits) / p.totalUnits) * 100);
+
+            return {
+                id: p.id,
+                name: p.name,
+                location: p.location,
+                type: getPropertyTypeLabel(p.propertyType),
+                targetYield,
+                minInvestment: Number(p.pricePerUnit),
+                imageUrl: p.images?.[0] || '',
+                fundingProgress,
+                status: fundingProgress >= 100 ? 'closed' : fundingProgress > 50 ? 'funding' : 'open'
+            };
+        });
+
+        res.json(marketplaceData);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Helper function to get property type label
+function getPropertyTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+        RESIDENTIAL: 'Residential',
+        COMMERCIAL: 'Commercial',
+        INDUSTRIAL: 'Industrial',
+        MIXED_USE: 'Mixed Use'
+    };
+    return labels[type] || type;
+}

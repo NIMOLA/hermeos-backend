@@ -20,6 +20,9 @@ import supportRoutes from './routes/support.routes';
 import adminRoutes from './routes/admin.routes';
 import chatbotRoutes from './routes/chatbot.routes';
 import kycRoutes from './routes/kyc.routes';
+import performanceRoutes from './routes/performance.routes';
+import exitRequestRoutes from './routes/exitRequest.routes';
+import investmentRoutes from './routes/investment.routes';
 
 dotenv.config();
 
@@ -74,6 +77,9 @@ app.use('/api/support', supportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatbotRoutes);
 app.use('/api/kyc', kycRoutes);
+app.use('/api/performance', performanceRoutes);
+app.use('/api/exit-requests', exitRequestRoutes);
+app.use('/api/investments', investmentRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

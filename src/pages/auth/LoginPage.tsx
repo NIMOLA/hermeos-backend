@@ -1,34 +1,36 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '../../components/ui/button';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const { login } = useAuth();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // specific logic to redirect based on email can be added here
-        // for now default to user dashboard
-        navigate('/dashboard');
+        setError(null);
+        setIsLoading(true);
+
+        try {
+            await login(email, password);
+            // Redirect based on user role or default to dashboard
+            navigate('/dashboard');
+        } catch (err: any) {
+            setError(err.message || 'Login failed. Please check your credentials.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSocialLogin = async (provider: 'google' | 'apple') => {
-        try {
-            // In a real app, you would use Google/Apple SDKs to get the ID token
-            // For this demo, we mock the social login response
-            console.log(`Starting ${provider} login...`);
-
-            // Simulating API call
-            // const response = await axios.post('/api/auth/social-login', {
-            //     provider,
-            //     idToken: 'mock_token',
-            //     email: 'social@example.com'
-            // });
-
-            // For now, redirect to dashboard as if successful
-            navigate('/dashboard');
-        } catch (error) {
-            console.error(`${provider} login failed:`, error);
-        }
+        // TODO: Implement OAuth in Phase 6
+        console.log(`${provider} login not yet implemented`);
+        setError('Social login coming soon!');
     };
 
     return (
@@ -76,17 +78,43 @@ export default function LoginPage() {
                     </div>
 
                     <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+                        {error && (
+                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm rounded-lg">
+                                {error}
+                            </div>
+                        )}
+
                         <div className="space-y-5">
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email address</label>
-                                <input id="email" name="email" type="email" autoComplete="email" required className="appearance-none block w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white" placeholder="you@example.com" />
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="appearance-none block w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white"
+                                    placeholder="you@example.com"
+                                />
                             </div>
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
                                     <a href="#" className="text-sm font-medium text-primary hover:text-blue-500">Forgot password?</a>
                                 </div>
-                                <input id="password" name="password" type="password" autoComplete="current-password" required className="appearance-none block w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white" placeholder="••••••••" />
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="appearance-none block w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white"
+                                    placeholder="••••••••"
+                                />
                             </div>
                         </div>
 
@@ -96,7 +124,14 @@ export default function LoginPage() {
                         </div>
 
                         <div>
-                            <Button type="submit" className="w-full h-11 text-base">Sign in</Button>
+                            <Button type="submit" className="w-full h-11 text-base" disabled={isLoading}>
+                                {isLoading ? (
+                                    <span className="flex items-center gap-2">
+                                        <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                        Signing in...
+                                    </span>
+                                ) : 'Sign in'}
+                            </Button>
                         </div>
                     </form>
 

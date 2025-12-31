@@ -1,10 +1,13 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function SignupPage() {
+    const navigate = useNavigate();
+    const { register } = useAuth();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: '',
@@ -54,31 +57,18 @@ export default function SignupPage() {
                 'Institutional': 'institutional'
             };
 
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email: formData.email,
-                    password: formData.password,
-                    firstName,
-                    lastName,
-                    phone: formData.phone,
-                    tier: tierMap[formData.accountType] || 'basic',
-                }),
+            // Use AuthContext register method
+            await register({
+                email: formData.email,
+                password: formData.password,
+                firstName,
+                lastName,
+                phone: formData.phone,
+                tier: tierMap[formData.accountType] || 'basic',
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Registration failed');
-            }
-
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-
-            window.location.href = '/kyc/info';
+            // Navigate to KYC page
+            navigate('/kyc/info');
         } catch (err: any) {
             setError(err.message || 'Something went wrong. Please try again.');
         } finally {

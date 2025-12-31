@@ -75,3 +75,56 @@ export const authorize = (...roles: UserRole[]) => {
         next();
     };
 };
+
+// Optional authentication - doesn't fail if no token
+export const optionalAuth = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // Get token from header
+        let token: string | undefined;
+
+        if (req.headers.authorization?.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
+        if (!token) {
+            // No token, continue without user
+            return next();
+        }
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+            id: string;
+            email: string;
+            role: UserRole;
+        };
+
+        // Check if user exists
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+                isVerified: true
+            }
+        });
+
+        if (user) {
+            // Attach user to request
+            req.user = {
+                id: user.id,
+                email: user.email,
+                role: user.role
+            };
+        }
+
+        next();
+    } catch (error) {
+        // Token invalid, continue without user
+        next();
+    }
+};

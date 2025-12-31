@@ -50,6 +50,7 @@ enum TransferStatus {
   APPROVED
   REJECTED
   COMPLETED
+  CANCELLED
 }
 
 model User {
@@ -138,6 +139,7 @@ model Property {
   
   // Status
   status            PropertyStatus  @default(DRAFT)
+  isFeatured        Boolean         @default(false)
   listedAt          DateTime?
   
   // Media
@@ -171,6 +173,8 @@ model Ownership {
   units             Int
   acquisitionPrice  Decimal   @db.Decimal(15, 2)
   acquisitionDate   DateTime  @default(now())
+  currentValue      Decimal?  @db.Decimal(15, 2)
+  status            String    @default("ACTIVE") // ACTIVE, PENDING, EXITED
   
   certificateUrl    String?   // Digital ownership certificate
   
