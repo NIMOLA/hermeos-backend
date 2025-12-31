@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { protect, authorize } from '../middleware/auth';
 import * as adminController from '../controllers/admin.controller';
+import * as adminPaymentController from '../controllers/adminPayment.controller';
 
 const router = Router();
 
@@ -24,6 +25,12 @@ router.put('/kyc/:id/reject', adminController.rejectKYC);
 
 // Transfer requests
 router.get('/transfers', adminController.getAllTransferRequests);
+
+// Payment proof verification
+router.get('/payment-proofs', adminPaymentController.getPendingPaymentProofs);
+router.get('/payment-proofs/:id', adminPaymentController.getPaymentProofDetails);
+router.post('/payment-proofs/:id/verify', adminPaymentController.verifyPaymentProof);
+router.post('/payment-proofs/:id/reject', adminPaymentController.rejectPaymentProof);
 
 // Audit logs
 router.get('/audit-logs', adminController.getAuditLogs);
