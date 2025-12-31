@@ -1,6 +1,5 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFetch } from '../../hooks/useApi';
 
 // Interfaces
@@ -14,6 +13,7 @@ interface AllocationData {
     name: string;
     value: number;
     color: string;
+    [key: string]: string | number;
 }
 
 interface Transaction {
@@ -85,8 +85,8 @@ export default function PerformancePage() {
     const period = searchParams.get('period') || 'ytd';
 
     // Fetch performance data for specific property
-    const { data: performanceData, loading, error } = useFetch<PerformanceData>(
-        propertyId ? `/performance/property/${propertyId}?period=${period}` : null
+    const { data: performanceData, isLoading: loading, error } = useFetch<PerformanceData>(
+        propertyId ? `/performance/property/${propertyId}?period=${period}` : ''
     );
 
     // Fetch overall income trends
@@ -124,7 +124,7 @@ export default function PerformancePage() {
             <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
                     <p className="text-red-700 dark:text-red-400 font-medium">
-                        {error || 'Failed to load performance data'}
+                        {error?.message || 'Failed to load performance data'}
                     </p>
                 </div>
             </div>
