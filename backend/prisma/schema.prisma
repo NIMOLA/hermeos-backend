@@ -1,5 +1,5 @@
 // This is your Prisma schema file
-// Complete fix for all TypeScript compilation errors
+// Complete fix for all TypeScript compilation errors - Final Version
 
 generator client {
   provider      = "prisma-client-js"
@@ -52,7 +52,7 @@ enum TransferStatus {
   REJECTED
   COMPLETED
   CANCELLED
-  PROCESSING  // Added for withdrawalLimits controller
+  PROCESSING
 }
 
 enum KYCStatus {
@@ -61,6 +61,7 @@ enum KYCStatus {
   SUBMITTED
   VERIFIED
   REJECTED
+  APPROVED // Added as controller uses APPROVED
 }
 
 // MODELS
@@ -102,12 +103,12 @@ model User {
   notifications           Notification[]
   documents               Document[]
   supportTickets          SupportTicket[]
-  kycRecords              KYCRecord[]  // Relation to KYC model
+  kyc                     KYC[]         // Changed from kycRecords to match controller
   transferRequests        TransferRequest[]
   adminAuditLogs          AdminAuditLog[]
   paymentProofs           PaymentProof[]
   adminInvitationsCreated AdminInvitation[] @relation("AdminCreator")
-  auditLogs               AuditLog[]  // Added for dataRetention util
+  auditLogs               AuditLog[]
 
   @@index([email])
   @@index([role])
@@ -121,11 +122,24 @@ model Property {
   city              String
   state             String
   country           String          @default("Nigeria")
+  location          String?         // Added for controller
   totalUnits        Int
   availableUnits    Int
   pricePerUnit      Decimal         @db.Decimal(15, 2)
   totalValue        Decimal         @db.Decimal(15, 2)
   expectedReturn    Decimal         @db.Decimal(5, 2)
+  
+  // Additional fields required by property controller
+  expectedAnnualIncome Decimal?     @db.Decimal(15, 2)
+  propertyType         String?
+  bedrooms             Int?
+  bathrooms            Int?
+  size                 String?
+  listedAt             DateTime?    @default(now())
+  lastDistributionDate DateTime?
+  titleDeedUrl         String?
+  certificateUrl       String?
+
   status            PropertyStatus  @default(LISTED)
   images            String[]
   documents         String[]
@@ -137,6 +151,8 @@ model Property {
   ownerships        Ownership[]
   transactions      Transaction[]
   transferRequests  TransferRequest[]
+  distributions     Distribution[]  // Added for performance controller
+  paymentProofs     PaymentProof[]  // Added for payment controller
 
   @@index([status])
   @@index([city])
@@ -150,15 +166,15 @@ model Ownership {
   property          Property @relation(fields: [propertyId], references: [id])
   units             Int
   acquisitionPrice  Decimal  @db.Decimal(15, 2)
-  acquisitionDate   DateTime @default(now())  // Added for ownership controller
-  currentValue      Decimal  @db.Decimal(15, 2)
+  acquisitionDate   DateTime @default(now())
+  currentValue      Decimal  @default(0) @db.Decimal(15, 2)
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   // Relations
   transactions      Transaction[]
-  transferRequests  TransferRequest[] @relation("OwnershipTransfers")  // Added for transfer controllers
+  transferRequests  TransferRequest[] @relation("OwnershipTransfers")
 
   @@index([userId])
   @@index([propertyId])
@@ -178,6 +194,10 @@ model Transaction {
   status        TransactionStatus @default(PENDING)
   reference     String            @unique
   description   String?
+  // Fee field used in ownership controller
+  fee           Decimal?          @default(0) @db.Decimal(15, 2)
+  paymentMethod String?           @default("wallet")
+  paymentReference String?
   
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -195,17 +215,22 @@ model TransferRequest {
   propertyId        String?
   property          Property?      @relation(fields: [propertyId], references: [id])
   ownershipId       String?
-  ownership         Ownership?     @relation("OwnershipTransfers", fields: [ownershipId], references: [id])  // Added relation
+  ownership         Ownership?     @relation("OwnershipTransfers", fields: [ownershipId], references: [id])
   units             Int
   status            TransferStatus @default(PENDING)
-  amount            Decimal?       @db.Decimal(15, 2)  // Added for withdrawal controllers
+  amount            Decimal?       @db.Decimal(15, 2)
   bankName          String?
   bankAccountNumber String?
   bankAccountName   String?
-  accountNumber     String?        // Legacy field - maps to bankAccountNumber
+  accountNumber     String?        // Alias for bankAccountNumber
+  accountName       String?        // Alias for bankAccountName as per withdrawalLimits controller
   reason            String?
   requestType       String?        @default("transfer")
   rejectionReason   String?
+  requestedPrice    Decimal?       @db.Decimal(15, 2)
+  
+  reviewedBy        String?
+  reviewedAt        DateTime?
   
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -222,7 +247,8 @@ model Notification {
   title     String
   message   String
   type      String
-  read      Boolean  @default(false)
+  isRead    Boolean  @default(false) // Changed from read to isRead
+  read      Boolean  @default(false) // Keeping both to be safe
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -238,6 +264,9 @@ model Document {
   type        String
   size        Int
   uploadedAt  DateTime @default(now())
+  
+  // Fields for sorting? Controller used createdAt sort on Document
+  createdAt   DateTime @default(now()) 
 
   @@index([userId])
 }
@@ -248,7 +277,8 @@ model SupportTicket {
   user        User     @relation(fields: [userId], references: [id])
   subject     String
   message     String
-  category    String?  // Added for support routes
+  category    String?
+  assetRef    String?  // Added for support routes
   status      String   @default("open")
   priority    String   @default("medium")
   createdAt   DateTime @default(now())
@@ -258,7 +288,8 @@ model SupportTicket {
   @@index([status])
 }
 
-model KYCRecord {
+// Renamed from KYCRecord to match controller 'prisma.kYC'
+model KYC {
   id              String     @id @default(uuid())
   userId          String
   user            User       @relation(fields: [userId], references: [id])
@@ -269,8 +300,11 @@ model KYCRecord {
   proofOfAddress  String?
   bvn             String?
   submittedAt     DateTime?
+  
   reviewedAt      DateTime?
   reviewedBy      String?
+  verifiedAt      DateTime?
+  verifiedBy      String?
   rejectionReason String?
   
   createdAt       DateTime   @default(now())
@@ -285,6 +319,7 @@ model PaymentProof {
   userId          String
   user            User     @relation(fields: [userId], references: [id])
   propertyId      String?
+  property        Property? @relation(fields: [propertyId], references: [id])
   amount          Decimal  @db.Decimal(15, 2)
   paymentMethod   String
   receiptUrl      String
@@ -292,6 +327,12 @@ model PaymentProof {
   verifiedBy      String?
   verifiedAt      DateTime?
   rejectionReason String?
+  
+  // Missing fields
+  units             Int?
+  depositorName     String?
+  transferDate      DateTime?
+  transferReference String?
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -305,10 +346,11 @@ model AdminAuditLog {
   adminId     String
   admin       User     @relation(fields: [adminId], references: [id])
   action      String
-  entityType  String?  // Added for admin controller
+  entityType  String?
+  entityId    String?  // Renamed from targetId to match controller
   targetType  String?
-  targetId    String?
-  details     String?
+  targetId    String?  // Keeping both to be safe
+  details     Json?    // Controller uses Json for details
   ipAddress   String?
   
   createdAt   DateTime @default(now())
@@ -345,4 +387,18 @@ model AdminInvitation {
 
   @@index([token])
   @@index([email])
+}
+
+// Added Distribution model for performance controller
+model Distribution {
+  id               String   @id @default(uuid())
+  propertyId       String
+  property         Property @relation(fields: [propertyId], references: [id])
+  amount           Decimal  @db.Decimal(15, 2)
+  distributionDate DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([propertyId])
+  @@index([distributionDate])
 }
