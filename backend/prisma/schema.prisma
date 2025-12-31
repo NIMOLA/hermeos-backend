@@ -89,6 +89,7 @@ model User {
   transferRequests      TransferRequest[]
   adminAuditLogs        AdminAuditLog[]
   paymentProofs         PaymentProof[]
+  adminInvitationsCreated AdminInvitation[] @relation("AdminCreator")
 
   @@index([email])
   @@index([role])
