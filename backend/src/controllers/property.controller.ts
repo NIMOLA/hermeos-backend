@@ -231,7 +231,7 @@ export const getFeaturedProperty = async (req: AuthRequest, res: Response, next:
         }
 
         // Calculate target yield
-        const targetYield = featured.totalValue > 0
+        const targetYield = Number(featured.totalValue) > 0
             ? `${Math.round((Number(featured.expectedAnnualIncome) / Number(featured.totalValue)) * 100)}%`
             : '10-12%';
 
@@ -271,7 +271,7 @@ export const getMarketplaceProperties = async (req: AuthRequest, res: Response, 
         });
 
         const marketplaceData = properties.map(p => {
-            const targetYield = p.totalValue > 0
+            const targetYield = Number(p.totalValue) > 0
                 ? `${Math.round((Number(p.expectedAnnualIncome) / Number(p.totalValue)) * 100)}-${Math.round((Number(p.expectedAnnualIncome) / Number(p.totalValue)) * 100) + 2}%`
                 : '10-12%';
 

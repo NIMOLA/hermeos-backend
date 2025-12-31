@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
-import { AppError } from './errorHandler';
+import { AppError } from '../middleware/errorHandler';
 
 const prisma = new PrismaClient();
 
