@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { AuthRequest } from '../middleware/auth';
@@ -178,7 +178,7 @@ export const acceptAdminInvitation = async (req: AuthRequest, res: Response, nex
                 password: hashedPassword,
                 firstName,
                 lastName,
-                role: invitation.role,
+                role: invitation.role as UserRole,
                 isVerified: true,
                 kycStatus: 'verified'
             },
