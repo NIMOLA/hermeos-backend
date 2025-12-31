@@ -24,6 +24,7 @@ import performanceRoutes from './routes/performance.routes';
 import exitRequestRoutes from './routes/exitRequest.routes';
 import investmentRoutes from './routes/investment.routes';
 import paymentRoutes from './routes/payment.routes';
+import twoFactorRoutes from './routes/twoFactor.routes';
 
 dotenv.config();
 
@@ -82,6 +83,7 @@ app.use('/api/performance', performanceRoutes);
 app.use('/api/exit-requests', exitRequestRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/2fa', twoFactorRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {
