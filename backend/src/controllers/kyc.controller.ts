@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, KYCStatus } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 
@@ -8,7 +8,8 @@ const prisma = new PrismaClient();
 // Submit KYC verification
 export const submitKYC = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { idType, idNumber, bvn, nin } = req.body;
+        // nin is not in schema, idNumber should cover it
+        const { idType, idNumber, bvn } = req.body;
         const userId = req.user!.id;
 
         // Check if KYC already exists
@@ -16,7 +17,7 @@ export const submitKYC = async (req: AuthRequest, res: Response, next: NextFunct
             where: { userId }
         });
 
-        if (existingKYC && (existingKYC.status === 'PENDING' || existingKYC.status === 'APPROVED')) {
+        if (existingKYC && (existingKYC.status === KYCStatus.PENDING || existingKYC.status === KYCStatus.APPROVED)) {
             return next(new AppError('KYC already submitted or approved', 400));
         }
 
@@ -27,8 +28,7 @@ export const submitKYC = async (req: AuthRequest, res: Response, next: NextFunct
                 idType,
                 idNumber,
                 bvn,
-                nin,
-                status: 'PENDING',
+                status: KYCStatus.PENDING,
                 updatedAt: new Date()
             },
             create: {
@@ -36,12 +36,13 @@ export const submitKYC = async (req: AuthRequest, res: Response, next: NextFunct
                 idType,
                 idNumber,
                 bvn,
-                nin,
-                status: 'PENDING'
+                status: KYCStatus.PENDING
             }
         });
 
-        // Update user's kycStatus
+        // Update user's kycStatus using string 'PENDING' if user model still uses string? 
+        // User model kycStatus is String? @default("not_submitted"). 
+        // We really should use the enum there too, but let's stick to string for User model for now to avoid breaking other things
         await prisma.user.update({
             where: { id: userId },
             data: { kycStatus: 'PENDING' }
@@ -63,11 +64,12 @@ export const updateKYCDocuments = async (req: AuthRequest, res: Response, next: 
         const { idDocumentUrl, proofOfAddressUrl } = req.body;
         const userId = req.user!.id;
 
+        // Schema uses idDocument and proofOfAddress
         const kyc = await prisma.kYC.update({
             where: { userId },
             data: {
-                idDocumentUrl,
-                proofOfAddressUrl
+                idDocument: idDocumentUrl,
+                proofOfAddress: proofOfAddressUrl
             }
         });
 
@@ -91,7 +93,7 @@ export const getMyKYCStatus = async (req: AuthRequest, res: Response, next: Next
         if (!kyc) {
             return res.status(200).json({
                 success: true,
-                data: { status: 'NOT_STARTED' }
+                data: { status: KYCStatus.NOT_SUBMITTED }
             });
         }
 

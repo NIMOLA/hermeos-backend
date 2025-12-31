@@ -15,10 +15,10 @@ export const getDashboardStats = async (req: AuthRequest, res: Response, next: N
             pendingKYC,
             totalAUM
         ] = await Promise.all([
-            prisma.user.count(),
-            prisma.property.count(),
-            prisma.transaction.count({ where: { status: 'COMPLETED' } }),
-            prisma.kYC.count({ where: { status: 'PENDING' } }),
+            prisma.user.count(), // totalUsers
+            prisma.property.count(), // totalProperties
+            prisma.transaction.count({ where: { status: 'COMPLETED' } }), // totalTransactions
+            prisma.kYC.count({ where: { status: 'PENDING' } }), // pendingKYC
             prisma.ownership.aggregate({
                 _sum: { acquisitionPrice: true }
             })

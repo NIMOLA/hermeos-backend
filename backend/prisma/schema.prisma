@@ -195,7 +195,7 @@ model Transaction {
   type          TransactionType
   amount        Decimal           @db.Decimal(15, 2)
   status        TransactionStatus @default(PENDING)
-  reference     String            @unique
+  reference     String            @unique @default(uuid())
   description   String?
   // Fee field used in ownership controller
   fee           Decimal?          @default(0) @db.Decimal(15, 2)
@@ -295,7 +295,7 @@ model SupportTicket {
 
 model KYC {
   id              String     @id @default(uuid())
-  userId          String
+  userId          String     @unique
   user            User       @relation(fields: [userId], references: [id])
   status          KYCStatus  @default(NOT_SUBMITTED)
   idType          String?

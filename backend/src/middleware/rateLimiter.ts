@@ -27,7 +27,7 @@ export const authLimiter = rateLimit({
             success: false,
             error: 'Too many requests',
             message: 'Too many authentication attempts. Please wait 15 minutes and try again.',
-            retryAfter: Math.ceil(req.rateLimit.resetTime! / 1000)
+            retryAfter: Math.ceil(req.rateLimit.resetTime!.getTime() / 1000)
         });
     }
 });

@@ -260,6 +260,11 @@ export const getMarketplaceProperties = async (req: AuthRequest, res: Response, 
                 name: true,
                 location: true,
                 propertyType: true,
+                bedrooms: true,
+                bathrooms: true,
+                size: true,
+                listedAt: true,
+                lastDistributionDate: true,
                 expectedAnnualIncome: true,
                 totalValue: true,
                 pricePerUnit: true,
@@ -270,6 +275,7 @@ export const getMarketplaceProperties = async (req: AuthRequest, res: Response, 
         });
 
         const marketplaceData = properties.map(p => {
+            // Apply fallback logic after fetching the data
             const targetYield = Number(p.totalValue) > 0
                 ? `${Math.round((Number(p.expectedAnnualIncome) / Number(p.totalValue)) * 100)}-${Math.round((Number(p.expectedAnnualIncome) / Number(p.totalValue)) * 100) + 2}%`
                 : '10-12%';
