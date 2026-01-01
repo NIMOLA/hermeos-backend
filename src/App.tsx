@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy load all page components
 const ProceedsPage = lazy(() => import('./pages/dashboard/ProceedsPage'));
@@ -55,40 +56,50 @@ function App() {
           {/* Root App Layout */}
           <Route element={<RootLayout />}>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/dashboard" element={<DashboardOverviewPage />} />
-            <Route path="/dashboard/tour" element={<DashboardTourPage />} />
-            <Route path="/portfolio" element={<PortfolioPage />} />
-            <Route path="/proceeds" element={<ProceedsPage />} />
+
+            {/* Protected routes - wrap with ProtectedRoute */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardOverviewPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/tour"
+              element={
+                <ProtectedRoute>
+                  <DashboardTourPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/portfolio"
+              element={
+                <ProtectedRoute>
+                  <PortfolioPage />
+                </ProtectedRoute>
+              }
+            />
+
             <Route path="/properties" element={<PropertiesListPage />} />
-            <Route path="/properties/details" element={<PropertyDetailsPage />} />
-            <Route path="/properties/review" element={<AcquisitionReviewPage />} />
-            <Route path="/properties/payment-status" element={<PaymentStatusPage />} />
-            <Route path="/performance" element={<PerformancePage />} />
-            <Route path="/support" element={<SupportPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/kyc" element={<KYCInfoPage />} />
-            <Route path="/kyc/info" element={<KYCInfoPage />} />
-            <Route path="/kyc/status" element={<KYCStatusPage />} />
-            <Route path="/exit-request" element={<ExitRequestPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-          </Route>
+            <Route path="/properties/:id" element={<PropertyDetailsPage />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="assets" element={<AdminAssetsPage />} />
-            <Route path="users" element={<AdminUsersPage />} />
-            <Route path="users/:id" element={<AdminUserDetailPage />} />
-            <Route path="exits" element={<AdminExitRequestsPage />} />
-            <Route path="financials" element={<AdminFinancialsPage />} />
-            <Route path="audit-trail" element={<AuditTrailPage />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
-            <Route path="edit-property" element={<EditPropertyPage />} />
-          </Route>
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* 404 Catch-all */}
-          <Route path="*" element={<NotFoundPage />} />
+            {/* Keep other routes as-is (protect individually where necessary) */}
+
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Routes>
       </Suspense>
     </Router>

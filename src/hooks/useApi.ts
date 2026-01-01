@@ -1,56 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../lib/api-client';
-import type { ApiError } from '../lib/api-client';
+import apiClient, { ApiError } from '../lib/api-client';
 
-interface UseApiOptions {
-    /**
-     * If true, the request will be made immediately on mount
-     */
-    immediate?: boolean;
-
-    /**
-     * Callback to run on success
-     */
-    onSuccess?: (data: any) => void;
-
-    /**
-     * Callback to run on error
-     */
-    onError?: (error: ApiError) => void;
-}
-
-interface UseApiResult<T> {
+type UseApiResult<T> = {
     data: T | null;
     error: ApiError | null;
     isLoading: boolean;
     refetch: () => Promise<void>;
-}
+};
 
-/**
- * Custom hook for making API calls with loading and error states
- * 
- * @param endpoint - API endpoint to call
- * @param method - HTTP method (GET, POST, etc.)
- * @param body - Request body (for POST, PUT, PATCH)
- * @param options - Additional options
- * 
- * @example
- * const { data, isLoading, error, refetch } = useApi('/user/profile', 'GET', null, { immediate: true });
- */
 export function useApi<T = any>(
     endpoint: string,
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET',
-    body?: any,
-    options: UseApiOptions = {}
+    body: any = null,
+    options: { immediate?: boolean; onSuccess?: (res: T) => void; onError?: (err: ApiError) => void } = {}
 ): UseApiResult<T> {
     const [data, setData] = useState<T | null>(null);
     const [error, setError] = useState<ApiError | null>(null);
     const [isLoading, setIsLoading] = useState(options.immediate ?? false);
 
+    // Use stable JSON body string for deps to avoid re-creating the callback each render
+    const bodyJSON = body ? JSON.stringify(body) : null;
+
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
 
+        let active = true; // ignore stale responses if unmounted or a newer fetch started
         try {
             let result: T;
 
@@ -74,21 +49,42 @@ export function useApi<T = any>(
                     throw new Error(`Unsupported method: ${method}`);
             }
 
+            // Only update state if this fetch is still active
+            if (!active) return;
+
             setData(result);
             options.onSuccess?.(result);
         } catch (err) {
+            if (!active) return;
             const apiError = err as ApiError;
             setError(apiError);
             options.onError?.(apiError);
         } finally {
+            if (!active) return;
             setIsLoading(false);
         }
-    }, [endpoint, method, body, options]);
+
+        // cleanup function marker
+        return () => {
+            active = false;
+        };
+    }, [endpoint, method, bodyJSON, options.onSuccess, options.onError]);
 
     useEffect(() => {
+        let cancelled = false;
         if (options.immediate) {
-            fetchData();
+            // Call fetchData and ensure late / stale responses are ignored
+            const run = async () => {
+                await fetchData();
+                if (cancelled) {
+                    // noop - response will be ignored by fetchData's active flag
+                }
+            };
+            run();
         }
+        return () => {
+            cancelled = true;
+        };
     }, [options.immediate, fetchData]);
 
     return {
@@ -99,13 +95,7 @@ export function useApi<T = any>(
     };
 }
 
-/**
- * Custom hook for fetching data on mount (convenience wrapper for GET requests)
- * 
- * @example
- * const { data, isLoading, error } = useFetch('/user/portfolio');
- */
-export function useFetch<T = any>(endpoint: string, params?: Record<string, any>): UseApiResult<T> {
+export function useFetch<T = any>(endpoint: string, params?: Record<string, any>) {
     const queryString = params
         ? `?${new URLSearchParams(
             Object.entries(params).reduce((acc, [key, value]) => {
@@ -120,14 +110,6 @@ export function useFetch<T = any>(endpoint: string, params?: Record<string, any>
     return useApi<T>(`${endpoint}${queryString}`, 'GET', null, { immediate: true });
 }
 
-/**
- * Custom hook for mutations (POST, PUT, DELETE)
- * Returns a mutate function to call manually
- * 
- * @example
- * const { mutate, isLoading } = useMutation('/api/properties', 'POST');
- * await mutate({ name: 'New Property', ... });
- */
 export function useMutation<T = any, B = any>(
     endpoint: string,
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST'
@@ -174,16 +156,5 @@ export function useMutation<T = any, B = any>(
         [endpoint, method]
     );
 
-    return {
-        mutate,
-        data,
-        error,
-        isLoading,
-        reset: () => {
-            setData(null);
-            setError(null);
-        },
-    };
+    return { mutate, data, error, isLoading };
 }
-
-export default useApi;

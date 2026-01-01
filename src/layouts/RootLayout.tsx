@@ -1,24 +1,30 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Chatbot from '../components/Chatbot';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function RootLayout() {
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
+    const { isAuthenticated, isLoading, user } = useAuth();
 
     const isActive = (path: string) => {
         return location.pathname === path || location.pathname.startsWith(path + '/');
     };
 
-    const navItems = [
+    // Define public and private navs separately
+    const publicNav = [{ path: '/properties', label: 'Marketplace', icon: 'home_work' }];
+    const privateNav = [
         { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
         { path: '/portfolio', label: 'Portfolio', icon: 'account_balance_wallet' },
-        { path: '/properties', label: 'Marketplace', icon: 'home_work' },
         { path: '/performance', label: 'Performance', icon: 'trending_up' },
         { path: '/notifications', label: 'Notifications', icon: 'notifications' },
         { path: '/support', label: 'Support', icon: 'support_agent' },
         { path: '/settings', label: 'Settings', icon: 'settings' },
     ];
+
+    // Build the navItems depending on auth state
+    const navItems = isAuthenticated ? [...privateNav, ...publicNav] : [...publicNav];
 
     const isLandingPage = location.pathname === '/';
     const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(location.pathname);
@@ -92,7 +98,7 @@ export default function RootLayout() {
                                     ))}
                                 </nav>
 
-                                {/* User Menu */}
+                                {/* User Menu - show only when authenticated */}
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={toggleTheme}
@@ -103,39 +109,51 @@ export default function RootLayout() {
                                             {theme === 'dark' ? 'light_mode' : 'dark_mode'}
                                         </span>
                                     </button>
-                                    <button className="relative p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                        <span className="material-symbols-outlined">notifications</span>
-                                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                                    </button>
-                                    <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-700">
-                                        <div className="hidden sm:block text-right">
-                                            <p className="text-sm font-medium text-slate-900 dark:text-white">John Okeke</p>
-                                            <p className="text-xs text-slate-500">Premium Member</p>
+
+                                    {isAuthenticated ? (
+                                        <>
+                                            <button className="relative p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                                                <span className="material-symbols-outlined">notifications</span>
+                                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                                            </button>
+                                            <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-700">
+                                                <div className="hidden sm:block text-right">
+                                                    <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.firstName ?? 'User'} {user?.lastName ?? ''}</p>
+                                                    <p className="text-xs text-slate-500">{/* Insert tier or role if available */}</p>
+                                                </div>
+                                                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                                    {user?.firstName?.[0] ?? 'U'}{user?.lastName?.[0] ?? ''}
+                                                </div>
+                                                <Link
+                                                    to="/logout"
+                                                    className="hidden md:flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-red-600"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">logout</span>
+                                                    <span>Logout</span>
+                                                </Link>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        // If not authenticated show login button only (or avatar placeholder)
+                                        <div className="flex items-center gap-3">
+                                            <Link to="/login" className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">
+                                                Login
+                                            </Link>
                                         </div>
-                                        <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                                            JI
-                                        </div>
-                                        <Link
-                                            to="/login"
-                                            className="hidden md:flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[18px]">logout</span>
-                                            <span>Logout</span>
-                                        </Link>
-                                    </div>
+                                    )}
                                 </div>
                             </>
                         )}
                     </div>
 
                     {!shouldHideNav && (
-                        /* Mobile Navigation */
+                        /* Mobile Navigation */)}
                         <nav className="md:hidden flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all mobile-nav-item ${isActive(item.path)
+                                    className={`flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${isActive(item.path)
                                         ? 'bg-primary/10 text-primary'
                                         : 'text-slate-500 dark:text-slate-400'
                                         }`}
@@ -145,7 +163,6 @@ export default function RootLayout() {
                                 </Link>
                             ))}
                         </nav>
-                    )}
                 </div>
             </header>
 
