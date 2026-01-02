@@ -97,6 +97,10 @@ model User {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  // Capabilities
+  verificationStatus    String           @default("pending") // pending, approved, rejected
+  capabilities          UserCapability[]
+
   // Relations
   ownerships              Ownership[]
   transactions            Transaction[]
@@ -411,3 +415,28 @@ model Distribution {
   @@index([propertyId])
   @@index([distributionDate])
 }
+
+// CAPABILITY SYSTEM
+
+model Capability {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  description     String?
+  defaultOnSignup Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  users           UserCapability[]
+}
+
+model UserCapability {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  capabilityId String
+  capability   Capability @relation(fields: [capabilityId], references: [id])
+  assignedAt   DateTime   @default(now())
+
+  @@unique([userId, capabilityId])
+}
+

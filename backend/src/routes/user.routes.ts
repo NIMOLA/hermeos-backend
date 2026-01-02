@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as userController from '../controllers/user.controller';
 import * as proceedsController from '../controllers/proceeds.controller';
+import * as capabilityController from '../controllers/capability.controller';
 import { protect } from '../middleware/auth';
 
 const router = Router();
@@ -17,5 +18,9 @@ router.get('/transactions', proceedsController.getTransactionHistory);
 router.get('/notifications', userController.getNotifications);
 router.patch('/notifications/:id/read', userController.markNotificationRead);
 router.get('/documents', userController.getDocuments);
+
+// Capability Routes
+router.post('/unlock-capability', capabilityController.unlockCapability);
+router.get('/capabilities', capabilityController.listCapabilities);
 
 export default router;

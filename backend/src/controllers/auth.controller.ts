@@ -51,25 +51,45 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
                 firstName,
                 lastName,
                 phone,
-                tier: tier || 'basic'
+                tier: tier || 'basic',
+                verificationStatus: 'pending'
             },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                role: true,
-                tier: true,
-                createdAt: true
-            }
+            include: { capabilities: true } // Include capabilities in return if needed? Better to fetch separately or return specifically.
         });
+
+        // Assign Default Capabilities
+        const defaultCaps = await prisma.capability.findMany({ where: { defaultOnSignup: true } });
+
+        if (defaultCaps.length > 0) {
+            const userCapsData = defaultCaps.map(cap => ({
+                userId: user.id,
+                capabilityId: cap.id
+            }));
+
+            await prisma.userCapability.createMany({
+                data: userCapsData
+            });
+
+            // Log Assignment
+            await prisma.auditLog.create({
+                data: {
+                    userId: user.id,
+                    action: 'ASSIGNED_ON_SIGNUP',
+                    resource: 'capability',
+                    details: { count: defaultCaps.length }
+                }
+            });
+        }
+
+        // Fetch assigned capability names for response
+        const capabilities = defaultCaps.map(c => c.name);
 
         // Generate token
         const token = generateToken(user.id, user.email, user.role);
 
         res.status(201).json({
             success: true,
-            data: { user, token }
+            data: { user, token, capabilities }
         });
     } catch (error) {
         next(error);
