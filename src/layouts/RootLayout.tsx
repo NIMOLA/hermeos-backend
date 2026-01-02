@@ -147,7 +147,7 @@ export default function RootLayout() {
                     </div>
 
                     {!shouldHideNav && (
-                        /* Mobile Navigation */)}
+                        /* Mobile Navigation */
                         <nav className="md:hidden flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
                             {navItems.map((item) => (
                                 <Link
@@ -163,6 +163,7 @@ export default function RootLayout() {
                                 </Link>
                             ))}
                         </nav>
+                    )}
                 </div>
             </header>
 

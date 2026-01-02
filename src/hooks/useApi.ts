@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import apiClient, { ApiError } from '../lib/api-client';
+import apiClient from '../lib/api-client';
+import type { ApiError } from '../lib/api-client';
 
 type UseApiResult<T> = {
     data: T | null;
@@ -91,7 +92,7 @@ export function useApi<T = any>(
         data,
         error,
         isLoading,
-        refetch: fetchData,
+        refetch: async () => { await fetchData(); },
     };
 }
 
