@@ -1,0 +1,9 @@
+src/components/ProtectedRoute.tsx(6,13): error TS2503: Cannot find namespace 'JSX'.
+src/components/ui/dialog.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-dialog' or its corresponding type declarations.
+src/components/ui/label.tsx(2,33): error TS2307: Cannot find module '@radix-ui/react-label' or its corresponding type declarations.
+src/contexts/AuthContext.tsx(3,27): error TS2307: Cannot find module 'jwt-decode' or its corresponding type declarations.
+src/hooks/useApi.ts(2,21): error TS1484: 'ApiError' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/hooks/useApi.ts(94,9): error TS2322: Type '() => Promise<(() => void) | undefined>' is not assignable to type '() => Promise<void>'.
+  Type 'Promise<(() => void) | undefined>' is not assignable to type 'Promise<void>'.
+    Type '(() => void) | undefined' is not assignable to type 'void'.
+      Type '() => void' is not assignable to type 'void'.

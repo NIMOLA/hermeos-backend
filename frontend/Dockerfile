@@ -6,9 +6,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-RUN npx prisma generate
-RUN npm run build
 
-EXPOSE 5000
+EXPOSE 8080
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8080"]

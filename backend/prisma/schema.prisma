@@ -1,9 +1,5 @@
-// This is your Prisma schema file
-// Final fix for TypeScript strictness
-
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -11,432 +7,72 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ENUMS
-enum UserRole {
+enum Role {
   USER
-  FREE_USER
-  BASIC
-  PREMIUM
-  INSTITUTIONAL
   ADMIN
-  MODERATOR
-  SUPPORT
   SUPER_ADMIN
 }
 
-enum PropertyStatus {
-  LISTED
-  FULLY_SUBSCRIBED
-  CLOSED
-  DELISTED
-}
-
-enum TransactionType {
-  OWNERSHIP_REGISTRATION
-  DISTRIBUTION
-  TRANSFER_REQUEST
-  WALLET_DEPOSIT
-  WALLET_WITHDRAWAL
-}
-
-enum TransactionStatus {
+enum KycStatus {
   PENDING
-  COMPLETED
-  FAILED
-  CANCELLED
-}
-
-enum TransferStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  COMPLETED
-  CANCELLED
-  PROCESSING
-}
-
-enum KYCStatus {
-  NOT_SUBMITTED
-  PENDING
-  SUBMITTED
   VERIFIED
   REJECTED
-  APPROVED 
+  NOT_STARTED
 }
 
-// MODELS
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
-  password              String
-  firstName             String
-  lastName              String
-  phone                 String?
-  role                  UserRole  @default(FREE_USER)
-  tier                  String    @default("free")
-  isVerified            Boolean   @default(false)
-  kycStatus             String?   @default("not_submitted")
-  
-  // Security fields
-  failedLoginAttempts   Int       @default(0)
-  lockedUntil           DateTime?
-  twoFactorSecret       String?
-  twoFactorEnabled      Boolean   @default(false)
-  lastLogin             DateTime?
-  
-  // OAuth fields
-  googleId              String?   @unique
-  appleId               String?   @unique
-  
-  // Financial
-  walletBalance         Decimal   @default(0) @db.Decimal(15, 2)
-  
-  // Soft delete
-  deletedAt             DateTime?
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  // Capabilities
-  verificationStatus    String           @default("pending") // pending, approved, rejected
-  capabilities          UserCapability[]
-
-  // Relations
-  ownerships              Ownership[]
-  transactions            Transaction[]
-  notifications           Notification[]
-  documents               Document[]
-  supportTickets          SupportTicket[]
-  kyc                     KYC[]         
-  transferRequests        TransferRequest[]
-  adminAuditLogs          AdminAuditLog[]
-  paymentProofs           PaymentProof[]
-  adminInvitationsCreated AdminInvitation[] @relation("AdminCreator")
-  auditLogs               AuditLog[]
-
-  @@index([email])
-  @@index([role])
-}
-
-model Property {
-  id                String          @id @default(uuid())
-  name              String
-  description       String
-  address           String
-  city              String
-  state             String
-  country           String          @default("Nigeria")
-  location          String?         
-  totalUnits        Int
-  availableUnits    Int
-  pricePerUnit      Decimal         @db.Decimal(15, 2)
-  totalValue        Decimal         @db.Decimal(15, 2)
-  expectedReturn    Decimal         @db.Decimal(5, 2)
-  
-  // Additional fields required by property controller
-  expectedAnnualIncome Decimal?     @db.Decimal(15, 2)
-  propertyType         String?
-  bedrooms             Int?
-  bathrooms            Int?
-  size                 String?
-  listedAt             DateTime?    @default(now())
-  lastDistributionDate DateTime?
-  titleDeedUrl         String?
-  certificateUrl       String?
-
-  status            PropertyStatus  @default(LISTED)
-  images            String[]
-  documents         String[]
-  
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-
-  // Relations
-  ownerships        Ownership[]
-  transactions      Transaction[]
-  transferRequests  TransferRequest[]
-  distributions     Distribution[]  
-  paymentProofs     PaymentProof[]  
-
-  @@index([status])
-  @@index([city])
-}
-
-model Ownership {
-  id                String   @id @default(uuid())
-  userId            String
-  user              User     @relation(fields: [userId], references: [id])
-  propertyId        String
-  property          Property @relation(fields: [propertyId], references: [id])
-  units             Int
-  acquisitionPrice  Decimal  @db.Decimal(15, 2)
-  acquisitionDate   DateTime @default(now())
-  currentValue      Decimal  @default(0) @db.Decimal(15, 2)
-  
-  // Status cannot be optional if controller expects string logic
-  status            String  @default("active") 
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Relations
-  transactions      Transaction[]
-  transferRequests  TransferRequest[] @relation("OwnershipTransfers")
-
-  @@index([userId])
-  @@index([propertyId])
-  @@unique([userId, propertyId])
-}
-
-model Transaction {
-  id            String            @id @default(uuid())
-  userId        String
-  user          User              @relation(fields: [userId], references: [id])
-  propertyId    String?
-  property      Property?         @relation(fields: [propertyId], references: [id])
-  ownershipId   String?
-  ownership     Ownership?        @relation(fields: [ownershipId], references: [id])
-  type          TransactionType
-  amount        Decimal           @db.Decimal(15, 2)
-  status        TransactionStatus @default(PENDING)
-  reference     String            @unique @default(uuid())
-  description   String?
-  // Fee field used in ownership controller
-  fee           Decimal?          @default(0) @db.Decimal(15, 2)
-  paymentMethod String?           @default("wallet")
-  paymentReference String?
-  
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  @@index([userId])
-  @@index([type])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model TransferRequest {
-  id                String         @id @default(uuid())
-  userId            String
-  user              User           @relation(fields: [userId], references: [id])
-  propertyId        String?
-  property          Property?      @relation(fields: [propertyId], references: [id])
-  ownershipId       String?
-  ownership         Ownership?     @relation("OwnershipTransfers", fields: [ownershipId], references: [id])
-  units             Int
-  status            TransferStatus @default(PENDING)
-  reason            String?
-  requestType       String?        @default("transfer")
-  rejectionReason   String?
-  
-  // Payment info
-  amount            Decimal?       @db.Decimal(15, 2)
-  requestedPrice    Decimal?       @db.Decimal(15, 2)
-  
-  // Bank details
-  bankName          String?
-  bankAccountNumber String?
-  bankAccountName   String?
-  accountNumber     String?        
-  accountName       String?        
-
-  reviewedBy        String?
-  reviewedAt        DateTime?
-  
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model Notification {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  message   String
-  type      String
-  isRead    Boolean  @default(false) 
-  read      Boolean  @default(false) // Keeping both for compatibility
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  kycStatus KycStatus @default(NOT_STARTED)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([userId])
-  @@index([createdAt])
+  capabilities UserCapability[]
+  verification IdentityVerification?
+  // Investments would go here
 }
-
-model Document {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  filename    String
-  url         String
-  type        String
-  size        Int
-  uploadedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
-
-  @@index([userId])
-}
-
-model SupportTicket {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  subject     String
-  message     String
-  category    String?
-  assetRef    String?  
-  status      String   @default("open")
-  priority    String   @default("medium")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-}
-
-model KYC {
-  id              String     @id @default(uuid())
-  userId          String     @unique
-  user            User       @relation(fields: [userId], references: [id])
-  status          KYCStatus  @default(NOT_SUBMITTED)
-  idType          String?
-  idNumber        String?
-  idDocument      String?
-  proofOfAddress  String?
-  bvn             String?
-  submittedAt     DateTime?
-  
-  reviewedAt      DateTime?
-  reviewedBy      String?
-  verifiedAt      DateTime?
-  verifiedBy      String?
-  rejectionReason String?
-  
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-
-  @@index([userId])
-  @@index([status])
-}
-
-model PaymentProof {
-  id              String   @id @default(uuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
-  propertyId      String?
-  property        Property? @relation(fields: [propertyId], references: [id])
-  amount          Decimal  @db.Decimal(15, 2)
-  paymentMethod   String
-  receiptUrl      String?  // Made optional as controller might not provide it optionally? No, schema says receiptUrl is required but controller misses it. 
-                         // Wait, error says 'receiptUrl' is missing in type... but required. 
-                         // Checking controller logic, if it's missing in input, we must make it optional or provide default.
-                         // Making it optional is safer.
-  status          String   @default("pending")
-  verifiedBy      String?
-  verifiedAt      DateTime?
-  rejectionReason String?
-  
-  units             Int?
-  depositorName     String?
-  transferDate      DateTime?
-  transferReference String?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-}
-
-model AdminAuditLog {
-  id          String   @id @default(uuid())
-  adminId     String
-  admin       User     @relation(fields: [adminId], references: [id])
-  action      String
-  entityType  String?
-  entityId    String?  
-  targetType  String?
-  targetId    String?  
-  details     Json?    
-  ipAddress   String?
-  
-  createdAt   DateTime @default(now())
-
-  @@index([adminId])
-  @@index([createdAt])
-}
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
-  action    String
-  resource  String
-  details   Json?
-  ipAddress String?
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-model AdminInvitation {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  role        String
-  permissions String[]
-  token       String   @unique
-  used        Boolean  @default(false)
-  createdBy   String
-  creator     User     @relation("AdminCreator", fields: [createdBy], references: [id])
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
-
-  @@index([token])
-  @@index([email])
-}
-
-model Distribution {
-  id               String   @id @default(uuid())
-  propertyId       String
-  property         Property @relation(fields: [propertyId], references: [id])
-  amount           Decimal  @db.Decimal(15, 2)
-  distributionDate DateTime
-  
-  period           String?
-  description      String?
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([propertyId])
-  @@index([distributionDate])
-}
-
-// CAPABILITY SYSTEM
 
 model Capability {
-  id              String           @id @default(uuid())
-  name            String           @unique
-  description     String?
-  defaultOnSignup Boolean          @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-
+  id              String   @id @default(uuid())
+  name            String   @unique // e.g., 'view_marketplace', 'invest', 'admin_dashboard'
+  defaultOnSignup Boolean  @default(false)
+  
   users           UserCapability[]
 }
 
 model UserCapability {
-  id           String     @id @default(uuid())
   userId       String
-  user         User       @relation(fields: [userId], references: [id])
   capabilityId String
-  capability   Capability @relation(fields: [capabilityId], references: [id])
-  assignedAt   DateTime   @default(now())
+  assignedAt   DateTime @default(now())
+  
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  capability Capability @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, capabilityId])
+  @@id([userId, capabilityId])
 }
 
+model IdentityVerification {
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  fullName  String
+  idType    String
+  idNumber  String
+  status    KycStatus @default(PENDING)
+  submittedAt DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Property {
+  id               String   @id @default(uuid())
+  title            String
+  description      String
+  price            Decimal
+  roi              Decimal
+  fundedPercentage Decimal  @default(0)
+  images           String[] // Array of URLs
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
