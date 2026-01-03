@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
 // Lazy load all page components
 const ProceedsPage = lazy(() => import('./pages/dashboard/ProceedsPage'));
@@ -85,7 +86,55 @@ function App() {
             />
 
             <Route path="/properties" element={<PropertiesListPage />} />
-            <Route path="/properties/:id" element={<PropertyDetailsPage />} />
+            <Route
+              path="/properties/:id"
+              element={
+                <ProtectedRoute>
+                  <PropertyDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/proceeds"
+              element={
+                <ProtectedRoute>
+                  <ProceedsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/performance"
+              element={
+                <ProtectedRoute>
+                  <PerformancePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/documents"
+              element={
+                <ProtectedRoute>
+                  <DocumentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/support"
+              element={
+                <ProtectedRoute>
+                  <SupportPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationsPage />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/settings"
@@ -96,7 +145,43 @@ function App() {
               }
             />
 
-            {/* Keep other routes as-is (protect individually where necessary) */}
+            {/* KYC Routes */}
+            <Route
+              path="/kyc/info"
+              element={
+                <ProtectedRoute>
+                  <KYCInfoPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/kyc/status"
+              element={
+                <ProtectedRoute>
+                  <KYCStatusPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            >
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="assets" element={<AdminAssetsPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="users/:id" element={<AdminUserDetailPage />} />
+              <Route path="financials" element={<AdminFinancialsPage />} />
+              <Route path="exits" element={<AdminExitRequestsPage />} />
+              <Route path="audit-trail" element={<AuditTrailPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="properties/edit/:id" element={<EditPropertyPage />} />
+            </Route>
 
             <Route path="*" element={<NotFoundPage />} />
           </Route>
