@@ -234,7 +234,7 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
         const kyc = await prisma.kYC.update({
             where: { id },
             data: {
-                status: 'APPROVED',
+                status: 'VERIFIED',
                 verifiedAt: new Date(),
                 verifiedBy: req.user!.id
             }
@@ -242,7 +242,7 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
 
         await prisma.user.update({
             where: { id: kyc.userId },
-            data: { kycStatus: 'APPROVED' }
+            data: { kycStatus: 'VERIFIED' }
         });
 
         // Grant Verified Capabilities

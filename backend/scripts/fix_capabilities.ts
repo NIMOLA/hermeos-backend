@@ -18,13 +18,13 @@ async function auditAndFixCapabilities() {
 
     console.log(`Found ${verifiedCaps.length} verified capabilities: ${verifiedCaps.map(c => c.name).join(', ')}`);
 
-    // 2. Find users who are APPROVED but missing at least one verified capability
+    // 2. Find users who are VERIFIED but missing at least one verified capability
     const approvedUsers = await prisma.user.findMany({
-        where: { kycStatus: 'APPROVED' },
+        where: { kycStatus: 'VERIFIED' },
         include: { capabilities: true }
     });
 
-    console.log(`Found ${approvedUsers.length} approved users.`);
+    console.log(`Found ${approvedUsers.length} verified users.`);
 
     let fixedCount = 0;
 

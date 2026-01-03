@@ -56,7 +56,7 @@ echo ""
 
 # Step 4: Restart Backend
 echo -e "${YELLOW}🔄 Step 4: Restarting backend...${NC}"
-docker compose restart backend
+docker compose up -d backend
 sleep 3
 echo -e "${GREEN}✓ Backend restarted${NC}"
 echo ""

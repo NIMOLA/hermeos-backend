@@ -34,6 +34,8 @@ const PaymentStatusPage = lazy(() => import('./pages/dashboard/PaymentStatusPage
 const ExitRequestPage = lazy(() => import('./pages/dashboard/ExitRequestPage'));
 const NotificationsPage = lazy(() => import('./pages/dashboard/NotificationsPage'));
 const DocumentsPage = lazy(() => import('./pages/dashboard/DocumentsPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
@@ -53,6 +55,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
 
           {/* Root App Layout */}
           <Route element={<RootLayout />}>
