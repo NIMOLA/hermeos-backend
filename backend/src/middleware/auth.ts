@@ -129,3 +129,35 @@ export const optionalAuth = async (
         next();
     }
 };
+
+export const requireCapability = (capabilityName: string) => {
+    return async (req: AuthRequest, res: Response, next: NextFunction) => {
+        try {
+            if (!req.user) {
+                return next(new AppError('Not authorized', 401));
+            }
+
+            // Admins bypass capability checks
+            if (['ADMIN', 'SUPER_ADMIN'].includes(req.user.role)) {
+                return next();
+            }
+
+            const hasCap = await prisma.userCapability.findFirst({
+                where: {
+                    userId: req.user.id,
+                    capability: {
+                        name: capabilityName
+                    }
+                }
+            });
+
+            if (!hasCap) {
+                return next(new AppError(`Missing required capability: ${capabilityName}`, 403));
+            }
+
+            next();
+        } catch (error) {
+            next(error);
+        }
+    };
+};
