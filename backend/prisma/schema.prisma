@@ -14,10 +14,6 @@ datasource db {
 // ENUMS
 enum UserRole {
   USER
-  FREE_USER
-  BASIC
-  PREMIUM
-  INSTITUTIONAL
   ADMIN
   MODERATOR
   SUPPORT
@@ -72,8 +68,8 @@ model User {
   firstName             String
   lastName              String
   phone                 String?
-  role                  UserRole  @default(FREE_USER)
-  tier                  String    @default("free")
+  role                  UserRole  @default(USER)
+  tier                  String    @default("Tier 1")
   isVerified            Boolean   @default(false)
   kycStatus             String?   @default("not_submitted")
   
@@ -113,6 +109,7 @@ model User {
   paymentProofs           PaymentProof[]
   adminInvitationsCreated AdminInvitation[] @relation("AdminCreator")
   auditLogs               AuditLog[]
+  savedProperties         SavedProperty[]
 
   @@index([email])
   @@index([role])
@@ -157,9 +154,22 @@ model Property {
   transferRequests  TransferRequest[]
   distributions     Distribution[]  
   paymentProofs     PaymentProof[]  
+  savedByUsers      SavedProperty[]
 
   @@index([status])
   @@index([city])
+}
+
+model SavedProperty {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  propertyId String
+  property  Property @relation(fields: [propertyId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, propertyId])
+  @@index([userId])
 }
 
 model Ownership {

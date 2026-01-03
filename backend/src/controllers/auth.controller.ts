@@ -23,7 +23,7 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, firstName, lastName, phone, tier } = req.body;
+        const { email, password, firstName, lastName, phone } = req.body;
 
         // Password complexity validation
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -51,7 +51,8 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
                 firstName,
                 lastName,
                 phone,
-                tier: tier || 'basic',
+                role: 'USER',
+                tier: 'Tier 1',
                 verificationStatus: 'pending'
             },
             include: { capabilities: true } // Include capabilities in return if needed? Better to fetch separately or return specifically.

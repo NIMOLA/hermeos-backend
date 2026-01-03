@@ -18,6 +18,8 @@ router.get('/transactions', proceedsController.getTransactionHistory);
 router.get('/notifications', userController.getNotifications);
 router.patch('/notifications/:id/read', userController.markNotificationRead);
 router.get('/documents', userController.getDocuments);
+router.post('/bookmarks', userController.toggleSavedProperty);
+router.get('/bookmarks', userController.getSavedProperties);
 
 // Capability Routes
 router.post('/unlock-capability', capabilityController.unlockCapability);

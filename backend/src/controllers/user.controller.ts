@@ -337,6 +337,90 @@ export const getPortfolioHoldings = async (req: AuthRequest, res: Response, next
     }
 };
 
+// Toggle saved property (Bookmark)
+export const toggleSavedProperty = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.id;
+        const { propertyId } = req.body;
+
+        if (!propertyId) {
+            return next(new AppError('Property ID is required', 400));
+        }
+
+        const existing = await prisma.savedProperty.findUnique({
+            where: {
+                userId_propertyId: {
+                    userId,
+                    propertyId
+                }
+            }
+        });
+
+        if (existing) {
+            await prisma.savedProperty.delete({
+                where: { id: existing.id }
+            });
+            res.status(200).json({
+                success: true,
+                message: 'Property removed from saved list',
+                data: { isSaved: false }
+            });
+        } else {
+            await prisma.savedProperty.create({
+                data: {
+                    userId,
+                    propertyId
+                }
+            });
+            res.status(200).json({
+                success: true,
+                message: 'Property saved',
+                data: { isSaved: true }
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get saved properties
+export const getSavedProperties = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.id;
+
+        const saved = await prisma.savedProperty.findMany({
+            where: { userId },
+            include: {
+                property: {
+                    select: {
+                        id: true,
+                        name: true,
+                        location: true,
+                        totalValue: true,
+                        expectedAnnualIncome: true,
+                        images: true,
+                        status: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const formatted = saved.map(s => ({
+            ...s.property,
+            savedAt: s.createdAt,
+            imageUrl: s.property.images?.[0] || ''
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: formatted
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Helper function to get activity title
 function getActivityTitle(type: string): string {
     const titles: Record<string, string> = {

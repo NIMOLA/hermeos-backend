@@ -10,12 +10,10 @@ const prisma = new PrismaClient();
  */
 export const getDashboardStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        // Total partners (users with USER/BASIC/PREMIUM/INSTITUTIONAL roles)
+        // Total partners
         const totalPartners = await prisma.user.count({
             where: {
-                role: {
-                    in: ['USER', 'FREE_USER', 'BASIC', 'PREMIUM', 'INSTITUTIONAL']
-                }
+                role: 'USER'
             }
         });
 
@@ -26,9 +24,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response, next: N
 
         const partnersThisMonth = await prisma.user.count({
             where: {
-                role: {
-                    in: ['USER', 'FREE_USER', 'BASIC', 'PREMIUM', 'INSTITUTIONAL']
-                },
+                role: 'USER',
                 createdAt: {
                     gte: thisMonth
                 }
@@ -37,9 +33,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response, next: N
 
         const partnersLastMonth = await prisma.user.count({
             where: {
-                role: {
-                    in: ['USER', 'FREE_USER', 'BASIC', 'PREMIUM', 'INSTITUTIONAL']
-                },
+                role: 'USER',
                 createdAt: {
                     gte: lastMonth,
                     lt: thisMonth

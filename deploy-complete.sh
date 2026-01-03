@@ -51,7 +51,12 @@ docker compose exec -T backend sh -c "npx prisma db push" || {
     echo -e "${RED}❌ Database migration failed${NC}"
     exit 1
 }
-echo -e "${GREEN}✓ Database updated${NC}"
+echo -e "${YELLOW}🌱 Seeding database (wiping existing data)...${NC}"
+docker compose exec -T backend sh -c "npx tsx scripts/seed_init.ts" || {
+    echo -e "${RED}❌ Database seeding failed${NC}"
+    exit 1
+}
+echo -e "${GREEN}✓ Database updated and seeded${NC}"
 echo ""
 
 # Step 4: Restart Backend
