@@ -6,14 +6,36 @@ import { logFinancialEvent, logSecurityEvent } from '../utils/logger';
 
 const prisma = new PrismaClient();
 
-// Withdrawal limits
-const DAILY_WITHDRAWAL_LIMIT = 10000000; // ₦10M per day
-const SINGLE_TRANSACTION_LIMIT = 5000000; // ₦5M per transaction
+// Withdrawal limits configuration
+const LIMITS = {
+    basic: {
+        daily: 10_000_000, // ₦10M
+        single: 5_000_000  // ₦5M
+    },
+    premium: {
+        daily: 50_000_000, // ₦50M
+        single: 20_000_000 // ₦20M
+    },
+    institutional: {
+        daily: 500_000_000, // ₦500M
+        single: 100_000_000 // ₦100M
+    }
+};
+
+const getLimitsForUser = async (userId: string) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { tier: true }
+    });
+
+    const tier = (user?.tier || 'basic') as keyof typeof LIMITS;
+    return LIMITS[tier] || LIMITS.basic;
+};
 
 /**
  * Check if user has exceeded daily withdrawal limit
  */
-const checkDailyWithdrawalLimit = async (userId: string, amount: number): Promise<boolean> => {
+const checkDailyWithdrawalLimit = async (userId: string, amount: number, limit: number): Promise<boolean> => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -41,7 +63,7 @@ const checkDailyWithdrawalLimit = async (userId: string, amount: number): Promis
     );
 
     // Check if this new withdrawal would exceed limit
-    return (totalToday + amount) <= DAILY_WITHDRAWAL_LIMIT;
+    return (totalToday + amount) <= limit;
 };
 
 /**
@@ -51,6 +73,9 @@ export const createExitRequestWithLimits = async (req: AuthRequest, res: Respons
     try {
         const { propertyId, units, reason, bankName, accountNumber, accountName } = req.body;
         const userId = req.user!.id;
+
+        // Get user limits
+        const userLimits = await getLimitsForUser(userId);
 
         // Use transaction for data consistency
         const result = await prisma.$transaction(async (tx) => {
@@ -83,28 +108,28 @@ export const createExitRequestWithLimits = async (req: AuthRequest, res: Respons
             const exitAmount = Number(property.pricePerUnit) * units;
 
             // Check single transaction limit
-            if (exitAmount > SINGLE_TRANSACTION_LIMIT) {
+            if (exitAmount > userLimits.single) {
                 logSecurityEvent('Withdrawal limit exceeded - single transaction', {
                     userId,
                     amount: exitAmount,
-                    limit: SINGLE_TRANSACTION_LIMIT
+                    limit: userLimits.single
                 });
                 throw new AppError(
-                    `Transaction amount (₦${exitAmount.toLocaleString()}) exceeds single transaction limit of ₦${SINGLE_TRANSACTION_LIMIT.toLocaleString()}. Please split into multiple transactions.`,
+                    `Transaction amount (₦${exitAmount.toLocaleString()}) exceeds your tier's single transaction limit of ₦${userLimits.single.toLocaleString()}.`,
                     400
                 );
             }
 
             // Check daily limit
-            const withinDailyLimit = await checkDailyWithdrawalLimit(userId, exitAmount);
+            const withinDailyLimit = await checkDailyWithdrawalLimit(userId, exitAmount, userLimits.daily);
             if (!withinDailyLimit) {
                 logSecurityEvent('Withdrawal limit exceeded - daily limit', {
                     userId,
                     amount: exitAmount,
-                    limit: DAILY_WITHDRAWAL_LIMIT
+                    limit: userLimits.daily
                 });
                 throw new AppError(
-                    `This withdrawal would exceed your daily limit of ₦${DAILY_WITHDRAWAL_LIMIT.toLocaleString()}. Please try again tomorrow or contact support for higher limits.`,
+                    `This withdrawal would exceed your daily limit of ₦${userLimits.daily.toLocaleString()}.`,
                     400
                 );
             }
@@ -214,13 +239,14 @@ export const getWithdrawalLimits = async (req: AuthRequest, res: Response, next:
             0
         );
 
-        const remainingDaily = DAILY_WITHDRAWAL_LIMIT - totalToday;
+        const userLimits = await getLimitsForUser(userId);
+        const remainingDaily = userLimits.daily - totalToday;
 
         res.json({
             success: true,
             data: {
-                dailyLimit: DAILY_WITHDRAWAL_LIMIT,
-                singleTransactionLimit: SINGLE_TRANSACTION_LIMIT,
+                dailyLimit: userLimits.daily,
+                singleTransactionLimit: userLimits.single,
                 usedToday: totalToday,
                 remainingToday: Math.max(0, remainingDaily),
                 transactionsToday: todayWithdrawals.length
