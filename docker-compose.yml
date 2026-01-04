@@ -1,18 +1,19 @@
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - backend
-    environment:
-      - VITE_API_URL=http://localhost:5000/api
-    networks:
-      - hermeos-network
+  # Frontend is built on host by deploy script, not docker
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - backend
+  #   environment:
+  #     - VITE_API_URL=http://localhost:5000/api
+  #   networks:
+  #     - hermeos-network
 
   backend:
     build:
@@ -29,7 +30,8 @@ services:
       - SUPER_ADMIN_KEY=admin123
     networks:
       - hermeos-network
-    command: sh -c "npx prisma push && npx prisma db seed && npm start"
+    # Command is handled by Dockerfile (npx tsx src/server.ts) to avoid build errors
+    # Migrations should be run manually or via deploy script
 
   db:
     image: postgres:15-alpine

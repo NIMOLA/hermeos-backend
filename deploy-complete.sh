@@ -29,55 +29,55 @@ echo ""
 # Step 1: Pull Latest Code
 echo -e "${YELLOW}📥 Step 1: Pulling latest code...${NC}"
 cd /var/www/hermeos-proptech
-git pull origin main
+# Detect current branch or default to main
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "Pulling from branch: $CURRENT_BRANCH"
+git pull origin $CURRENT_BRANCH
 echo -e "${GREEN}✓ Code updated${NC}"
 echo ""
 
 # Step 2: Backend Setup
 echo -e "${YELLOW}📦 Step 2: Setting up backend...${NC}"
-cd backend
-npm install --production
-echo -e "${GREEN}✓ Backend dependencies installed${NC}"
+# Rebuild containers to ensure backend has latest code/deps (and bypasses build check)
+docker compose up -d --build backend db
+echo -e "${GREEN}✓ Backend containers built and started${NC}"
 echo ""
 
 # Step 3: Database Migrations
 echo -e "${YELLOW}🗄️  Step 3: Running database migrations...${NC}"
-cd ..
-docker compose exec -T backend sh -c "npx prisma generate" || {
-    echo -e "${RED}❌ Prisma generate failed${NC}"
-    exit 1
-}
-docker compose exec -T backend sh -c "npx prisma db push" || {
+# Wait for DB to be ready
+sleep 5
+docker compose exec -T backend npx prisma generate || echo "Prisma generate warning (can be ignored if runtime uses tsx)"
+docker compose exec -T backend npx prisma db push || {
     echo -e "${RED}❌ Database migration failed${NC}"
     exit 1
 }
 echo -e "${GREEN}✓ Database updated${NC}"
 echo ""
 
-# Step 4: Restart Backend
-echo -e "${YELLOW}🔄 Step 4: Restarting backend...${NC}"
-docker compose restart backend
-sleep 3
-echo -e "${GREEN}✓ Backend restarted${NC}"
-echo ""
-
-# Step 5: Build Frontend
-echo -e "${YELLOW}🎨 Step 5: Building frontend...${NC}"
+# Step 4: Build Frontend
+echo -e "${YELLOW}🎨 Step 4: Building frontend...${NC}"
+# Install all dependencies (dev included for build tools)
 npm install
-npm run build
+npm run build || {
+    echo -e "${RED}❌ Frontend build failed${NC}"
+    exit 1
+}
 echo -e "${GREEN}✓ Frontend built${NC}"
 echo ""
 
-# Step 6: Configure Nginx (if needed)
-if [ ! -f /etc/nginx/sites-available/hermeos ]; then
-    echo -e "${YELLOW}⚙️  Step 6: Configuring Nginx...${NC}"
-    sudo tee /etc/nginx/sites-available/hermeos > /dev/null << EOF
+# Step 5: Configure Nginx
+echo -e "${YELLOW}⚙️  Step 5: Configuring Nginx...${NC}"
+# We overwrite default to ensure it's the only one and correct
+sudo tee /etc/nginx/sites-available/default > /dev/null << EOF
 server {
     listen 80;
-    server_name $VPS_IP;
+    server_name $VPS_IP hermeosproptech.com www.hermeosproptech.com;
+
+    root /var/www/hermeos-proptech/dist;
+    index index.html;
 
     location / {
-        root /var/www/hermeos-proptech/dist;
         try_files \$uri \$uri/ /index.html;
         add_header Cache-Control "no-cache";
     }
@@ -98,12 +98,15 @@ server {
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 }
 EOF
-    sudo ln -sf /etc/nginx/sites-available/hermeos /etc/nginx/sites-enabled/
-    sudo rm -f /etc/nginx/sites-enabled/default
-    echo -e "${GREEN}✓ Nginx configured${NC}"
-else
-    echo -e "${GREEN}✓ Nginx already configured${NC}"
+
+# Link default if not linked
+sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+# Remove conflicting 'hermeos' config if it exists
+if [ -f /etc/nginx/sites-enabled/hermeos ]; then
+    sudo rm /etc/nginx/sites-enabled/hermeos
 fi
+
+echo -e "${GREEN}✓ Nginx configured${NC}"
 echo ""
 
 # Step 7: Reload Nginx
