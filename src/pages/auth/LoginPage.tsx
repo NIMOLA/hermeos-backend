@@ -8,7 +8,7 @@ import apiClient from '../../lib/api-client';
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const { login, setAuth } = useAuth();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
