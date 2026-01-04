@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import apiClient from '../../lib/api-client';
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, setAuth } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -29,10 +31,35 @@ export default function LoginPage() {
         }
     };
 
-    const handleSocialLogin = async (provider: 'google' | 'apple') => {
-        // TODO: Implement OAuth in Phase 6
-        console.log(`${provider} login not yet implemented`);
-        setError('Social login coming soon!');
+    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+        try {
+            setIsLoading(true);
+            const { credential } = credentialResponse;
+            if (!credential) throw new Error('Google login failed');
+
+            const response = await apiClient.post<{
+                token: string;
+                role: string;
+                kycStatus: string;
+                user: any
+            }>('/auth/google', {
+                token: credential
+            });
+
+            localStorage.setItem('token', response.token);
+            navigate('/dashboard');
+            window.location.reload();
+
+        } catch (err: any) {
+            console.error('Google Login Error', err);
+            setError('Google login failed. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleError = () => {
+        setError('Google login failed. Please try again.');
     };
 
     return (
@@ -155,23 +182,16 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            type="button"
-                            onClick={() => handleSocialLogin('google')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                        >
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Google</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleSocialLogin('apple')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-[20px]">apple</span>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Apple</span>
-                        </button>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex justify-center">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
+                                theme="outline"
+                                width="100%"
+                            />
+                        </div>
+                        {/* Apple Login Hidden as per requirements */}
                     </div>
 
                     <p className="text-center text-sm text-slate-600 dark:text-slate-400">
