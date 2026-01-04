@@ -24,6 +24,8 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
+  googleId  String?  @unique
+  appleId   String?  @unique
   role      Role     @default(USER)
   kycStatus KycStatus @default(NOT_STARTED)
   createdAt DateTime @default(now())
