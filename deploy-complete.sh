@@ -17,8 +17,7 @@ NC='\033[0m' # No Color
 
 # Check if running as root
 if [ "$EUID" -eq 0 ]; then 
-    echo -e "${RED}❌ Please do not run as root${NC}"
-    exit 1
+    echo -e "${YELLOW}⚠️  Running as root user. Ensure you know what you are doing.${NC}"
 fi
 
 # Get VPS IP
