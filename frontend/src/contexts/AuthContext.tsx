@@ -30,6 +30,7 @@ interface AuthContextType {
     logout: () => void;
     updateUser: (user: User) => void;
     refreshUser: () => Promise<void>;
+    setAuth: (token: string, user: User) => void;
 }
 
 interface RegisterData {
@@ -174,6 +175,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    /**
+     * Set auth data directly (used for social login)
+     */
+    const setAuth = (newToken: string, newUser: User) => {
+        setToken(newToken);
+        setUser(newUser);
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(newUser));
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
+    };
+
     const value: AuthContextType = {
         user,
         token,
@@ -184,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         updateUser,
         refreshUser,
+        setAuth,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

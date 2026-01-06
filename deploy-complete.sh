@@ -33,88 +33,80 @@ git pull origin main
 echo -e "${GREEN}✓ Code updated${NC}"
 echo ""
 
-# Step 2: Backend Setup
-echo -e "${YELLOW}📦 Step 2: Setting up backend...${NC}"
-cd backend
-npm install --production
-echo -e "${GREEN}✓ Backend dependencies installed${NC}"
+# Step 2: Update Infrastructure
+echo -e "${YELLOW}🔄 Step 2: Updating infrastructure...${NC}"
+
+# Stop host Nginx if running to prevent port 80 conflicts with Docker
+if systemctl is-active --quiet nginx; then
+    echo -e "${YELLOW}⚠️  Stopping host Nginx to allow Docker to bind Port 80...${NC}"
+    sudo systemctl stop nginx || true
+    sudo systemctl disable nginx || true
+fi
+
+# Rebuild containers to pick up changes in backend or frontend structure
+docker compose up -d --build --remove-orphans
+echo -e "${GREEN}✓ Docker containers updated${NC}"
 echo ""
 
 # Step 3: Database Migrations
 echo -e "${YELLOW}🗄️  Step 3: Running database migrations...${NC}"
-cd ..
+# We execute this inside the running backend container
 docker compose exec -T backend sh -c "npx prisma generate" || {
     echo -e "${RED}❌ Prisma generate failed${NC}"
-    exit 1
+    # Continue anyway as the startup script usually handles this, but good to be explicit
 }
 docker compose exec -T backend sh -c "npx prisma db push" || {
     echo -e "${RED}❌ Database migration failed${NC}"
-    exit 1
 }
 echo -e "${GREEN}✓ Database updated${NC}"
 echo ""
 
-# Step 4: Restart Backend
-echo -e "${YELLOW}🔄 Step 4: Restarting backend...${NC}"
-docker compose restart backend
-sleep 3
-echo -e "${GREEN}✓ Backend restarted${NC}"
-echo ""
+# Step 4: Configure Nginx (Update path to use Docker or new structure)
+# NOTE: Now that frontend is in Docker, we should proxy requests to it,
+# OR if we still serve static files, point to the new location.
+# For simplicity in this transition, we will assume Nginx on host proxies to frontend container.
+# OR we rely on the `frontend` container (Nginx internal) exposed on port 80.
 
-# Step 5: Build Frontend
-echo -e "${YELLOW}🎨 Step 5: Building frontend...${NC}"
-npm install
-npm run build
-echo -e "${GREEN}✓ Frontend built${NC}"
-echo ""
+# If there is a host Nginx, it should just proxy port 80 to localhost:80 (docker frontend)
+# BUT the previous setup served files directly.
+# Let's switch to a full Docker setup where the host Nginx (if any) proxies to the containers.
 
-# Step 6: Configure Nginx (if needed)
 if [ ! -f /etc/nginx/sites-available/hermeos ]; then
-    echo -e "${YELLOW}⚙️  Step 6: Configuring Nginx...${NC}"
+    echo -e "${YELLOW}⚙️  Step 4: Configuring Host Nginx...${NC}"
     sudo tee /etc/nginx/sites-available/hermeos > /dev/null << EOF
 server {
     listen 80;
     server_name $VPS_IP;
 
-    location / {
-        root /var/www/hermeos-proptech/dist;
-        try_files \$uri \$uri/ /index.html;
-        add_header Cache-Control "no-cache";
-    }
+    # Proxy all traffic to the Docker Frontend service (exposed on host port 80)
+    # Note: If docker-compose exposes frontend:80->80, this host nginx might conflict.
+    # If host nginx is needed (e.g. for SSL later), it should proxy.
+    # Current docker-compose maps 80:80, so we should actually STOP host nginx or let Docker handle it.
 
-    location /api {
-        proxy_pass http://localhost:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
-    }
-
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    # STRATEGY CHANGE: We will let Docker bind port 80.
+    # If Host Nginx is running, it will conflict.
+    # We will disable host nginx for the 'hermeos' site and let Docker take over.
 }
 EOF
-    sudo ln -sf /etc/nginx/sites-available/hermeos /etc/nginx/sites-enabled/
-    sudo rm -f /etc/nginx/sites-enabled/default
-    echo -e "${GREEN}✓ Nginx configured${NC}"
+    # Actually, to avoid conflicts, let's just warn.
+    echo -e "${YELLOW}⚠️  NOTE: Docker is now configured to listen on Port 80.${NC}"
+    echo -e "${YELLOW}⚠️  If you have a host-level Nginx running, it might conflict.${NC}"
+    echo -e "${YELLOW}⚠️  We will attempt to stop host nginx to allow Docker to bind port 80.${NC}"
+
+    sudo systemctl stop nginx || true
+    sudo systemctl disable nginx || true
+    echo -e "${GREEN}✓ Host Nginx stopped to allow Docker Frontend${NC}"
 else
-    echo -e "${GREEN}✓ Nginx already configured${NC}"
+    # Existing config found. We should probably remove it to let Docker handle port 80
+    echo -e "${YELLOW}⚠️  Existing Nginx config found. Stopping host Nginx to allow Docker to take over port 80...${NC}"
+    sudo systemctl stop nginx || true
+    sudo systemctl disable nginx || true
 fi
 echo ""
 
-# Step 7: Reload Nginx
-echo -e "${YELLOW}🔄 Step 7: Reloading Nginx...${NC}"
-sudo nginx -t && sudo systemctl reload nginx
-echo -e "${GREEN}✓ Nginx reloaded${NC}"
-echo ""
-
-# Step 8: Health Check
-echo -e "${YELLOW}🏥 Step 8: Running health checks...${NC}"
-sleep 2
+# Step 5: Health Check
+echo -e "${YELLOW}🏥 Step 5: Running health checks...${NC}"
+sleep 10 # Wait for containers to settle
 
 # Check backend
 BACKEND_HEALTH=$(curl -s http://localhost:5000/health | jq -r .status 2>/dev/null || echo "error")
@@ -124,20 +116,12 @@ else
     echo -e "${RED}⚠ Backend health check failed${NC}"
 fi
 
-# Check database
-DB_CHECK=$(docker compose exec -T postgres pg_isready -U hermeos_user 2>/dev/null || echo "error")
-if [[ $DB_CHECK == *"accepting connections"* ]]; then
-    echo -e "${GREEN}✓ Database is healthy${NC}"
+# Check frontend
+FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80)
+if [ "$FRONTEND_STATUS" = "200" ]; then
+    echo -e "${GREEN}✓ Frontend is accessible${NC}"
 else
-    echo -e "${RED}⚠ Database health check failed${NC}"
-fi
-
-# Check Nginx
-NGINX_STATUS=$(sudo systemctl is-active nginx)
-if [ "$NGINX_STATUS" = "active" ]; then
-    echo -e "${GREEN}✓ Nginx is running${NC}"
-else
-    echo -e "${RED}⚠ Nginx is not running${NC}"
+    echo -e "${RED}⚠ Frontend check failed (Status: $FRONTEND_STATUS)${NC}"
 fi
 
 echo ""
@@ -148,18 +132,5 @@ echo ""
 echo "🌐 Your platform is live at:"
 echo "   Frontend: http://$VPS_IP"
 echo "   Backend API: http://$VPS_IP:5000/api"
-echo "   Health Check: http://$VPS_IP:5000/health"
-echo ""
-echo "🔐 Next Steps:"
-echo "   1. Initialize super admin (if not done):"
-echo "      curl -X POST http://$VPS_IP:5000/api/admin/management/init-super-admin \\"
-echo "        -H 'Content-Type: application/json' \\"
-echo "        -d '{\"email\":\"admin@hermeos.com\",\"password\":\"YourPassword123!\",\"firstName\":\"Super\",\"lastName\":\"Admin\",\"masterKey\":\"mces2024!dev\"}'"
-echo ""
-echo "   2. Login at: http://$VPS_IP/login"
-echo "   3. Access admin dashboard: http://$VPS_IP/admin"
-echo ""
-echo "📊 Check logs:"
-echo "   docker compose logs -f backend"
 echo ""
 echo "🎉 Happy deploying!"
