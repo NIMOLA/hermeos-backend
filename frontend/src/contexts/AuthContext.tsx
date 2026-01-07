@@ -12,12 +12,15 @@ export interface User {
     lastName: string;
     phone?: string;
     tier: string;
-    kyc?: {
+    kycStatus?: string; // Changed to match backend response
+    isVerified?: boolean; // Added to match backend response
+    kyc?: { // Keeping for backward compatibility if needed, but likely unused
         status: 'pending' | 'verified' | 'rejected';
         verifiedAt?: string;
     };
-    role?: 'user' | 'admin';
-    createdAt: string;
+    role?: string; // Changed from 'user' | 'admin' to string to match backend enum
+    createdAt?: string; // Made optional as login response doesn't always have it
+    lastLogin?: string; // Added from backend
 }
 
 interface AuthContextType {
@@ -30,7 +33,6 @@ interface AuthContextType {
     logout: () => void;
     updateUser: (user: User) => void;
     refreshUser: () => Promise<void>;
-    setAuth: (token: string, user: User) => void;
 }
 
 interface RegisterData {
@@ -39,7 +41,6 @@ interface RegisterData {
     firstName: string;
     lastName: string;
     phone?: string;
-    tier?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -98,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
+            // Response is now unwrapped by api-client
             const response = await apiClient.post<{ token: string; user: User }>('/auth/login', {
                 email,
                 password,
@@ -122,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const register = async (data: RegisterData) => {
         setIsLoading(true);
         try {
+            // Response is now unwrapped by api-client
             const response = await apiClient.post<{ token: string; user: User }>('/auth/register', data);
 
             setToken(response.token);
@@ -167,23 +170,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!token) return;
 
         try {
-            const response = await apiClient.get<{ user: User }>('/auth/me');
-            updateUser(response.user);
+            // api-client unwraps response.data.
+            // Backend getMe returns { success: true, data: user }
+            // So response here IS the user object.
+            const response = await apiClient.get<User>('/auth/me');
+            updateUser(response);
         } catch (error) {
             console.error('Failed to refresh user:', error);
             // If refresh fails with 401, logout will be handled by api-client
         }
-    };
-
-    /**
-     * Set auth data directly (used for social login)
-     */
-    const setAuth = (newToken: string, newUser: User) => {
-        setToken(newToken);
-        setUser(newUser);
-        localStorage.setItem('token', newToken);
-        localStorage.setItem('user', JSON.stringify(newUser));
-        localStorage.setItem(VERSION_KEY, APP_VERSION);
     };
 
     const value: AuthContextType = {
@@ -196,7 +191,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         updateUser,
         refreshUser,
-        setAuth,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

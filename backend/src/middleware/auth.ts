@@ -1,61 +1,163 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../server';
+import { PrismaClient, UserRole } from '@prisma/client';
+import { AppError } from './errorHandler';
+export { requireRole } from './requireRole';
 
-interface AuthRequest extends Request {
-    user?: any;
+const prisma = new PrismaClient();
+
+export interface AuthRequest extends Request {
+    user?: {
+        id: string;
+        email: string;
+        role: UserRole;
+    };
 }
 
-export const verifyToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'Access denied. No token provided.' });
-    }
-
+export const protect = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-        req.user = decoded;
+        // Get token from header
+        let token: string | undefined;
+
+        if (req.headers.authorization?.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
+        if (!token) {
+            return next(new AppError('Not authorized to access this route', 401));
+        }
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+            id: string;
+            email: string;
+            role: UserRole;
+        };
+
+        // Check if user exists
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+                isVerified: true
+            }
+        });
+
+        if (!user) {
+            return next(new AppError('User no longer exists', 401));
+        }
+
+        // Attach user to request
+        req.user = {
+            id: user.id,
+            email: user.email,
+            role: user.role
+        };
+
         next();
     } catch (error) {
-        res.status(400).json({ error: 'Invalid token.' });
+        return next(new AppError('Not authorized to access this route', 401));
     }
 };
 
-export const hasCapability = (requiredCapability: string) => {
+export const authorize = (...roles: UserRole[]) => {
+    return (req: AuthRequest, res: Response, next: NextFunction) => {
+        if (!req.user || !roles.includes(req.user.role)) {
+            return next(
+                new AppError('You do not have permission to perform this action', 403)
+            );
+        }
+        next();
+    };
+};
+
+// Optional authentication - doesn't fail if no token
+export const optionalAuth = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // Get token from header
+        let token: string | undefined;
+
+        if (req.headers.authorization?.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
+        if (!token) {
+            // No token, continue without user
+            return next();
+        }
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+            id: string;
+            email: string;
+            role: UserRole;
+        };
+
+        // Check if user exists
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+                isVerified: true
+            }
+        });
+
+        if (user) {
+            // Attach user to request
+            req.user = {
+                id: user.id,
+                email: user.email,
+                role: user.role
+            };
+        }
+
+        next();
+    } catch (error) {
+        // Token invalid, continue without user
+        next();
+    }
+};
+
+export const requireCapability = (capabilityName: string) => {
     return async (req: AuthRequest, res: Response, next: NextFunction) => {
         try {
-            if (!req.user || !req.user.id) {
-                return res.status(401).json({ error: 'User not authenticated' });
+            if (!req.user) {
+                return next(new AppError('Not authorized', 401));
             }
 
-            // Check if user has the capability
-            const userCapability = await prisma.userCapability.findFirst({
+            // Admins bypass capability checks
+            if (['ADMIN', 'SUPER_ADMIN'].includes(req.user.role)) {
+                return next();
+            }
+
+            const hasCap = await prisma.userCapability.findFirst({
                 where: {
                     userId: req.user.id,
                     capability: {
-                        name: requiredCapability
+                        name: capabilityName
                     }
                 }
             });
 
-            // Super Admins bypass capability checks (optional, but good for safety)
-            // For strict RBAC + Capabilities, we might want to check roles too.
-            // But user requested Capability SYSTEM.
-
-            const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-            if (user?.role === 'SUPER_ADMIN') {
-                // Super admin has all powers
-                return next();
-            }
-
-            if (!userCapability) {
-                return res.status(403).json({ error: `Missing capability: ${requiredCapability}` });
+            if (!hasCap) {
+                return next(new AppError(`Missing required capability: ${capabilityName}`, 403));
             }
 
             next();
         } catch (error) {
-            res.status(500).json({ error: 'Server error checking capabilities' });
+            next(error);
         }
     };
 };
