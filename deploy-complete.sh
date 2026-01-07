@@ -28,7 +28,7 @@ echo ""
 # Step 1: Pull Latest Code
 echo -e "${YELLOW}📥 Step 1: Pulling latest code...${NC}"
 cd /var/www/hermeos-proptech
-git pull origin main
+git pull origin $(git rev-parse --abbrev-ref HEAD)
 echo -e "${GREEN}✓ Code updated${NC}"
 echo ""
 
