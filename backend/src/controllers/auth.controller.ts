@@ -174,6 +174,12 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
         // Generate token
         const token = generateToken(user.id, user.email, user.role);
 
+        // Introspection: Fetch capabilities for the user
+        const capabilities = await prisma.userCapability.findMany({
+            where: { userId: user.id },
+            include: { capability: true }
+        });
+
         res.status(200).json({
             success: true,
             data: {
@@ -185,7 +191,12 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
                     role: user.role,
                     tier: user.tier,
                     isVerified: user.isVerified,
-                    kycStatus: user.kycStatus
+                    kycStatus: user.kycStatus,
+                    capabilities: capabilities.map(uc => ({
+                        name: uc.capability.name,
+                        assignedAt: uc.assignedAt,
+                        description: uc.capability.description
+                    }))
                 },
                 token
             }
@@ -220,9 +231,22 @@ export const getMe = async (req: AuthRequest, res: Response, next: NextFunction)
             return next(new AppError('User not found', 404));
         }
 
+        // Introspection: Fetch capabilities for the user
+        const capabilities = await prisma.userCapability.findMany({
+            where: { userId: user.id },
+            include: { capability: true }
+        });
+
         res.status(200).json({
             success: true,
-            data: user
+            data: {
+                ...user,
+                capabilities: capabilities.map(uc => ({
+                    name: uc.capability.name,
+                    assignedAt: uc.assignedAt,
+                    description: uc.capability.description
+                }))
+            }
         });
     } catch (error) {
         next(error);
@@ -350,6 +374,12 @@ export const socialLogin = async (req: AuthRequest, res: Response, next: NextFun
 
         const token = generateToken(user.id, user.email, user.role);
 
+        // Introspection: Fetch capabilities for the user
+        const capabilities = await prisma.userCapability.findMany({
+            where: { userId: user.id },
+            include: { capability: true }
+        });
+
         res.status(200).json({
             success: true,
             data: {
@@ -361,7 +391,12 @@ export const socialLogin = async (req: AuthRequest, res: Response, next: NextFun
                     role: user.role,
                     tier: user.tier,
                     isVerified: user.isVerified,
-                    kycStatus: user.kycStatus
+                    kycStatus: user.kycStatus,
+                    capabilities: capabilities.map(uc => ({
+                        name: uc.capability.name,
+                        assignedAt: uc.assignedAt,
+                        description: uc.capability.description
+                    }))
                 },
                 token
             }
