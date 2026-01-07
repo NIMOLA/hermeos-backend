@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { CapabilityService } from '../services/capability.service';
 
 const prisma = new PrismaClient();
 
@@ -52,7 +53,7 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
                     firstName,
                     lastName,
                     phone,
-                    tier: tier || 'basic'
+                    tier: 'Tier 1' // Default tier
                 },
                 select: {
                     id: true,
@@ -64,6 +65,9 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
                     createdAt: true
                 }
             });
+
+            // Assign default capabilities
+            await CapabilityService.assignDefaultCapabilities(user.id);
 
             // Generate token
             const token = generateToken(user.id, user.email, user.role);
@@ -339,6 +343,9 @@ export const socialLogin = async (req: AuthRequest, res: Response, next: NextFun
                     lastLogin: new Date()
                 }
             });
+
+            // Assign default capabilities for new social users
+            await CapabilityService.assignDefaultCapabilities(user.id);
         }
 
         const token = generateToken(user.id, user.email, user.role);
