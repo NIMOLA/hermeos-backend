@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import { PrismaClient, KYCStatus } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { CapabilityService } from '../services/capability.service';
 
 const prisma = new PrismaClient();
 
@@ -245,23 +246,8 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
             data: { kycStatus: 'VERIFIED' }
         });
 
-        // Grant Verified Capabilities
-        const verifiedCaps = await prisma.capability.findMany({
-            where: { defaultOnSignup: false }
-        });
-
-        if (verifiedCaps.length > 0) {
-            const userCapsData = verifiedCaps.map(cap => ({
-                userId: kyc.userId,
-                capabilityId: cap.id
-            }));
-
-            // Use createMany with skipDuplicates to avoid errors if they already have some
-            await prisma.userCapability.createMany({
-                data: userCapsData,
-                skipDuplicates: true
-            });
-        }
+        // Sync capabilities using service
+        await CapabilityService.syncKycCapabilities(kyc.userId, 'VERIFIED');
 
         await prisma.adminAuditLog.create({
             data: {
@@ -269,7 +255,7 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
                 action: 'APPROVED_KYC',
                 entityType: 'KYC',
                 entityId: id,
-                details: { capabilitiesGranted: verifiedCaps.map(c => c.name) }
+                details: { status: 'VERIFIED' }
             }
         });
 
