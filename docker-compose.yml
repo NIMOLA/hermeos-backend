@@ -6,7 +6,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "80:80"
     depends_on:
       - backend
     environment:
@@ -19,7 +19,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000" # Expose to host for Nginx
+      - "5000:5000"
     depends_on:
       - db
     environment:
@@ -29,7 +29,7 @@ services:
       - SUPER_ADMIN_KEY=admin123
     networks:
       - hermeos-network
-    command: sh -c "npx prisma push && npx prisma db seed && npm start"
+    command: sh -c "npx prisma generate && npx prisma push && npx prisma db seed && npm start"
 
   db:
     image: postgres:15-alpine
