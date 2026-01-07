@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
@@ -43,19 +43,31 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 12);
 
-        // Create user
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                firstName,
-                lastName,
-                phone,
-                tier: tier || 'basic',
-                verificationStatus: 'pending'
-            },
-            include: { capabilities: true } // Include capabilities in return if needed? Better to fetch separately or return specifically.
-        });
+        // Create user (handle potential race condition unique constraint)
+        let user;
+        try {
+            user = await prisma.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    firstName,
+                    lastName,
+                    phone,
+                    tier: tier || 'basic',
+                    verificationStatus: 'pending'
+                },
+                include: { capabilities: true }
+            });
+        } catch (dbError: unknown) {
+            // Handle Prisma unique constraint violations (race condition)
+            if (dbError instanceof Prisma.PrismaClientKnownRequestError && dbError.code === 'P2002') {
+                return next(new AppError('Email already registered', 400));
+            }
+
+            // Log and return a generic error (don't leak DB internals in production)
+            console.error('Registration Error:', dbError);
+            return next(new AppError('Registration failed', 500));
+        }
 
         // Assign Default Capabilities
         const defaultCaps = await prisma.capability.findMany({ where: { defaultOnSignup: true } });
