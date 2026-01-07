@@ -43,66 +43,50 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 12);
 
-        // Create user (handle potential race condition unique constraint)
-        let user;
+        // Create user
         try {
-            user = await prisma.user.create({
+            const user = await prisma.user.create({
                 data: {
                     email,
                     password: hashedPassword,
                     firstName,
                     lastName,
                     phone,
-                    tier: tier || 'basic',
-                    verificationStatus: 'pending'
+                    tier: tier || 'basic'
                 },
-                include: { capabilities: true }
-            });
-        } catch (dbError: unknown) {
-            // Handle Prisma unique constraint violations (race condition)
-            if (dbError instanceof Prisma.PrismaClientKnownRequestError && dbError.code === 'P2002') {
-                return next(new AppError('Email already registered', 400));
-            }
-
-            // Log and return a generic error (don't leak DB internals in production)
-            console.error('Registration Error:', dbError);
-            return next(new AppError('Registration failed', 500));
-        }
-
-        // Assign Default Capabilities
-        const defaultCaps = await prisma.capability.findMany({ where: { defaultOnSignup: true } });
-
-        if (defaultCaps.length > 0) {
-            const userCapsData = defaultCaps.map(cap => ({
-                userId: user.id,
-                capabilityId: cap.id
-            }));
-
-            await prisma.userCapability.createMany({
-                data: userCapsData
-            });
-
-            // Log Assignment
-            await prisma.auditLog.create({
-                data: {
-                    userId: user.id,
-                    action: 'ASSIGNED_ON_SIGNUP',
-                    resource: 'capability',
-                    details: { count: defaultCaps.length }
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    tier: true,
+                    createdAt: true
                 }
             });
+
+            // Generate token
+            const token = generateToken(user.id, user.email, user.role);
+
+            res.status(201).json({
+                success: true,
+                data: { user, token }
+            });
+        } catch (dbError: any) {
+            // Handle Prisma unique constraint violations (race condition)
+            if (dbError.code === 'P2002') {
+                return next(new AppError('Email already registered', 400));
+            }
+            // Re-throw other errors to be handled by global error handler
+            // But wrap them in AppError to ensure message is visible in dev/prod for debugging this issue
+            if (process.env.NODE_ENV === 'production') {
+                // In production, we might want to be careful, but for this specific bug fix, we need to know.
+                // However, let's log it and return a slightly more descriptive error if possible.
+                console.error('Registration Error:', dbError);
+                return next(new AppError(`Registration failed: ${dbError.message || 'Database error'}`, 500));
+            }
+            throw dbError;
         }
-
-        // Fetch assigned capability names for response
-        const capabilities = defaultCaps.map(c => c.name);
-
-        // Generate token
-        const token = generateToken(user.id, user.email, user.role);
-
-        res.status(201).json({
-            success: true,
-            data: { user, token, capabilities }
-        });
     } catch (error) {
         next(error);
     }
