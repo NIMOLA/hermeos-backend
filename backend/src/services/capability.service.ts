@@ -1,4 +1,5 @@
 import { PrismaClient, UserRole } from '@prisma/client';
+import { CAPABILITIES } from '../config/capabilities';
 
 const prisma = new PrismaClient();
 
@@ -8,13 +9,20 @@ export class CapabilityService {
      * @param userId The ID of the user to assign capabilities to.
      */
     static async assignDefaultCapabilities(userId: string): Promise<void> {
-        const defaultCaps = await prisma.capability.findMany({
-            where: { defaultOnSignup: true }
+        // Use registry as source of truth for what SHOULD be default
+        const defaultCapNames = Object.values(CAPABILITIES)
+            .filter(c => c.defaultOnSignup)
+            .map(c => c.name);
+
+        if (defaultCapNames.length === 0) return;
+
+        const caps = await prisma.capability.findMany({
+            where: { name: { in: defaultCapNames } }
         });
 
-        if (defaultCaps.length === 0) return;
+        if (caps.length === 0) return;
 
-        const capsToAdd = defaultCaps.map(cap => ({
+        const capsToAdd = caps.map(cap => ({
             userId,
             capabilityId: cap.id
         }));
@@ -30,13 +38,20 @@ export class CapabilityService {
      * @param userId The ID of the user.
      */
     static async assignVerifiedCapabilities(userId: string): Promise<void> {
-        const verifiedCaps = await prisma.capability.findMany({
-            where: { defaultOnSignup: false }
+        // Verified caps are those that are NOT default but are USER_FACING
+        // Or specifically defined as Tier 2 in registry logic.
+        // For now, we use the logic: defaultOnSignup=false AND type=USER_FACING
+        const verifiedCapNames = Object.values(CAPABILITIES)
+            .filter(c => !c.defaultOnSignup && c.type === 'USER_FACING')
+            .map(c => c.name);
+
+        if (verifiedCapNames.length === 0) return;
+
+        const caps = await prisma.capability.findMany({
+            where: { name: { in: verifiedCapNames } }
         });
 
-        if (verifiedCaps.length === 0) return;
-
-        const capsToAdd = verifiedCaps.map(cap => ({
+        const capsToAdd = caps.map(cap => ({
             userId,
             capabilityId: cap.id
         }));
@@ -60,25 +75,25 @@ export class CapabilityService {
             case 'ADMIN':
             case 'SUPER_ADMIN':
                 roleCapabilities = [
-                    'view_admin_dashboard',
-                    'manage_users',
-                    'approve_kyc',
-                    'manage_properties',
-                    'manage_transactions',
-                    'view_audit_logs'
+                    CAPABILITIES.VIEW_ADMIN_DASHBOARD.name,
+                    CAPABILITIES.MANAGE_USERS.name,
+                    CAPABILITIES.APPROVE_KYC.name,
+                    CAPABILITIES.MANAGE_PROPERTIES.name,
+                    CAPABILITIES.MANAGE_TRANSACTIONS.name,
+                    CAPABILITIES.VIEW_AUDIT_LOGS.name
                 ];
                 break;
             case 'SUPPORT':
                 roleCapabilities = [
-                    'view_admin_dashboard',
-                    'manage_users',
-                    'view_audit_logs'
+                    CAPABILITIES.VIEW_ADMIN_DASHBOARD.name,
+                    CAPABILITIES.MANAGE_USERS.name,
+                    CAPABILITIES.VIEW_AUDIT_LOGS.name
                 ];
                 break;
             case 'MODERATOR':
                 roleCapabilities = [
-                    'view_admin_dashboard',
-                    'manage_properties'
+                    CAPABILITIES.VIEW_ADMIN_DASHBOARD.name,
+                    CAPABILITIES.MANAGE_PROPERTIES.name
                 ];
                 break;
             default:
@@ -111,7 +126,5 @@ export class CapabilityService {
         if (kycStatus === 'VERIFIED') {
             await this.assignVerifiedCapabilities(userId);
         }
-        // Logic for revoking capabilities could go here if needed
-        // but removing capabilities is riskier, so we leave it additive for now.
     }
 }
