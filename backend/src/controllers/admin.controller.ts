@@ -234,7 +234,7 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
         const kyc = await prisma.kYC.update({
             where: { id },
             data: {
-                status: 'APPROVED',
+                status: 'VERIFIED',
                 verifiedAt: new Date(),
                 verifiedBy: req.user!.id
             }
@@ -242,15 +242,34 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
 
         await prisma.user.update({
             where: { id: kyc.userId },
-            data: { kycStatus: 'APPROVED' }
+            data: { kycStatus: 'VERIFIED' }
         });
+
+        // Grant Verified Capabilities
+        const verifiedCaps = await prisma.capability.findMany({
+            where: { defaultOnSignup: false }
+        });
+
+        if (verifiedCaps.length > 0) {
+            const userCapsData = verifiedCaps.map(cap => ({
+                userId: kyc.userId,
+                capabilityId: cap.id
+            }));
+
+            // Use createMany with skipDuplicates to avoid errors if they already have some
+            await prisma.userCapability.createMany({
+                data: userCapsData,
+                skipDuplicates: true
+            });
+        }
 
         await prisma.adminAuditLog.create({
             data: {
                 adminId: req.user!.id,
                 action: 'APPROVED_KYC',
                 entityType: 'KYC',
-                entityId: id
+                entityId: id,
+                details: { capabilitiesGranted: verifiedCaps.map(c => c.name) }
             }
         });
 

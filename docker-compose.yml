@@ -1,18 +1,13 @@
-version: '3.8'
-
 services:
   frontend:
     build:
-      context: ./frontend
+      context: .
       dockerfile: Dockerfile
     ports:
       - "80:80"
+    env_file: .env
     depends_on:
       - backend
-    environment:
-      - VITE_API_URL=http://localhost:5000/api
-    networks:
-      - hermeos-network
 
   backend:
     build:
@@ -20,32 +15,26 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    env_file: .env
     depends_on:
-      - db
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/hermeos
-      - PORT=5000
-      - JWT_SECRET=supersecretkey
-      - SUPER_ADMIN_KEY=admin123
-    networks:
-      - hermeos-network
-    command: sh -c "npx prisma generate && npx prisma db push && npx prisma db seed && npm start"
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15-alpine
-    restart: always
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=hermeos
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-hermeos}
+    # Removed public port mapping 5432 for security.
+    # Internal services connect using the service name 'db'.
     volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - hermeos-network
-
-networks:
-  hermeos-network:
-    driver: bridge
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  db_data:
+  postgres_data:

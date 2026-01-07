@@ -105,6 +105,12 @@ class ApiClient {
             }
 
             const data = await response.json();
+
+            // Fix: Check if response is wrapped in { success: true, data: ... }
+            if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+                 return data.data as T;
+            }
+
             return data;
         } catch (error) {
             // Re-throw ApiError
@@ -204,7 +210,14 @@ class ApiClient {
             await this.handleError(response);
         }
 
-        return response.json();
+        const data = await response.json();
+
+        // Fix: Check if response is wrapped in { success: true, data: ... }
+        if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+             return data.data as T;
+        }
+
+        return data;
     }
 }
 
