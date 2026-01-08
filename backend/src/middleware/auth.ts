@@ -14,6 +14,8 @@ export interface AuthRequest extends Request {
     };
 }
 
+
+
 export const protect = async (
     req: AuthRequest,
     res: Response,
@@ -65,6 +67,9 @@ export const protect = async (
         return next(new AppError('Not authorized to access this route', 401));
     }
 };
+
+// Alias for backward compatibility
+export const verifyToken = protect;
 
 export const authorize = (...roles: UserRole[]) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {

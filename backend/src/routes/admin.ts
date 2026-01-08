@@ -1,5 +1,5 @@
 import express from 'express';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../server';
 import { verifyToken, hasCapability } from '../middleware/auth';
 
@@ -27,6 +27,8 @@ router.post('/management/init-super-admin', async (req, res) => {
                 email,
                 password: hashedPassword,
                 role: 'SUPER_ADMIN',
+                firstName: 'Super',
+                lastName: 'Admin',
                 kycStatus: 'VERIFIED'
             }
         });

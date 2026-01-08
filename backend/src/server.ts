@@ -1,4 +1,5 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -31,6 +32,7 @@ import twoFactorRoutes from './routes/twoFactor.routes';
 dotenv.config();
 
 const app: Application = express();
+export const prisma = new PrismaClient();
 
 // Security Middleware
 app.use(helmet());
