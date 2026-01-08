@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import SignUp from './pages/SignUp';
 
 function App() {
     // Simple auth check mock (in real app, use Context/Redux)
@@ -10,6 +11,7 @@ function App() {
         <Router>
             <div className="min-h-screen bg-background text-foreground font-sans antialiased">
                 <Routes>
+                    <Route path="/signup" element={<SignUp />} />
                     <Route path="/login" element={<Login />} />
                     <Route
                         path="/dashboard"

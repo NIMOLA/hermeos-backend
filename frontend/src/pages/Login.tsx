@@ -45,6 +45,15 @@ export default function Login() {
                     <Button onClick={handleLogin} className="w-full bg-hermeos-gold text-black hover:bg-yellow-400">
                         Enter Platform
                     </Button>
+                    <div className="text-center text-sm text-gray-400 mt-4">
+                        Don't have an account?{' '}
+                        <span
+                            onClick={() => navigate('/signup')}
+                            className="text-hermeos-gold hover:underline cursor-pointer"
+                        >
+                            Sign up
+                        </span>
+                    </div>
                 </CardContent>
             </Card>
         </div>

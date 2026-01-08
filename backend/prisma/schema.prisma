@@ -3,29 +3,25 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN
-}
 
-enum KycStatus {
-  PENDING
-  VERIFIED
-  REJECTED
-  NOT_STARTED
-}
+
+
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
-  role      Role     @default(USER)
-  kycStatus KycStatus @default(NOT_STARTED)
+  firstName String
+  lastName  String
+  phone     String?
+  tier      String   @default("Tier 1")
+  verificationStatus String @default("pending")
+  role      String   @default("USER")
+  kycStatus String @default("NOT_STARTED")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -59,7 +55,7 @@ model IdentityVerification {
   fullName  String
   idType    String
   idNumber  String
-  status    KycStatus @default(PENDING)
+  status    String    @default("PENDING")
   submittedAt DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -69,10 +65,21 @@ model Property {
   id               String   @id @default(uuid())
   title            String
   description      String
-  price            Decimal
-  roi              Decimal
-  fundedPercentage Decimal  @default(0)
-  images           String[] // Array of URLs
+  price            Float
+  roi              Float
+  fundedPercentage Float    @default(0)
+  images           String   @default("") // Array of URLs stored as string
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  resource  String?
+  details   String?  // JSON string
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 }

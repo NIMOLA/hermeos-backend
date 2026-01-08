@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../server';
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
     user?: any;
 }
 
@@ -21,6 +21,8 @@ export const verifyToken = async (req: AuthRequest, res: Response, next: NextFun
         res.status(400).json({ error: 'Invalid token.' });
     }
 };
+
+export const protect = verifyToken;
 
 export const hasCapability = (requiredCapability: string) => {
     return async (req: AuthRequest, res: Response, next: NextFunction) => {

@@ -51,7 +51,7 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
                 firstName,
                 lastName,
                 phone,
-                tier: tier || 'basic',
+                tier: tier || 'Tier 1',
                 verificationStatus: 'pending'
             },
             include: { capabilities: true } // Include capabilities in return if needed? Better to fetch separately or return specifically.
