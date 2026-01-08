@@ -69,6 +69,8 @@ router.post('/google', async (req, res) => {
                     googleId,
                     password: hashedPassword,
                     role: 'USER',
+                    firstName: given_name || 'Google',
+                    lastName: family_name || 'User',
                     kycStatus: email_verified ? 'VERIFIED' : 'NOT_STARTED', // Consider email verification as partial KYC or keep NOT_STARTED
                 }
             });
