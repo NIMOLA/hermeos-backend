@@ -7,26 +7,20 @@ set -e  # Exit on any error
 
 echo "🚀 Starting Hermeos PropTech Deployment..."
 
-# Navigate to project directory
-cd /var/www/hermeos-backend
+# Navigate to directory (optional if run from root)
+# cd /var/www/hermeos-backend
 
 # Pull latest code
 echo "📥 Pulling latest code from GitHub..."
 git pull origin main
 
-# Install dependencies
-echo "📦 Installing backend dependencies..."
-cd backend
-npm install
+# Rebuild and Start Containers (Updates dependencies & code)
+echo "🔄 Rebuilding and Starting services..."
+docker compose up -d --build
 
-# Run Prisma migrations inside Docker container
+# Run Migrations (Safe to run multiple times)
 echo "🗄️  Running database migrations..."
-cd ..
-docker compose exec -T backend sh -c "cd /app && npx prisma generate && npx prisma db push"
-
-# Restart services
-echo "🔄 Restarting services..."
-docker compose restart backend
+docker compose exec -T backend npx prisma db push
 
 echo "✅ Deployment complete!"
 echo ""
