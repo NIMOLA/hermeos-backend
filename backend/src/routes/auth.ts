@@ -1,7 +1,7 @@
 import express from 'express';
 import { register, login, getMe } from '../controllers/auth.controller';
 import { protect } from '../middleware/auth';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../server';
