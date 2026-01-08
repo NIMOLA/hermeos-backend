@@ -30,9 +30,8 @@ export default function LoginPage() {
     };
 
     const handleSocialLogin = async (provider: 'google' | 'apple') => {
-        // TODO: Implement OAuth in Phase 6
-        console.log(`${provider} login not yet implemented`);
-        setError('Social login coming soon!');
+        // Disabled
+        console.log(`${provider} login disabled`);
     };
 
     return (
@@ -155,22 +154,24 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 opacity-50 pointer-events-none">
                         <button
                             type="button"
+                            disabled
                             onClick={() => handleSocialLogin('google')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
                         >
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Google</span>
+                            <span className="text-sm font-medium text-slate-500">Google</span>
                         </button>
                         <button
                             type="button"
+                            disabled
                             onClick={() => handleSocialLogin('apple')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
                         >
-                            <span className="material-symbols-outlined text-[20px]">apple</span>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Apple</span>
+                            <span className="material-symbols-outlined text-[20px] text-slate-500">apple</span>
+                            <span className="text-sm font-medium text-slate-500">Apple</span>
                         </button>
                     </div>
 

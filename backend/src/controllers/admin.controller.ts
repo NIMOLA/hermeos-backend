@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import { PrismaClient, KYCStatus } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { CapabilityService } from '../services/capability.service';
 
 const prisma = new PrismaClient();
 
@@ -234,7 +235,7 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
         const kyc = await prisma.kYC.update({
             where: { id },
             data: {
-                status: 'APPROVED',
+                status: 'VERIFIED',
                 verifiedAt: new Date(),
                 verifiedBy: req.user!.id
             }
@@ -242,15 +243,19 @@ export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunc
 
         await prisma.user.update({
             where: { id: kyc.userId },
-            data: { kycStatus: 'APPROVED' }
+            data: { kycStatus: 'VERIFIED' }
         });
+
+        // Sync capabilities using service
+        await CapabilityService.syncKycCapabilities(kyc.userId, 'VERIFIED');
 
         await prisma.adminAuditLog.create({
             data: {
                 adminId: req.user!.id,
                 action: 'APPROVED_KYC',
                 entityType: 'KYC',
-                entityId: id
+                entityId: id,
+                details: { status: 'VERIFIED' }
             }
         });
 

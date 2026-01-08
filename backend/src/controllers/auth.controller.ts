@@ -1,10 +1,11 @@
 import { Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { CapabilityService } from '../services/capability.service';
 
 const prisma = new PrismaClient();
 
@@ -23,7 +24,7 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, firstName, lastName, phone, tier } = req.body;
+        const { email, password, firstName, lastName, phone } = req.body;
 
         // Password complexity validation
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -44,53 +45,54 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
         const hashedPassword = await bcrypt.hash(password, 12);
 
         // Create user
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                firstName,
-                lastName,
-                phone,
-                tier: tier || 'Tier 1',
-                verificationStatus: 'pending'
-            },
-            include: { capabilities: true } // Include capabilities in return if needed? Better to fetch separately or return specifically.
-        });
 
-        // Assign Default Capabilities
-        const defaultCaps = await prisma.capability.findMany({ where: { defaultOnSignup: true } });
+        try {
+            const user = await prisma.user.create({
 
-        if (defaultCaps.length > 0) {
-            const userCapsData = defaultCaps.map(cap => ({
-                userId: user.id,
-                capabilityId: cap.id
-            }));
-
-            await prisma.userCapability.createMany({
-                data: userCapsData
-            });
-
-            // Log Assignment
-            await prisma.auditLog.create({
                 data: {
-                    userId: user.id,
-                    action: 'ASSIGNED_ON_SIGNUP',
-                    resource: 'capability',
-                    details: { count: defaultCaps.length }
+                    email,
+                    password: hashedPassword,
+                    firstName,
+                    lastName,
+                    phone,
+                    tier: 'Tier 1' // Default tier
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    tier: true,
+                    createdAt: true
                 }
             });
+
+            // Assign default capabilities
+            await CapabilityService.assignDefaultCapabilities(user.id);
+
+            // Generate token
+            const token = generateToken(user.id, user.email, user.role);
+
+            res.status(201).json({
+                success: true,
+                data: { user, token }
+            });
+        } catch (dbError: any) {
+            // Handle Prisma unique constraint violations (race condition)
+            if (dbError.code === 'P2002') {
+                return next(new AppError('Email already registered', 400));
+            }
+            // Re-throw other errors to be handled by global error handler
+            // But wrap them in AppError to ensure message is visible in dev/prod for debugging this issue
+            if (process.env.NODE_ENV === 'production') {
+                // In production, we might want to be careful, but for this specific bug fix, we need to know.
+                // However, let's log it and return a slightly more descriptive error if possible.
+                console.error('Registration Error:', dbError);
+                return next(new AppError(`Registration failed: ${dbError.message || 'Database error'}`, 500));
+            }
+            throw dbError;
         }
-
-        // Fetch assigned capability names for response
-        const capabilities = defaultCaps.map(c => c.name);
-
-        // Generate token
-        const token = generateToken(user.id, user.email, user.role);
-
-        res.status(201).json({
-            success: true,
-            data: { user, token, capabilities }
-        });
     } catch (error) {
         next(error);
     }
@@ -174,6 +176,12 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
         // Generate token
         const token = generateToken(user.id, user.email, user.role);
 
+        // Introspection: Fetch capabilities for the user
+        const capabilities = await prisma.userCapability.findMany({
+            where: { userId: user.id },
+            include: { capability: true }
+        });
+
         res.status(200).json({
             success: true,
             data: {
@@ -185,7 +193,12 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
                     role: user.role,
                     tier: user.tier,
                     isVerified: user.isVerified,
-                    kycStatus: user.kycStatus
+                    kycStatus: user.kycStatus,
+                    capabilities: capabilities.map(uc => ({
+                        name: uc.capability.name,
+                        assignedAt: uc.assignedAt,
+                        description: uc.capability.description
+                    }))
                 },
                 token
             }
@@ -220,9 +233,22 @@ export const getMe = async (req: AuthRequest, res: Response, next: NextFunction)
             return next(new AppError('User not found', 404));
         }
 
+        // Introspection: Fetch capabilities for the user
+        const capabilities = await prisma.userCapability.findMany({
+            where: { userId: user.id },
+            include: { capability: true }
+        });
+
         res.status(200).json({
             success: true,
-            data: user
+            data: {
+                ...user,
+                capabilities: capabilities.map(uc => ({
+                    name: uc.capability.name,
+                    assignedAt: uc.assignedAt,
+                    description: uc.capability.description
+                }))
+            }
         });
     } catch (error) {
         next(error);
@@ -343,9 +369,18 @@ export const socialLogin = async (req: AuthRequest, res: Response, next: NextFun
                     lastLogin: new Date()
                 }
             });
+
+            // Assign default capabilities for new social users
+            await CapabilityService.assignDefaultCapabilities(user.id);
         }
 
         const token = generateToken(user.id, user.email, user.role);
+
+        // Introspection: Fetch capabilities for the user
+        const capabilities = await prisma.userCapability.findMany({
+            where: { userId: user.id },
+            include: { capability: true }
+        });
 
         res.status(200).json({
             success: true,
@@ -358,7 +393,12 @@ export const socialLogin = async (req: AuthRequest, res: Response, next: NextFun
                     role: user.role,
                     tier: user.tier,
                     isVerified: user.isVerified,
-                    kycStatus: user.kycStatus
+                    kycStatus: user.kycStatus,
+                    capabilities: capabilities.map(uc => ({
+                        name: uc.capability.name,
+                        assignedAt: uc.assignedAt,
+                        description: uc.capability.description
+                    }))
                 },
                 token
             }

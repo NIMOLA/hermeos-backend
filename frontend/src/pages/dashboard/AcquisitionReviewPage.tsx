@@ -2,8 +2,11 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function AcquisitionReviewPage() {
+    const { user } = useAuth();
+
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Review Acquisition</h1>
@@ -78,14 +81,25 @@ export default function AcquisitionReviewPage() {
                     </Card>
 
                     <div className="flex flex-col gap-3">
-                        <Link to="/payment/status">
-                            <Button className="w-full h-12 text-lg shadow-lg">Confirm Purchase</Button>
-                        </Link>
+                        {user?.isVerified ? (
+                            <Link to="/payment/status">
+                                <Button className="w-full h-12 text-lg shadow-lg">Confirm Purchase</Button>
+                            </Link>
+                        ) : (
+                            <Link to="/kyc/info">
+                                <Button className="w-full h-12 text-lg shadow-lg bg-amber-500 hover:bg-amber-600">
+                                    <span className="material-symbols-outlined mr-2">verified_user</span>
+                                    Verify Identity to Invest
+                                </Button>
+                            </Link>
+                        )}
                         <Link to="/properties/details">
                             <Button variant="outline" className="w-full">Cancel</Button>
                         </Link>
                         <p className="text-xs text-center text-slate-500 mt-2">
-                            By clicking confirm, you agree to the Terms of Purchase and Co-Ownership Agreement.
+                            {user?.isVerified
+                                ? "By clicking confirm, you agree to the Terms of Purchase and Co-Ownership Agreement."
+                                : "Identity verification is required to complete this investment under regulatory guidelines."}
                         </p>
                     </div>
                 </div>
