@@ -287,7 +287,7 @@ export default function PerformancePage() {
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value: number | undefined) => value ? `${value}%` : '0%'}
+                                    formatter={(value: any) => [`₦${value?.toLocaleString()}`, 'Value']}
                                     contentStyle={{
                                         background: '#1a2632',
                                         border: '1px solid #334155',
