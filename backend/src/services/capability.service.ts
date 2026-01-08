@@ -10,8 +10,9 @@ export class CapabilityService {
      */
     static async assignDefaultCapabilities(userId: string): Promise<void> {
         // Use registry as source of truth for what SHOULD be default
+        // Filter out deprecated capabilities
         const defaultCapNames = Object.values(CAPABILITIES)
-            .filter(c => c.defaultOnSignup)
+            .filter(c => c.defaultOnSignup && !c.isDeprecated)
             .map(c => c.name);
 
         if (defaultCapNames.length === 0) return;
@@ -41,8 +42,9 @@ export class CapabilityService {
         // Verified caps are those that are NOT default but are USER_FACING
         // Or specifically defined as Tier 2 in registry logic.
         // For now, we use the logic: defaultOnSignup=false AND type=USER_FACING
+        // Filter out deprecated capabilities
         const verifiedCapNames = Object.values(CAPABILITIES)
-            .filter(c => !c.defaultOnSignup && c.type === 'USER_FACING')
+            .filter(c => !c.defaultOnSignup && c.type === 'USER_FACING' && !c.isDeprecated)
             .map(c => c.name);
 
         if (verifiedCapNames.length === 0) return;
@@ -69,6 +71,8 @@ export class CapabilityService {
      * @param role The role to assign capabilities for.
      */
     static async assignRoleCapabilities(userId: string, role: UserRole): Promise<void> {
+        console.warn(`[LEGACY_PATH_USAGE] assignRoleCapabilities called for user ${userId} with role ${role}. This logic relies on legacy role mapping.`);
+
         let roleCapabilities: string[] = [];
 
         switch (role) {
