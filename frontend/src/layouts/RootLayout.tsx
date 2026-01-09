@@ -129,39 +129,40 @@ export default function RootLayout() {
                                                     {user?.firstName?.[0] ?? 'U'}{user?.lastName?.[0] ?? ''}
                                                 </div>
 
-                                            </>
-                                            ) : (
-                                            // If not authenticated show login button only (or avatar placeholder)
-                                            <div className="flex items-center gap-3">
-                                                <Link to="/login" className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">
-                                                    Login
-                                                </Link>
                                             </div>
-                                    )}
+                                        </>
+                                    ) : (
+                                        // If not authenticated show login button only (or avatar placeholder)
+                                        <div className="flex items-center gap-3">
+                                            <Link to="/login" className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">
+                                                Login
+                                            </Link>
                                         </div>
-                                </>
-                        )}
-                            </div>
-
-                        {!shouldHideNav && (
-                            /* Mobile Navigation */
-                            <nav className="md:hidden flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
-                                {navItems.map((item) => (
-                                    <Link
-                                        key={item.path}
-                                        to={item.path}
-                                        className={`flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${isActive(item.path)
-                                            ? 'bg-primary/10 text-primary'
-                                            : 'text-slate-500 dark:text-slate-400'
-                                            }`}
-                                    >
-                                        <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                                        <span>{item.label}</span>
-                                    </Link>
-                                ))}
-                            </nav>
+                                    )}
+                                </div>
+                            </>
                         )}
                     </div>
+
+                    {!shouldHideNav && (
+                        /* Mobile Navigation */
+                        <nav className="md:hidden flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    className={`flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${isActive(item.path)
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+                                    <span>{item.label}</span>
+                                </Link>
+                            ))}
+                        </nav>
+                    )}
+                </div>
             </header>
 
             {/* Main Content */}
