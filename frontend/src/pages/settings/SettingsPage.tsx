@@ -1,8 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../contexts/AuthContext';
+import { useFetch } from '../../hooks/useApi';
 
 export default function SettingsPage() {
+    const { user } = useAuth();
+    const { data: profile } = useFetch<any>('/user/profile'); // Fetch additional profile info if needed
     const [activeTab, setActiveTab] = useState("Personal Details");
 
     const tabs = ["Personal Details", "Ownership Access", "Security", "Notifications"];
@@ -44,8 +48,8 @@ export default function SettingsPage() {
                     <div className="flex gap-3 items-center">
                         <div className="bg-center bg-no-repeat bg-cover rounded-full h-10 w-10 ring-2 ring-white dark:ring-slate-700" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCuGcK1zD3xC1IM0Dy9k9CiSX2x0E_-wIJ8PCiiIJoq3eLQ7kDZujM66KEO49rb08Sx2AB1u6LQxOvMLV2Zmd3PRYlh-afPwcA1E2YTfDBZ6WuE6zN_-hWSOJytLpewciIGXSOT9F7A8Ha8msDlifIeOVhEUurCz1wpFs5YSwWJspn10fMTNu0bJVAKis324uFCxgnPsU9dZPlqVhLUVDnWv1GCqGFkqeon2464sTtbwSRJQQrjDEQEM2YsLcTh2Mn4_FKAJm2Mla1-")' }}></div>
                         <div className="flex flex-col">
-                            <p className="text-slate-900 dark:text-white text-sm font-semibold">Chinedu Okeke</p>
-                            <p className="text-slate-500 dark:text-slate-400 text-xs">Asset Holder</p>
+                            <p className="text-slate-900 dark:text-white text-sm font-semibold">{user?.firstName} {user?.lastName}</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs">{user?.role || 'Asset Holder'}</p>
                         </div>
                     </div>
                 </div>
@@ -95,9 +99,11 @@ export default function SettingsPage() {
                                                     <span className="material-symbols-outlined text-2xl">check_circle</span>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
-                                                    <p className="text-slate-900 dark:text-white text-base font-bold">NIN Verification Status: Verified</p>
+                                                    <p className="text-slate-900 dark:text-white text-base font-bold">NIN Verification Status: {user?.isVerified ? 'Verified' : 'Pending'}</p>
                                                     <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-xl">
-                                                        Your National Identity has been confirmed. You are fully eligible to hold asset units in managed properties and receive ownership distributions.
+                                                        {user?.isVerified
+                                                            ? "Your National Identity has been confirmed. You are fully eligible to hold asset units in managed properties and receive ownership distributions."
+                                                            : "Your identity verification is currently pending. Please complete the verification process to access all features."}
                                                     </p>
                                                 </div>
                                             </div>
@@ -114,23 +120,23 @@ export default function SettingsPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Full Legal Name</label>
-                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="text" defaultValue="Chinedu Okeke" />
+                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="text" defaultValue={`${user?.firstName} ${user?.lastName} `} />
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email Address</label>
-                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="email" defaultValue="chinedu.okeke@hermeos.ng" />
+                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="email" defaultValue={user?.email} disabled />
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Phone Number</label>
-                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="tel" defaultValue="+234 803 555 0199" />
+                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="tel" placeholder="+234..." defaultValue={profile?.phoneNumber || ''} />
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">National Identification Number (NIN)</label>
-                                                <input className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-500 dark:text-slate-400 cursor-not-allowed" disabled type="text" defaultValue="***********5678" />
+                                                <input className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-500 dark:text-slate-400 cursor-not-allowed" disabled type="text" defaultValue="***********" />
                                             </div>
                                             <div className="flex flex-col gap-2 md:col-span-2">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Residential Address</label>
-                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="text" defaultValue="Plot 14, Ahmadu Bello Way, Victoria Island, Lagos, Nigeria" />
+                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="text" placeholder="Enter address" defaultValue={profile?.address || ''} />
                                             </div>
                                         </div>
                                         <div className="mt-8 flex justify-end">
@@ -222,7 +228,7 @@ export default function SettingsPage() {
                                         ].map((pref, i) => (
                                             <div key={i} className="flex items-center justify-between">
                                                 <div className="flex gap-3">
-                                                    <div className={`${pref.color} p-2 rounded-lg h-fit`}>
+                                                    <div className={`${pref.color} p - 2 rounded - lg h - fit`}>
                                                         <span className="material-symbols-outlined text-xl">{pref.icon}</span>
                                                     </div>
                                                     <div className="flex flex-col">

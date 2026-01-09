@@ -8,6 +8,7 @@ const router = Router();
 
 router.use(protect);
 
+router.get('/profile', userController.getOverview); // Reusing getOverview or similar if dedicated profile endpoint doesn't exist
 router.get('/overview', userController.getOverview);
 router.get('/dashboard/stats', userController.getDashboardStats);
 router.get('/activity', userController.getActivity);

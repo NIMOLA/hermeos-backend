@@ -16,7 +16,13 @@ export default function Login() {
 
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('role', res.data.role);
-            navigate('/dashboard');
+
+            // Redirect based on role
+            if (res.data.role === 'ADMIN' || res.data.role === 'SUPER_ADMIN') {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (error) {
             alert('Login failed');
         }

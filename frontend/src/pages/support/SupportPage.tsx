@@ -1,43 +1,50 @@
 import { useState } from 'react';
 import { Button } from '../../components/ui/button';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../lib/api-client';
 
 export default function SupportPage() {
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
+        name: user ? `${user.firstName} ${user.lastName}` : '',
+        email: user?.email || '',
+        subject: '',
         category: 'Account Verification',
         assetRef: '',
         message: ''
     });
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        if (searchQuery.trim()) {
-            console.log('Searching for:', searchQuery);
-            // In a real app, this would search articles
-            alert(`Searching for: "${searchQuery}"`);
-        }
+        // Implement search logic later or redirect to FAQ
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name || !formData.email || !formData.message) {
-            setSubmitStatus('error');
+        if (!formData.subject || !formData.message) {
             return;
         }
-        console.log('Submitting ticket:', formData);
-        setSubmitStatus('success');
-        // Reset form
-        setFormData({
-            name: '',
-            email: '',
-            category: 'Account Verification',
-            assetRef: '',
-            message: ''
-        });
-        setTimeout(() => setSubmitStatus('idle'), 3000);
+
+        setIsSubmitting(true);
+        try {
+            await apiClient.post('/support', {
+                category: formData.category,
+                subject: formData.subject,
+                message: formData.message,
+                assetRef: formData.assetRef
+            });
+            setSubmitStatus('success');
+            setFormData(prev => ({ ...prev, subject: '', message: '', assetRef: '' }));
+            setTimeout(() => setSubmitStatus('idle'), 3000);
+        } catch (error) {
+            console.error('Support ticket failed', error);
+            setSubmitStatus('error');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const topics = [
@@ -202,15 +209,33 @@ export default function SupportPage() {
                                     <label className="flex flex-col gap-1.5">
                                         <span className="text-sm font-bold text-slate-900 dark:text-slate-200">Email Address *</span>
                                         <input
-                                            className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border"
-                                            placeholder="you@example.com"
+                                            className="rounded-lg border-slate-300 bg-slate-100 dark:bg-slate-900 dark:border-slate-600 dark:text-slate-400 p-2.5 w-full outline-none border cursor-not-allowed"
+                                            type="text"
+                                            value={formData.name}
+                                            disabled
+                                        />
+                                    </label>
+                                    <label className="flex flex-col gap-1.5">
+                                        <span className="text-sm font-bold text-slate-900 dark:text-slate-200">Email Address *</span>
+                                        <input
+                                            className="rounded-lg border-slate-300 bg-slate-100 dark:bg-slate-900 dark:border-slate-600 dark:text-slate-400 p-2.5 w-full outline-none border cursor-not-allowed"
                                             type="email"
                                             value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            required
+                                            disabled
                                         />
                                     </label>
                                 </div>
+                                <label className="flex flex-col gap-1.5">
+                                    <span className="text-sm font-bold text-slate-900 dark:text-slate-200">Subject *</span>
+                                    <input
+                                        className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border"
+                                        placeholder="Brief summary of your request"
+                                        type="text"
+                                        value={formData.subject}
+                                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                                        required
+                                    />
+                                </label>
                                 <label className="flex flex-col gap-1.5">
                                     <span className="text-sm font-bold text-slate-900 dark:text-slate-200">Category</span>
                                     <select
@@ -250,8 +275,8 @@ export default function SupportPage() {
                                     <span className="material-symbols-outlined text-green-500 text-sm">lock</span>
                                     <span className="text-xs text-slate-500 dark:text-slate-400">Your data is transmitted securely via SSL encryption.</span>
                                 </div>
-                                <Button type="submit" className="w-full py-3 h-auto shadow-sm">
-                                    Submit Ticket
+                                <Button type="submit" className="w-full py-3 h-auto shadow-sm" disabled={isSubmitting}>
+                                    {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
                                 </Button>
                             </form>
                         </div>

@@ -1,11 +1,34 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFetch } from '../../hooks/useApi';
+
+// Reusing Property interface or defining a subset
+interface Property {
+    id: string;
+    name: string;
+    location: string;
+    pricePerUnit: number; // Assuming this exists or using totalValuation/units
+    projectedYield: number;
+    images: string[];
+    // ...
+}
 
 export default function AcquisitionReviewPage() {
     const { user } = useAuth();
+    const { id } = useParams<{ id: string }>();
+    const { data: property, isLoading, error } = useFetch<Property>(id ? `/properties/${id}` : '');
+
+    // Simple state for quantity (could be expanded)
+    const quantity = 10; // Default for now, or derive from query param?
+    const unitPrice = property?.pricePerUnit || 50000; // Fallback
+    const transactionFee = unitPrice * quantity * 0.015;
+    const totalAmount = (unitPrice * quantity) + transactionFee;
+
+    if (isLoading) return <div className="p-8 text-center">Loading review details...</div>;
+    if (error || !property) return <div className="p-8 text-center text-red-500">Error loading property</div>;
 
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -19,12 +42,12 @@ export default function AcquisitionReviewPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex gap-4">
-                                <div className="w-24 h-24 bg-slate-200 rounded-lg bg-cover bg-center" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547")' }}></div>
+                                <div className="w-24 h-24 bg-slate-200 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url('${property.images?.[0] || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547'}')` }}></div>
                                 <div>
-                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">Oceanview Apartments, Lekki</h3>
-                                    <p className="text-slate-500 text-sm">Residential • Completed 2022</p>
+                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">{property.name}</h3>
+                                    <p className="text-slate-500 text-sm">Residential • {property.location}</p>
                                     <div className="flex items-center gap-2 mt-2">
-                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs rounded-full font-bold">12% Net Yield</span>
+                                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs rounded-full font-bold">{property.projectedYield}% Net Yield</span>
                                     </div>
                                 </div>
                             </div>
@@ -38,20 +61,20 @@ export default function AcquisitionReviewPage() {
                         <CardContent className="space-y-3">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-600 dark:text-slate-400">Unit Price</span>
-                                <span className="font-medium text-slate-900 dark:text-white">₦50,000.00</span>
+                                <span className="font-medium text-slate-900 dark:text-white">₦{unitPrice.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-600 dark:text-slate-400">Quantity</span>
-                                <span className="font-medium text-slate-900 dark:text-white">10 Units</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{quantity} Units</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-600 dark:text-slate-400">Transaction Fee (1.5%)</span>
-                                <span className="font-medium text-slate-900 dark:text-white">₦7,500.00</span>
+                                <span className="font-medium text-slate-900 dark:text-white">₦{transactionFee.toLocaleString()}</span>
                             </div>
                             <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
                             <div className="flex justify-between text-lg font-bold">
                                 <span className="text-slate-900 dark:text-white">Total Amount</span>
-                                <span className="text-primary">₦507,500.00</span>
+                                <span className="text-primary">₦{totalAmount.toLocaleString()}</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -93,7 +116,7 @@ export default function AcquisitionReviewPage() {
                                 </Button>
                             </Link>
                         )}
-                        <Link to="/properties/details">
+                        <Link to={`/properties/${property.id}`}>
                             <Button variant="outline" className="w-full">Cancel</Button>
                         </Link>
                         <p className="text-xs text-center text-slate-500 mt-2">

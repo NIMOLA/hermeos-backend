@@ -6,6 +6,7 @@ const router = Router();
 
 router.use(protect);
 
+router.get('/portfolio', performanceController.getPortfolioPerformance);
 router.get('/property/:propertyId', performanceController.getPropertyPerformance);
 router.get('/income-trends', performanceController.getIncomePerformance);
 

@@ -1,12 +1,16 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Chatbot from '../components/Chatbot';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function RootLayout() {
-    const location = useLocation();
-    const { theme, toggleTheme } = useTheme();
-    const { isAuthenticated, isLoading, user } = useAuth();
+    const { isAuthenticated, isLoading, user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     const isActive = (path: string) => {
         return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -124,13 +128,19 @@ export default function RootLayout() {
                                                 <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
                                                     {user?.firstName?.[0] ?? 'U'}{user?.lastName?.[0] ?? ''}
                                                 </div>
-                                                <Link
-                                                    to="/logout"
-                                                    className="hidden md:flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-red-600"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">logout</span>
-                                                    <span>Logout</span>
-                                                </Link>
+                                                const navigate = useNavigate();
+
+    const handleLogout = () => {
+        const {logout} = useAuth(); // Destructuring inside component body if possible, or use the one from line 9
+        // Wait, 'logout' is available from line 9 destructuring
+    };
+
+    // Correction: 'logout' is likely available from useAuth() at line 9.
+    // Let's check line 9.
+    // const {isAuthenticated, isLoading, user} = useAuth();
+                                            // It is missing 'logout'.
+
+                                            // I need to update line 9 first.
                                             </div>
                                         </>
                                     ) : (

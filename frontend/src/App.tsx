@@ -98,6 +98,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/properties/:id/review"
+              element={
+                <ProtectedRoute>
+                  <AcquisitionReviewPage />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/proceeds"

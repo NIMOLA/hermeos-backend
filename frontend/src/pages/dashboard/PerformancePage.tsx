@@ -85,9 +85,12 @@ export default function PerformancePage() {
     const period = searchParams.get('period') || 'ytd';
 
     // Fetch performance data for specific property
-    const { data: performanceData, isLoading: loading, error } = useFetch<PerformanceData>(
-        propertyId ? `/performance/property/${propertyId}?period=${period}` : ''
-    );
+    // Fetch performance data for specific property or portfolio
+    const endpoint = propertyId
+        ? `/performance/property/${propertyId}?period=${period}`
+        : `/performance/portfolio?period=${period}`;
+
+    const { data: performanceData, isLoading: loading, error } = useFetch<PerformanceData>(endpoint);
 
     // Fetch overall income trends
     const { data: incomeTrends } = useFetch<IncomeTrendData[]>('/performance/income-trends?months=12');
