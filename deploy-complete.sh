@@ -92,7 +92,7 @@ server {
     server_name $VPS_IP;
 
     location / {
-        root /var/www/hermeos-proptech/dist;
+        root /var/www/hermeos-proptech/frontend/dist;
         try_files \$uri \$uri/ /index.html;
         add_header Cache-Control "no-cache";
     }
