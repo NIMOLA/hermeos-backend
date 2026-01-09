@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# Hermeos PropTech Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hermeos is a fractional real estate investment platform built with React (Frontend) and Express/Prisma (Backend).
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `frontend/` - React + Vite + Tailwind CSS
+- `backend/` - Node.js + Express + PostgreSQL (Prisma)
+- `docker-compose.yml` - Orchestration for production
 
-## React Compiler
+## Deployment Guide (VPS)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Docker & Docker Compose installed
+- Git installed
+- Root or sudo access
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Step-by-Step Deployment
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. **Clone/Pull the Repository**
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+   ```bash
+   cd /var/www/hermeos-proptech
+   git pull origin main
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. **Run the Deployment Script**
+   The `deploy-complete.sh` script handles Dependencies, Migrations, and Resets.
+
+   **Important:** You must make the script executable first.
+
+   ```bash
+   chmod +x deploy-complete.sh
+   ./deploy-complete.sh
+   ```
+
+### Manual Commands
+
+If you prefer running commands manually:
+
+```bash
+# Frontend
+cd frontend && npm run build
+
+# Backend
+cd backend && npm install --production
+
+# Database
+docker compose exec backend npx prisma db push
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Ensure you have a `.env` file in the root and `backend/` directories with:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `PORT`
