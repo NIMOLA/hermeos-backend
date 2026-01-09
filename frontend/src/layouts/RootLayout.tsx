@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function RootLayout() {
     const { isAuthenticated, isLoading, user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
     const handleLogout = () => {

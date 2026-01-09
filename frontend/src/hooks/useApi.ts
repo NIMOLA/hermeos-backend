@@ -7,6 +7,7 @@ type UseApiResult<T> = {
     error: ApiError | null;
     isLoading: boolean;
     refetch: () => Promise<void>;
+    setData: (data: T | null) => void;
 };
 
 export function useApi<T = any>(
@@ -93,6 +94,7 @@ export function useApi<T = any>(
         error,
         isLoading,
         refetch: async () => { await fetchData(); },
+        setData,
     };
 }
 
@@ -159,3 +161,5 @@ export function useMutation<T = any, B = any>(
 
     return { mutate, data, error, isLoading };
 }
+
+export { apiClient };
