@@ -77,6 +77,7 @@ echo ""
 
 # Step 5: Build Frontend
 echo -e "${YELLOW}🎨 Step 5: Building frontend...${NC}"
+cd frontend
 npm install
 npm run build
 echo -e "${GREEN}✓ Frontend built${NC}"
