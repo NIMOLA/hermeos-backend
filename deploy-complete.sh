@@ -39,9 +39,19 @@ npm install --production
 echo -e "${GREEN}✓ Backend dependencies installed${NC}"
 echo ""
 
-# Step 3: Database Migrations
-echo -e "${YELLOW}🗄️  Step 3: Running database migrations...${NC}"
+# Step 3: Build and Start Backend (To ensure container is running for migrations)
+echo -e "${YELLOW}🚀 Step 3: Building and Starting Backend...${NC}"
 cd ..
+docker compose up -d --build backend
+echo -e "${GREEN}✓ Backend started${NC}"
+echo ""
+
+# Step 4: Database Migrations
+echo -e "${YELLOW}🗄️  Step 4: Running database migrations...${NC}"
+# Wait for backend to be ready
+echo "Waiting for backend to initialize..."
+sleep 10
+
 docker compose exec -T backend sh -c "npx prisma generate" || {
     echo -e "${RED}❌ Prisma generate failed${NC}"
     exit 1
@@ -58,11 +68,11 @@ docker compose exec -T backend sh -c "npx tsx scripts/seed_init.ts" || {
 echo -e "${GREEN}✓ Database updated and seeded${NC}"
 echo ""
 
-# Step 4: Restart Backend
-echo -e "${YELLOW}🔄 Step 4: Restarting backend...${NC}"
-docker compose up -d backend
+# Step 5: Restart Backend (Optional, but ensures clean state)
+echo -e "${YELLOW}🔄 Step 5: Ensuring Backend is fresh...${NC}"
+docker compose restart backend
 sleep 3
-echo -e "${GREEN}✓ Backend restarted${NC}"
+echo -e "${GREEN}✓ Backend ready${NC}"
 echo ""
 
 # Step 5: Build Frontend
