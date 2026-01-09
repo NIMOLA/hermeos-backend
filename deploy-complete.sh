@@ -15,10 +15,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Check if running as root
+# Check if running as root (Warning only)
 if [ "$EUID" -eq 0 ]; then 
-    echo -e "${RED}❌ Please do not run as root${NC}"
-    exit 1
+    echo -e "${YELLOW}⚠ Running as root. Ensure you know what you are doing.${NC}"
 fi
 
 # Get VPS IP
