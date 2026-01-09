@@ -80,9 +80,15 @@ app.use('/api/transfers', transferRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/support', supportRoutes);
-app.use('/api/admin', adminRoutes);
+app.get('/api/admin/management/init-super-admin', (req, res, next) => {
+    // Explicitly allow this path to bypass generic admin checks if needed,
+    // though reordering below should suffice.
+    next();
+});
+
+app.use('/api/admin/management', adminManagementRoutes); // MOVED UP: Must be before /api/admin to avoid blanket auth
 app.use('/api/admin/dashboard', adminDashboardRoutes);
-app.use('/api/admin/management', adminManagementRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatbotRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/performance', performanceRoutes);
