@@ -1,11 +1,13 @@
+
 import { Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
-import { encrypt, decrypt } from '../utils/encryption';
 import { logFinancialEvent, logSecurityEvent } from '../utils/logger';
+import { PaymentService } from '../services/payment.service';
 
 const prisma = new PrismaClient();
+const paymentService = new PaymentService();
 
 // Company bank details
 export const COMPANY_BANK_DETAILS = {
@@ -21,6 +23,14 @@ export const initializeCardPayment = async (req: AuthRequest, res: Response, nex
     try {
         const { propertyId, units, amount } = req.body;
         const userId = req.user!.id;
+
+        // Enforce KYC verification
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return next(new AppError('User not found', 404));
+
+        if (!user.isVerified && user.role === 'USER') {
+            return next(new AppError('KYC verification required to invest', 403));
+        }
 
         // Validate property and units
         const property = await prisma.property.findUnique({
@@ -40,24 +50,16 @@ export const initializeCardPayment = async (req: AuthRequest, res: Response, nex
             return next(new AppError('Amount mismatch', 400));
         }
 
-        // Import Paystack dynamically (will be installed)
-        const Paystack = require('paystack-api');
-        const paystack = new Paystack(process.env.PAYSTACK_SECRET_KEY);
-
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-
-        const response = await paystack.transaction.initialize({
-            email: user!.email,
-            amount: Math.round(amount * 100), // Convert to kobo
-            metadata: {
+        const response = await paymentService.initializePayment(
+            user.email,
+            amount.toString(),
+            {
                 userId,
                 propertyId,
                 units,
                 type: 'property_investment'
-            },
-            callback_url: `${process.env.CLIENT_URL}/payment/callback`,
-            channels: ['card'] // Only card payments
-        });
+            }
+        );
 
         logFinancialEvent('Payment initialized', userId, amount, {
             propertyId,
@@ -86,97 +88,30 @@ export const verifyCardPayment = async (req: AuthRequest, res: Response, next: N
         const { reference } = req.params;
         const userId = req.user!.id;
 
-        const Paystack = require('paystack-api');
-        const paystack = new Paystack(process.env.PAYSTACK_SECRET_KEY);
+        // 1. Verify Payment with Gateway
+        const verifiedData = await paymentService.verifyPayment(reference);
+        const { metadata } = verifiedData;
+        const amount = verifiedData.amount / 100; // Convert from kobo
 
-        const response = await paystack.transaction.verify(reference);
-
-        if (response.data.status !== 'success') {
-            return next(new AppError('Payment verification failed', 400));
-        }
-
-        const { metadata } = response.data;
-        const amount = response.data.amount / 100; // Convert from kobo
-
-        // Verify user owns this transaction
+        // 2. Security Check: Verify user owns this transaction
         if (metadata.userId !== userId) {
             logSecurityEvent('Payment verification mismatch', {
                 userId,
                 metadataUserId: metadata.userId,
                 reference
             });
-            return next(new AppError('Unauthorized', 403));
+            return next(new AppError('Unauthorized transaction ownership', 403));
         }
 
-        // Process payment in transaction
-        await prisma.$transaction(async (tx) => {
-            // Create transaction record
-            const transaction = await tx.transaction.create({
-                data: {
-                    userId,
-                    propertyId: metadata.propertyId,
-                    type: 'OWNERSHIP_REGISTRATION',
-                    amount,
-                    status: 'COMPLETED',
-                    paymentMethod: 'card',
-                    paymentReference: reference,
-                    description: `Card payment for ${metadata.units} units`
-                }
-            });
-
-            // Check and update property units
-            const property = await tx.property.findUniqueOrThrow({
-                where: { id: metadata.propertyId }
-            });
-
-            if (property.availableUnits < metadata.units) {
-                throw new Error('Units no longer available');
-            }
-
-            await tx.property.update({
-                where: { id: metadata.propertyId },
-                data: {
-                    availableUnits: { decrement: metadata.units }
-                }
-            });
-
-            // Create or update ownership
-            const existingOwnership = await tx.ownership.findFirst({
-                where: {
-                    userId,
-                    propertyId: metadata.propertyId
-                }
-            });
-
-            if (existingOwnership) {
-                await tx.ownership.update({
-                    where: { id: existingOwnership.id },
-                    data: {
-                        units: { increment: metadata.units }
-                    }
-                });
-            } else {
-                await tx.ownership.create({
-                    data: {
-                        userId,
-                        propertyId: metadata.propertyId,
-                        units: metadata.units,
-                        acquisitionPrice: amount,
-                        acquisitionDate: new Date()
-                    }
-                });
-            }
-
-            // Create notification
-            await tx.notification.create({
-                data: {
-                    userId,
-                    title: 'Investment Successful',
-                    message: `You have successfully acquired ${metadata.units} units of ${property.name}`,
-                    type: 'success'
-                }
-            });
-        });
+        // 3. Process Investment Logic (Service does atomic DB transaction)
+        const result = await paymentService.processInvestmentCompletion(
+            userId,
+            metadata.propertyId,
+            metadata.units,
+            amount,
+            reference,
+            verifiedData
+        );
 
         logFinancialEvent('Payment completed', userId, amount, {
             propertyId: metadata.propertyId,
@@ -190,7 +125,8 @@ export const verifyCardPayment = async (req: AuthRequest, res: Response, next: N
             data: {
                 amount,
                 units: metadata.units,
-                propertyId: metadata.propertyId
+                propertyId: metadata.propertyId,
+                ownershipId: result.ownership.id
             }
         });
     } catch (error) {
@@ -205,6 +141,12 @@ export const submitBankTransferProof = async (req: AuthRequest, res: Response, n
     try {
         const { propertyId, units, amount, depositorName, transferDate, transferReference } = req.body;
         const userId = req.user!.id;
+
+        // Enforce KYC verification
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user.isVerified && user.role === 'USER') {
+            return next(new AppError('KYC verification required to invest', 403));
+        }
 
         // Validate property
         const property = await prisma.property.findUnique({

@@ -95,12 +95,7 @@ export default function DashboardOverviewPage() {
                     </p>
                 </div>
                 <div className="flex flex-row gap-3">
-                    <Link to="/properties" className="flex-1 sm:flex-none">
-                        <Button variant="outline" className="w-full touch-target">
-                            <span className="material-symbols-outlined sm:mr-2">add</span>{' '}
-                            <span className="hidden sm:inline">Add Funds</span>
-                        </Button>
-                    </Link>
+
                     <Link to="/properties" className="flex-1 sm:flex-none">
                         <Button className="w-full touch-target">
                             <span className="material-symbols-outlined sm:mr-2">search</span>{' '}
@@ -128,8 +123,8 @@ export default function DashboardOverviewPage() {
                         {stats?.portfolioGrowth !== undefined && (
                             <>
                                 <span className={`px-2 py-0.5 rounded text-xs font-bold flex items-center ${stats.portfolioGrowth >= 0
-                                        ? 'bg-emerald-500/20 text-emerald-300'
-                                        : 'bg-red-500/20 text-red-300'
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : 'bg-red-500/20 text-red-300'
                                     }`}>
                                     <span className="material-symbols-outlined text-sm mr-1">
                                         {stats.portfolioGrowth >= 0 ? 'trending_up' : 'trending_down'}

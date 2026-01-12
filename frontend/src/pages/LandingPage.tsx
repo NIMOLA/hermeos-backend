@@ -20,11 +20,11 @@ export default function LandingPage() {
                         Build Wealth with <span className="text-primary">Premium Real Estate</span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-300 mb-8 max-w-2xl leading-relaxed">
-                        Access high-yield residential and commercial properties in Nigeria's fastest-growing markets. Start your portfolio with as little as ₦500,000.
+                        Access verified, high-yield smart apartments in Nigeria's fastest-growing markets. Start your portfolio with as little as ₦500,000.
                     </p>
                     <div className="flex flex-col md:flex-row gap-4 justify-center md:justify-start">
                         <Link to="/login">
-                            <Button size="lg" className="w-full md:w-auto text-base font-bold h-12 px-8">
+                            <Button size="lg" className="w-full md:w-auto text-base font-bold h-12 px-8 bg-accent hover:bg-accent/90 text-white">
                                 Start Owning
                             </Button>
                         </Link>

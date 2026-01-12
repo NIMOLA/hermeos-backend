@@ -20,8 +20,8 @@ export default function AdminRoute({ children }: AdminRouteProps) {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   if (!isAdmin) {
-    // Redirect non-admins to user dashboard
-    return <Navigate to="/dashboard" replace />;
+    // Redirect non-admins to login to force credential verification
+    return <Navigate to="/login" replace />;
   }
 
   return children;

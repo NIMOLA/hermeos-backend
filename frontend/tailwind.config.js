@@ -9,17 +9,17 @@ export default {
         extend: {
             colors: {
                 'primary': {
-                    DEFAULT: '#1e3a8a', // Deep Blue
-                    50: '#eff6ff',
+                    DEFAULT: '#0F172A', // Deep Navy
+                    50: '#f0f4f8',
                     100: '#dbeafe',
                     200: '#bfdbfe',
                     300: '#93c5fd',
                     400: '#60a5fa',
                     500: '#3b82f6',
-                    600: '#1e3a8a',
-                    700: '#1e40af',
-                    800: '#1e3a8a',
-                    900: '#1e3a8a',
+                    600: '#2563eb',
+                    700: '#1d4ed8',
+                    800: '#1e40af',
+                    900: '#0F172A', // Deep Navy
                 },
                 'secondary': {
                     DEFAULT: '#059669', // Emerald Green
@@ -35,7 +35,7 @@ export default {
                     900: '#064e3b',
                 },
                 'accent': {
-                    DEFAULT: '#d97706', // Gold
+                    DEFAULT: '#C5A059', // Hermeos Gold
                     50: '#fffbeb',
                     100: '#fef3c7',
                     200: '#fde68a',
@@ -48,7 +48,7 @@ export default {
                     900: '#78350f',
                 },
                 "background-light": "#f6f7f8",
-                "background-dark": "#111921",
+                "background-dark": "#0F172A", // Deep Navy
                 "surface-dark": "#1C252E",
                 "border-dark": "#2A3B4C",
                 "text-secondary": "#93adc8",

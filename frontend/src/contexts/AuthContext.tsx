@@ -21,6 +21,7 @@ export interface User {
     role?: string; // Changed from 'user' | 'admin' to string to match backend enum
     createdAt?: string; // Made optional as login response doesn't always have it
     lastLogin?: string; // Added from backend
+    twoFactorEnabled?: boolean; // Added for 2FA feature
 }
 
 interface AuthContextType {
@@ -28,7 +29,7 @@ interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string, twoFactorCode?: string) => Promise<User | { requires2FA: boolean }>;
     register: (data: RegisterData) => Promise<void>;
     logout: () => void;
     updateUser: (user: User) => void;
@@ -96,14 +97,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     /**
      * Login user
      */
-    const login = async (email: string, password: string) => {
+    /**
+     * Login user
+     */
+    const login = async (email: string, password: string, twoFactorCode?: string) => {
         setIsLoading(true);
         try {
             // Response is now unwrapped by api-client
-            const response = await apiClient.post<{ token: string; user: User }>('/auth/login', {
+            const response = await apiClient.post<any>('/auth/login', {
                 email,
                 password,
+                twoFactorCode
             });
+
+            if (response.requires2FA) {
+                return { requires2FA: true };
+            }
 
             setToken(response.token);
             setUser(response.user);
@@ -111,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
             localStorage.setItem(VERSION_KEY, APP_VERSION);
+            return response.user;
         } catch (error) {
             throw error;
         } finally {

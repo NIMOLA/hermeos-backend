@@ -289,7 +289,7 @@ export default function SupportPage() {
                 href="https://wa.me/234800437636"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white py-3 px-5 rounded-full shadow-xl transition-transform hover:-translate-y-1"
+                className="fixed bottom-6 left-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white py-3 px-5 rounded-full shadow-xl transition-transform hover:-translate-y-1"
             >
                 <span className="material-symbols-outlined">chat</span>
                 <span className="font-bold">Chat with us</span>

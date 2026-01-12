@@ -116,6 +116,12 @@ export const createExitRequest = async (req: AuthRequest, res: Response, next: N
         }
 
         const userId = req.user!.id;
+
+        // KYC Guard
+        if (!req.user!.isVerified) {
+            return next(new AppError('Identity verification required for exit requests', 403));
+        }
+
         const { ownershipId, units, reason, bankName, accountNumber, accountName } = req.body;
 
         // Verify ownership exists and belongs to user
@@ -131,6 +137,16 @@ export const createExitRequest = async (req: AuthRequest, res: Response, next: N
 
         if (!ownership) {
             return next(new AppError('Ownership not found', 404));
+        }
+
+        // Enforce 365-day lock-in period
+        const acquisitionDate = new Date(ownership.acquisitionDate);
+        const oneYearFromAcquisition = new Date(acquisitionDate);
+        oneYearFromAcquisition.setFullYear(acquisitionDate.getFullYear() + 1);
+
+        if (new Date() < oneYearFromAcquisition) {
+            const daysRemaining = Math.ceil((oneYearFromAcquisition.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            return next(new AppError(`Investment is locked for 365 days. Days remaining: ${daysRemaining}`, 400));
         }
 
         // Validate units
@@ -195,6 +211,17 @@ export const createExitRequest = async (req: AuthRequest, res: Response, next: N
                 type: 'info'
             }
         });
+
+        // Send Email to User
+        try {
+            const { emailService } = await import('../services/email.service');
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            if (user) {
+                await emailService.sendExitRequestReceived(user.email, units);
+            }
+        } catch (err) {
+            console.error('Failed to send exit email', err);
+        }
 
         // Create notification for admins
         const admins = await prisma.user.findMany({

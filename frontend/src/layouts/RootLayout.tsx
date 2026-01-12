@@ -2,11 +2,14 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Chatbot from '../components/Chatbot';
 import { useAuth } from '../contexts/AuthContext';
+import logoFull from '../assets/logo-full.png';
+import logoIcon from '../assets/logo-icon.png';
 
 export default function RootLayout() {
-    const { isAuthenticated, isLoading, user, logout } = useAuth();
+    const { isAuthenticated, user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogout = () => {
         logout();
@@ -43,12 +46,8 @@ export default function RootLayout() {
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
                         <Link to="/" className="flex items-center gap-2 group">
-                            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                                <span className="material-symbols-outlined text-white text-xl">apartment</span>
-                            </div>
-                            <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                                Hermeos
-                            </span>
+                            <img src={logoFull} alt="Hermeos Proptech" className="h-10 w-auto hidden md:block" />
+                            <img src={logoIcon} alt="Hermeos" className="h-8 w-auto md:hidden" />
                         </Link>
 
                         {/* Public Action (Login/Theme) - Show on Landing Page only */}
@@ -131,6 +130,13 @@ export default function RootLayout() {
                                                 </div>
 
                                             </div>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="hidden sm:flex items-center justify-center p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Logout"
+                                            >
+                                                <span className="material-symbols-outlined">logout</span>
+                                            </button>
                                         </>
                                     ) : (
                                         // If not authenticated show login button only (or avatar placeholder)

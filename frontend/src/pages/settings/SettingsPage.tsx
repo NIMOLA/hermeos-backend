@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFetch } from '../../hooks/useApi';
+import { TwoFactorSetupModal } from '../../components/auth/TwoFactorSetupModal';
 
 export default function SettingsPage() {
     const { user } = useAuth();
     const { data: profile } = useFetch<any>('/user/profile'); // Fetch additional profile info if needed
     const [activeTab, setActiveTab] = useState("Personal Details");
+    const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
 
     const tabs = ["Personal Details", "Ownership Access", "Security", "Notifications"];
 
@@ -26,7 +28,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                        <Link to="/proceeds" className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
+                        <Link to="/dashboard" className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
                             <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 group-hover:text-primary transition-colors">dashboard</span>
                             <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">Dashboard</p>
                         </Link>
@@ -206,10 +208,22 @@ export default function SettingsPage() {
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">Secure your account with 2FA.</p>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" className="sr-only peer" />
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={user?.twoFactorEnabled || false}
+                                                    onChange={() => setShowTwoFactorSetup(true)}
+                                                    disabled={user?.twoFactorEnabled} // Can only enable here for now, disable needs separate flow
+                                                />
                                                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                                             </label>
                                         </div>
+                                        {user?.twoFactorEnabled && (
+                                            <div className="mt-4">
+                                                <p className="text-xs text-green-600 font-medium">2FA is currently active.</p>
+                                                {/* Add Disable Button logic later if needed */}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </section>
@@ -248,6 +262,10 @@ export default function SettingsPage() {
                         )}
                     </div>
                 </div>
+                <TwoFactorSetupModal
+                    isOpen={showTwoFactorSetup}
+                    onClose={() => setShowTwoFactorSetup(false)}
+                />
             </div>
         </div>
     );

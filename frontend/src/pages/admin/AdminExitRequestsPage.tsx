@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useFetch, apiClient } from '../../hooks/useApi'; // Ensure apiClient is imported
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
@@ -20,69 +21,36 @@ interface ExitRequest {
 }
 
 export default function AdminExitRequestsPage() {
-    const [requests, setRequests] = useState<ExitRequest[]>([
-        {
-            id: 1,
-            user: 'Aisha Bello',
-            userId: 'USR-2023-4521',
-            email: 'aisha.b@example.com',
-            asset: 'Oceanview Apartments',
-            units: 5,
-            price: '₦55,000',
-            total: '₦275,000',
-            date: 'Dec 23, 2023',
-            status: 'Pending',
-            reason: 'Personal financial needs',
-            accountNumber: '0123456789',
-            bankName: 'GTBank'
-        },
-        {
-            id: 2,
-            user: 'David Okafor',
-            userId: 'USR-2023-3890',
-            email: 'david.o@example.com',
-            asset: 'Greenfield Estate',
-            units: 10,
-            price: '₦40,000',
-            total: '₦400,000',
-            date: 'Dec 22, 2023',
-            status: 'Approved',
-            reason: 'Portfolio rebalancing',
-            accountNumber: '9876543210',
-            bankName: 'Access Bank'
-        },
-        {
-            id: 3,
-            user: 'John Doe',
-            userId: 'USR-2023-2341',
-            email: 'john.d@example.com',
-            asset: 'Oceanview Apartments',
-            units: 2,
-            price: '₦55,000',
-            total: '₦110,000',
-            date: 'Dec 20, 2023',
-            status: 'Rejected',
-            reason: 'Relocation abroad',
-            accountNumber: '1122334455',
-            bankName: 'Zenith Bank'
-        },
-    ]);
+    const { data: requests, refetch } = useFetch<ExitRequest[]>('/transfer-requests/all');
 
     const [selectedRequest, setSelectedRequest] = useState<ExitRequest | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
-    const handleApprove = (id: number) => {
-        setRequests(prev => prev.map(req =>
-            req.id === id ? { ...req, status: 'Approved' as const } : req
-        ));
-        setShowDetailModal(false);
+    const handleApprove = async (id: number) => {
+        if (!confirm('Are you sure you want to approve this request? This action cannot be undone.')) return;
+        try {
+            await apiClient.patch(`/transfer-requests/${id}/approve`);
+            refetch();
+            setShowDetailModal(false);
+            alert('Request approved successfully');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to approve request');
+        }
     };
 
-    const handleReject = (id: number) => {
-        setRequests(prev => prev.map(req =>
-            req.id === id ? { ...req, status: 'Rejected' as const } : req
-        ));
-        setShowDetailModal(false);
+    const handleReject = async (id: number) => {
+        const reason = prompt('Please enter a rejection reason:');
+        if (!reason) return;
+        try {
+            await apiClient.patch(`/transfer-requests/${id}/reject`, { rejectionReason: reason });
+            refetch();
+            setShowDetailModal(false);
+            alert('Request rejected');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to reject request');
+        }
     };
 
     const openDetailView = (request: ExitRequest) => {
@@ -119,7 +87,7 @@ export default function AdminExitRequestsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                                {requests.map((req) => (
+                                {(requests || []).map((req) => (
                                     <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                         <td className="p-4 text-sm font-medium text-slate-900 dark:text-white">#{req.id}</td>
                                         <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{req.user}</td>

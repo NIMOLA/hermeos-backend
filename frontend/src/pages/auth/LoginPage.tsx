@@ -4,6 +4,8 @@ import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 
+import { TwoFactorModal } from '../../components/auth/TwoFactorModal';
+
 export default function LoginPage() {
     const navigate = useNavigate();
     const { login } = useAuth();
@@ -13,19 +15,47 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    // 2FA State
+    const [showTwoFactor, setShowTwoFactor] = useState(false);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setIsLoading(true);
 
         try {
-            await login(email, password);
-            // Redirect based on user role or default to dashboard
-            navigate('/dashboard');
+            const result: any = await login(email, password);
+
+            if (result.requires2FA) {
+                setShowTwoFactor(true);
+                return;
+            }
+
+            const user = result;
+
+            // Redirect based on user role
+            if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err: any) {
             setError(err.message || 'Login failed. Please check your credentials.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleVerifyTwoFactor = async (token: string) => {
+        try {
+            const user: any = await login(email, password, token);
+            if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (err: any) {
+            throw err; // Modal handles error display
         }
     };
 
@@ -184,6 +214,13 @@ export default function LoginPage() {
                     </div>
                 </div>
             </div>
+
+            <TwoFactorModal
+                isOpen={showTwoFactor}
+                onClose={() => setShowTwoFactor(false)}
+                onVerify={handleVerifyTwoFactor}
+                email={email}
+            />
         </div>
     );
 }

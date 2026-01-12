@@ -97,9 +97,9 @@ export default function PerformancePage() {
 
     // Prepare allocation data
     const allocationData: AllocationData[] = performanceData ? [
-        { name: 'Partner Distribution', value: performanceData.allocations.partnerDistribution, color: '#197fe6' },
-        { name: 'Maintenance & Ops', value: performanceData.allocations.maintenanceOps, color: '#cbd5e1' },
-        { name: 'Proptech Fees', value: performanceData.allocations.proptechFees, color: '#f59e0b' },
+        { name: 'Investors', value: 80, color: '#197fe6' },
+        { name: 'Partners', value: 15, color: '#cbd5e1' },
+        { name: 'Platform', value: 5, color: '#f59e0b' },
     ] : [];
 
     const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

@@ -49,6 +49,12 @@ export const getMyOwnerships = async (req: AuthRequest, res: Response, next: Nex
 export const registerOwnership = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { propertyId, units, paymentReference } = req.body;
+        const user = req.user!;
+
+        // Enforce KYC verification
+        if (!user.isVerified && user.role === 'USER') {
+            return next(new AppError('KYC verification required to purchase assets', 403));
+        }
 
         // Validate property
         const property = await prisma.property.findUnique({

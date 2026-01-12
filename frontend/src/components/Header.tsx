@@ -27,6 +27,10 @@ export default function Header() {
                     </Link>
                 </nav>
                 <div className="flex items-center gap-4">
+                    <Link to="/notifications" className="relative text-slate-500 hover:text-primary transition-colors">
+                        <span className="material-symbols-outlined text-[24px]">notifications</span>
+                        {/* Optional: Add active state/badge here later */}
+                    </Link>
                     <Link to="/admin">
                         <button className="hidden sm:flex items-center gap-2 rounded-lg bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 text-sm font-bold shadow hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors border border-slate-700">
                             <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>

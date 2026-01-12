@@ -31,6 +31,10 @@ import twoFactorRoutes from './routes/twoFactor.routes';
 
 dotenv.config();
 
+// Validate Environment
+import { validateEnv } from './utils/validateEnv';
+validateEnv();
+
 const app: Application = express();
 export const prisma = new PrismaClient();
 

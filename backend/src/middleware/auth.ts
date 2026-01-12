@@ -11,6 +11,7 @@ export interface AuthRequest extends Request {
         id: string;
         email: string;
         role: UserRole;
+        isVerified: boolean;
     };
 }
 
@@ -56,10 +57,12 @@ export const protect = async (
         }
 
         // Attach user to request
+        // Attach user to request
         req.user = {
             id: user.id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            isVerified: user.isVerified
         };
 
         next();
@@ -124,7 +127,8 @@ export const optionalAuth = async (
             req.user = {
                 id: user.id,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                isVerified: user.isVerified
             };
         }
 

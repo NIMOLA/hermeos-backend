@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import * as authController from '../controllers/auth.controller';
+import * as twoFactorController from '../controllers/twoFactor.controller';
 import { protect } from '../middleware/auth';
 
 const router = Router();
@@ -27,6 +28,11 @@ router.post('/refresh-token', authController.refreshToken);
 router.post('/forgot-password', body('email').isEmail(), authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 router.get('/me', protect, authController.getMe);
+// 2FA Routes
+router.post('/2fa/setup', protect, twoFactorController.setup2FA);
+router.post('/2fa/verify', protect, twoFactorController.verify2FA);
+router.post('/2fa/disable', protect, twoFactorController.disable2FA);
+
 router.post('/logout', protect, authController.logout);
 
 export default router;
