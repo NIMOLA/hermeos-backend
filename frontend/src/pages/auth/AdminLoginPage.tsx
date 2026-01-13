@@ -69,150 +69,101 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex w-full relative">
-            {/* Back to Landing Page */}
+        <div className="min-h-screen flex w-full relative bg-slate-900">
+            {/* Back to Home */}
             <Link
                 to="/"
-                className="absolute top-6 left-6 z-50 flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg transition-all hover:shadow-md"
+                className="absolute top-6 left-6 z-50 flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white transition-colors bg-white/5 rounded-lg border border-white/10 hover:bg-white/10"
             >
                 <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 <span className="text-sm font-medium">Back to Home</span>
             </Link>
 
-            {/* Brand Section - Hidden on Mobile */}
-            <div className="hidden lg:flex w-1/2 bg-slate-900 relative overflow-hidden items-center justify-center">
-                <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547")' }}></div>
-                <div className="relative z-10 p-12 text-white max-w-lg">
-                    <div className="mb-8">
-                        <span className="material-symbols-outlined text-[48px] text-primary">apartment</span>
-                    </div>
-                    <h1 className="text-4xl font-bold mb-6">Acquire Premium Real Estate with Confidence.</h1>
-                    <p className="text-lg text-slate-300 leading-relaxed">
-                        Hermeos Proptech gives you access to high-yield residential and commercial properties across Nigeria. Track your portfolio, receive dividends, and manage assets all in one place.
-                    </p>
-                    <div className="mt-12 flex gap-4">
-                        <div className="flex -space-x-4">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-700"></div>
-                            ))}
-                        </div>
-                        <div className="flex flex-col justify-center">
-                            <span className="text-sm font-bold text-white">2,000+ Partners</span>
-                            <span className="text-xs text-slate-400">Trust Hermeos</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div className="w-full flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-[#0F172A] border border-slate-700 shadow-2xl rounded-2xl overflow-hidden relative">
+                    {/* Top Accent Line */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-red-900"></div>
 
-            {/* Login Form Section */}
-            <div className="w-full lg:w-1/2 bg-white dark:bg-[#111921] px-6 py-12 flex flex-col justify-center items-center overflow-y-auto">
-                <div className="w-full max-w-md space-y-8">
-                    <div className="text-center lg:text-left">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Welcome back</h2>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Please enter your details to access your account.</p>
-                    </div>
+                    <div className="p-8 sm:p-12">
+                        <div className="flex flex-col items-center text-center mb-8">
+                            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                                <span className="material-symbols-outlined text-3xl text-red-500">admin_panel_settings</span>
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Admin Portal</h2>
+                            <p className="text-slate-400 text-sm">
+                                Restricted access. Authorized personnel only.
+                            </p>
+                        </div>
 
-                    <form className="mt-8 space-y-6" onSubmit={handleLogin}>
                         {error && (
-                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm rounded-lg">
-                                {error}
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+                                <span className="material-symbols-outlined text-red-500 text-xl mt-0.5">error</span>
+                                <p className="text-sm text-red-400">{error}</p>
                             </div>
                         )}
 
-                        <div className="space-y-5">
+                        <form onSubmit={handleLogin} className="space-y-5">
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email address</label>
-                                <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    autoComplete="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="appearance-none block w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white"
-                                    placeholder="you@example.com"
-                                />
-                            </div>
-                            <div>
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-                                    <Link to="/forgot-password" className="text-sm font-medium text-primary hover:text-blue-500">Forgot password?</Link>
-                                </div>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                                    Administrative Email
+                                </label>
                                 <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 material-symbols-outlined text-[20px]">mail</span>
                                     <input
-                                        id="password"
-                                        name="password"
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder-slate-600"
+                                        placeholder="admin@hermeos.com"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 material-symbols-outlined text-[20px]">lock</span>
+                                    <input
                                         type={showPassword ? "text" : "password"}
-                                        autoComplete="current-password"
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="appearance-none block w-full px-3 py-2.5 pr-10 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white"
+                                        className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-lg pl-10 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder-slate-600"
                                         placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
                                     >
                                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex items-center">
-                            <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
-                            <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900 dark:text-slate-300">Remember me for 30 days</label>
-                        </div>
-
-                        <div>
-                            <Button type="submit" className="w-full h-11 text-base" disabled={isLoading}>
+                            <Button
+                                type="submit"
+                                className="w-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-medium py-2.5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-red-900/20 border-0"
+                                disabled={isLoading}
+                            >
                                 {isLoading ? (
-                                    <span className="flex items-center gap-2">
+                                    <span className="flex items-center justify-center gap-2">
                                         <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                        Signing in...
+                                        Authenticating...
                                     </span>
-                                ) : 'Sign in'}
+                                ) : 'Access Dashboard'}
                             </Button>
-                        </div>
-                    </form>
+                        </form>
 
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200 dark:border-slate-700"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white dark:bg-[#111921] text-slate-500">Or continue with</span>
+                        <div className="mt-8 pt-6 border-t border-slate-700/50 text-center">
+                            <p className="text-xs text-slate-500">
+                                This system is monitored. All access attempts are logged.
+                            </p>
                         </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3 opacity-50 pointer-events-none">
-                        <button
-                            type="button"
-                            disabled
-                            onClick={() => handleSocialLogin('google')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
-                        >
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                            <span className="text-sm font-medium text-slate-500">Google</span>
-                        </button>
-                        <button
-                            type="button"
-                            disabled
-                            onClick={() => handleSocialLogin('apple')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
-                        >
-                            <span className="material-symbols-outlined text-[20px] text-slate-500">apple</span>
-                            <span className="text-sm font-medium text-slate-500">Apple</span>
-                        </button>
-                    </div>
-
-                    <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-                        Don't have an account? <Link to="/signup" className="font-semibold text-primary hover:text-blue-500">Sign up</Link>
-                    </p>
-
                 </div>
             </div>
 
