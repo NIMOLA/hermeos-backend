@@ -36,7 +36,8 @@ export default function RootLayout() {
 
     const isLandingPage = location.pathname === '/';
     const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(location.pathname);
-    const shouldHideNav = isLandingPage || isAuthPage;
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    const shouldHideNav = isLandingPage || isAuthPage || isAdminRoute;
 
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark">

@@ -3,10 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function EditPropertyPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const isNew = !id;
 
     const [loading, setLoading] = useState(!isNew);
@@ -22,7 +24,7 @@ export default function EditPropertyPage() {
         totalUnits: 0,
         pricePerUnit: 0,
         capitalRaised: 0,
-        status: 'OPEN', // OPEN, CLOSED, PENDING
+        status: 'DRAFT', // Default for new
         images: [] as string[]
     });
 
@@ -31,8 +33,8 @@ export default function EditPropertyPage() {
             // Fetch Property Details
             apiClient.get(`/properties/${id}`)
                 .then(res => {
-                    const data = (res as any).data; // Cast to any to handle unknown type
-                    const p = data?.data || data; // Handle structure variation
+                    const data = (res as any).data;
+                    const p = data?.data || data;
                     if (p) {
                         setFormData({
                             name: p.name,
@@ -43,7 +45,7 @@ export default function EditPropertyPage() {
                             totalUnits: Number(p.totalUnits),
                             pricePerUnit: Number(p.pricePerUnit),
                             capitalRaised: Number(p.capitalRaised || 0),
-                            status: p.status || 'OPEN',
+                            status: p.status || 'DRAFT',
                             images: p.images || []
                         });
                     }
@@ -81,23 +83,62 @@ export default function EditPropertyPage() {
             };
 
             if (isNew) {
+                // Create (always DRAFT)
                 await apiClient.post('/properties', payload);
-                alert("Asset created successfully!");
+                alert("Asset drafted successfully!");
                 navigate('/admin/assets');
             } else {
+                // Update
                 await apiClient.put(`/properties/${id}`, payload);
                 alert("Asset updated successfully!");
-                navigate('/admin/assets');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Save failed", error);
-            alert("Failed to save asset. Check console for details.");
+            alert(error.response?.data?.message || "Failed to save asset.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSubmitForReview = async () => {
+        if (!confirm("Submit this property for Admin review?")) return;
+        setSaving(true);
+        try {
+            await apiClient.put(`/properties/${id}/submit`);
+            alert("Property Submitted for Review!");
+            navigate('/admin/assets');
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to submit.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handlePublish = async () => {
+        if (!confirm("Are you sure you want to PUBLISH this property live?")) return;
+        setSaving(true);
+        try {
+            await apiClient.put(`/properties/${id}/publish`);
+            alert("Property Published Live!");
+            navigate('/admin/assets'); // Or reload
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to publish.");
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) return <div className="p-10 text-center">Loading asset details...</div>;
+
+    const isModerator = user?.role === 'MODERATOR';
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+    const isPublished = formData.status === 'PUBLISHED' || formData.status === 'LISTED';
+    const isPending = formData.status === 'PENDING_REVIEW';
+    const isDraft = formData.status === 'DRAFT';
+
+    // Restriction Logic
+    // Moderators cannot edit if Published
+    const isReadOnly = isModerator && isPublished;
 
     return (
         <div className="max-w-6xl mx-auto flex flex-col gap-6">
@@ -116,10 +157,10 @@ export default function EditPropertyPage() {
                     </h1>
                     {!isNew && (
                         <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+                            <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
                                 {formData.status}
                             </Badge>
-                            <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">ID: {id}</span>
+                            <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">ID: {id?.substring(0, 8)}</span>
                         </div>
                     )}
                 </div>
@@ -127,10 +168,27 @@ export default function EditPropertyPage() {
                     <Button variant="outline" onClick={() => navigate('/admin/assets')}>
                         Cancel
                     </Button>
-                    <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-blue-600 text-white">
-                        {saving ? 'Saving...' : 'Save Changes'}
-                        {!saving && <span className="material-symbols-outlined ml-2 text-[18px]">save</span>}
-                    </Button>
+
+                    {/* Save Button (Draft/Edit) */}
+                    {!isReadOnly && (
+                        <Button onClick={handleSave} disabled={saving || isReadOnly} className="bg-slate-800 text-white hover:bg-slate-700">
+                            {saving ? 'Saving...' : 'Save Draft'}
+                        </Button>
+                    )}
+
+                    {/* Moderator Action: Submit */}
+                    {!isNew && isModerator && isDraft && (
+                        <Button onClick={handleSubmitForReview} disabled={saving} className="bg-blue-600 text-white hover:bg-blue-700">
+                            Submit for Review
+                        </Button>
+                    )}
+
+                    {/* Admin Action: Publish */}
+                    {!isNew && isAdmin && (isPending || isDraft) && (
+                        <Button onClick={handlePublish} disabled={saving} className="bg-emerald-600 text-white hover:bg-emerald-700">
+                            Publish Live
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -150,7 +208,8 @@ export default function EditPropertyPage() {
                                     name="name"
                                     value={formData.name}
                                     onChange={handleInputChange}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border"
+                                    disabled={isReadOnly}
+                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
                                     type="text"
                                     placeholder="e.g. The Eko Atlantic Heights"
                                 />
@@ -163,7 +222,8 @@ export default function EditPropertyPage() {
                                         name="location"
                                         value={formData.location}
                                         onChange={handleInputChange}
-                                        className="w-full pl-10 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border"
+                                        disabled={isReadOnly}
+                                        className="w-full pl-10 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
                                         type="text"
                                         placeholder="Full address"
                                     />
@@ -175,7 +235,8 @@ export default function EditPropertyPage() {
                                     name="description"
                                     value={formData.description}
                                     onChange={handleInputChange}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-3 border"
+                                    disabled={isReadOnly}
+                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-3 border disabled:opacity-50"
                                     rows={4}
                                     placeholder="Describe the asset..."
                                 />
@@ -198,22 +259,15 @@ export default function EditPropertyPage() {
                                     <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
                                     <input
                                         name="totalValue"
-                                        type="number"
                                         value={formData.totalValue}
                                         onChange={handleInputChange}
-                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono p-2 border"
+                                        // Moderators cannot edit valuation once set? Or maybe just restricted in general? 
+                                        // For now, allow edit unless published
+                                        disabled={isReadOnly}
+                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
+                                        type="number"
                                     />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Units *</label>
-                                <input
-                                    name="totalUnits"
-                                    type="number"
-                                    value={formData.totalUnits}
-                                    onChange={handleInputChange}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono p-2 border"
-                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Price Per Unit *</label>
@@ -221,50 +275,56 @@ export default function EditPropertyPage() {
                                     <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
                                     <input
                                         name="pricePerUnit"
-                                        type="number"
                                         value={formData.pricePerUnit}
                                         onChange={handleInputChange}
-                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono p-2 border"
+                                        disabled={isReadOnly}
+                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
+                                        type="number"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Capital Raised (Read Only)</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
-                                    <input
-                                        disabled
-                                        value={formData.capitalRaised.toLocaleString()}
-                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-mono p-2 border cursor-not-allowed"
-                                    />
-                                </div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Units *</label>
+                                <input
+                                    name="totalUnits"
+                                    value={formData.totalUnits}
+                                    onChange={handleInputChange}
+                                    disabled={isReadOnly}
+                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
+                                    type="number"
+                                />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="lg:col-span-1 flex flex-col gap-6">
-                    {/* Status Configuration */}
-                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-slate-400">tune</span> Status Configuration
-                            </h2>
-                        </div>
-                        <div className="p-6 flex flex-col gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Asset Status</label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleInputChange}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border"
-                                >
-                                    <option value="OPEN">Open for Subscription</option>
-                                    <option value="CLOSED">Transaction Closed</option>
-                                    <option value="PENDING">Offer Pending</option>
-                                </select>
+                {/* Sidebar / Status */}
+                <div className="flex flex-col gap-6">
+                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                        <h3 className="font-bold text-slate-900 dark:text-white mb-4">Status & Workflow</h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-500">Current Status</span>
+                                <Badge>{formData.status}</Badge>
                             </div>
+
+                            {isModerator && isPublished && (
+                                <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-100">
+                                    Property is Published. Contact Admin for changes.
+                                </div>
+                            )}
+
+                            {isModerator && isPending && (
+                                <div className="p-3 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100">
+                                    Submited for Review. Waiting for Admin.
+                                </div>
+                            )}
+
+                            {isAdmin && isPending && (
+                                <div className="p-3 bg-green-50 text-green-800 text-xs rounded border border-green-100">
+                                    Ready for Review. Check details before publishing.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

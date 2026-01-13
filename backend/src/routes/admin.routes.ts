@@ -12,6 +12,9 @@ router.use(authorize('ADMIN', 'SUPER_ADMIN'));
 // Dashboard stats
 router.get('/dashboard/stats', adminController.getDashboardStats);
 
+// Invitation
+router.post('/invite', adminController.inviteAdmin);
+
 // User management
 router.get('/users', adminController.getAllUsers);
 router.get('/users/:id', adminController.getUserById);
@@ -20,6 +23,7 @@ router.put('/users/:id/role', adminController.updateUserRole);
 
 // KYC management
 router.get('/kyc/pending', adminController.getPendingKYC);
+router.put('/kyc/:id/review', adminController.reviewKYC); // Mod action
 router.put('/kyc/:id/approve', adminController.approveKYC);
 router.put('/kyc/:id/reject', adminController.rejectKYC);
 

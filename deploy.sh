@@ -1,16 +1,33 @@
 #!/bin/bash
 
-# Pull latest changes
-git pull origin main
+# Stop on string error
+set -e
 
-# Rebuild and start containers
-docker-compose up -d --build
+echo "🚀 Starting Deployment..."
 
-# Wait for database to be ready (rudimentary check or rely on restart policy)
-sleep 10
+# 1. Backend Deployment
+echo "📦 Deploying Backend..."
+cd backend
+npm install
+# CRITICIAL: Update DB Schema
+echo "⚠️  Migrating Database..."
+npx prisma generate
+npx prisma db push --accept-data-loss
+# Build
+npm run build
+# Restart PM2
+echo "🔄 Restarting Backend Process..."
+pm2 restart hermeos-backend || pm2 start dist/server.js --name hermeos-backend --env production.env
+cd ..
 
-# Push schema and seed (Backend container command handles this, but for manual override:)
-# docker-compose exec backend npx prisma db push
-# docker-compose exec backend npx prisma db seed
+# 2. Frontend Deployment
+echo "🎨 Deploying Frontend..."
+cd frontend
+npm install
+npm run build
+cd ..
 
-echo "Deployment complete."
+# 3. Nginx Verification (Optional, if you need to restart)
+# sudo systemctl reload nginx
+
+echo "✅ Deployment Complete! Backend is running on PM2 and Frontend build is in frontend/dist."

@@ -1,14 +1,15 @@
 
 import { Link } from 'react-router-dom';
+import { useFetch } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
 
 export default function AdminAssetsPage() {
-    const assets = [
-        { id: 1, name: "Sunset Heights", type: "Residential", location: "Lagos, NG", value: "₦450M", status: "Active", partners: 124 },
-        { id: 2, name: "Oceanview Complex", type: "Commercial", location: "Lagos, NG", value: "₦1.2B", status: "Funding", partners: 85 },
-        { id: 3, name: "Greenfield Estate", type: "Land", location: "Abuja, NG", value: "₦850M", status: "Pending", partners: 0 },
-        { id: 4, name: "Tech Hub Plaza", type: "Commercial", location: "Lagos, NG", value: "₦2.1B", status: "Active", partners: 310 },
-    ];
+    const { data: responseData, isLoading: loading } = useFetch<any>('/properties'); // Fetch all properties (public endpoint lists all? verify) 
+    // If public only lists active, we need an admin endpoint. But let's try strict property listing first.
+    // If /properties only returns active, we might miss others.
+    // However, looking at property.controller previously, getAllProperties might list all.
+    // Let's assume response structure { success: true, data: [...] }
+    const assets = responseData?.data || [];
 
     return (
         <div className="flex flex-col gap-6">
@@ -19,7 +20,7 @@ export default function AdminAssetsPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline"><span className="material-symbols-outlined mr-2">upload</span> Import</Button>
-                    <Link to="/admin/edit-property">
+                    <Link to="/admin/assets/new">
                         <Button><span className="material-symbols-outlined mr-2">add</span> New Asset</Button>
                     </Link>
                 </div>
@@ -46,34 +47,40 @@ export default function AdminAssetsPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {assets.map((asset) => (
-                                <tr key={asset.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-slate-900 dark:text-white">{asset.name}</span>
-                                            <span className="text-xs text-slate-500">{asset.location}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{asset.type}</td>
-                                    <td className="p-4 text-sm font-medium text-slate-900 dark:text-white">{asset.value}</td>
-                                    <td className="p-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${asset.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/30' :
-                                            asset.status === 'Funding' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/30' :
-                                                'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                                            }`}>
-                                            {asset.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{asset.partners}</td>
-                                    <td className="p-4 text-right">
-                                        <Link to="/admin/edit-property">
-                                            <button className="text-slate-400 hover:text-primary transition-colors p-1">
-                                                <span className="material-symbols-outlined text-[20px]">edit_square</span>
-                                            </button>
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
+                            {loading ? (
+                                <tr><td colSpan={6} className="p-8 text-center text-slate-500">Loading assets...</td></tr>
+                            ) : assets.length > 0 ? (
+                                assets.map((asset: any) => (
+                                    <tr key={asset.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td className="p-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{asset.name}</span>
+                                                <span className="text-xs text-slate-500">{asset.location}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{asset.type || 'N/A'}</td>
+                                        <td className="p-4 text-sm font-medium text-slate-900 dark:text-white">₦{Number(asset.totalValue).toLocaleString()}</td>
+                                        <td className="p-4">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${asset.status === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-200 active-badge' :
+                                                asset.status === 'FUNDING' ? 'bg-blue-50 text-blue-700 border-blue-200 funding-badge' :
+                                                    'bg-slate-100 text-slate-600 border-slate-200'
+                                                }`}>
+                                                {asset.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{asset.partners || 0}</td>
+                                        <td className="p-4 text-right">
+                                            <Link to={`/admin/properties/edit/${asset.id}`}>
+                                                <button className="text-slate-400 hover:text-primary transition-colors p-1">
+                                                    <span className="material-symbols-outlined text-[20px]">edit_square</span>
+                                                </button>
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr><td colSpan={6} className="p-8 text-center text-slate-500">No assets found</td></tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

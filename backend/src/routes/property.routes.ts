@@ -21,7 +21,7 @@ router.get('/:id/performance', protect, propertyDetailsController.getPropertyPer
 router.post(
     '/',
     protect,
-    authorize('ADMIN', 'SUPER_ADMIN'),
+    authorize('MODERATOR', 'ADMIN', 'SUPER_ADMIN'), // Moderators can Create Drafts
     [
         body('name').trim().notEmpty(),
         body('location').trim().notEmpty(),
@@ -35,9 +35,14 @@ router.post(
 router.put(
     '/:id',
     protect,
-    authorize('ADMIN', 'SUPER_ADMIN'),
+    authorize('MODERATOR', 'ADMIN', 'SUPER_ADMIN'),
     propertyController.updateProperty
 );
+
+// Workflow Actions
+router.put('/:id/submit', protect, authorize('MODERATOR', 'SUPER_ADMIN'), propertyController.submitProperty);
+router.put('/:id/publish', protect, authorize('ADMIN', 'SUPER_ADMIN'), propertyController.publishProperty);
+router.put('/:id/price', protect, authorize('ADMIN', 'SUPER_ADMIN'), propertyController.updatePrice);
 
 router.delete(
     '/:id',

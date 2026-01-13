@@ -263,19 +263,21 @@ export default function DashboardOverviewPage() {
 
                 {/* Sidebar Widgets */}
                 <div className="space-y-6">
-                    <Card className="bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30">
-                        <CardContent className="p-6">
-                            <h3 className="font-bold text-blue-900 dark:text-blue-300 mb-2">Complete Verification</h3>
-                            <p className="text-sm text-blue-700 dark:text-blue-400 mb-4">
-                                Unlock higher limits and withdrawal features by completing your KYC.
-                            </p>
-                            <Link to="/kyc/status">
-                                <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white border-none">
-                                    Check Status
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
+                    {!user?.isVerified && (
+                        <Card className="bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30">
+                            <CardContent className="p-6">
+                                <h3 className="font-bold text-blue-900 dark:text-blue-300 mb-2">Complete Verification</h3>
+                                <p className="text-sm text-blue-700 dark:text-blue-400 mb-4">
+                                    Unlock higher limits and withdrawal features by completing your KYC.
+                                </p>
+                                <Link to="/kyc/status">
+                                    <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white border-none">
+                                        {user?.kycStatus === 'pending' || user?.kycStatus === 'pending_admin_review' ? 'View Status' : 'Start Verification'}
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Card>
                         <CardHeader>

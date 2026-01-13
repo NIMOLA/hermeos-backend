@@ -21,10 +21,14 @@ enum UserRole {
 }
 
 enum PropertyStatus {
-  LISTED
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  LISTED // Keeping for migration safety
   FULLY_SUBSCRIBED
   CLOSED
   DELISTED
+  ARCHIVED
 }
 
 enum TransactionType {

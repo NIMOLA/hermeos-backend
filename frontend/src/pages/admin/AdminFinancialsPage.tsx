@@ -146,42 +146,42 @@ export default function AdminFinancialsPage() {
                 </Card>
             </div>
 
-            {/* Revenue Breakdown */}
+            {/* Revenue Breakdown & Quick Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Revenue Sources</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Acquisition Fees</span>
-                                    <span className="text-sm font-bold text-slate-900 dark:text-white">₦48,750 (62.5%)</span>
+                        {transactions.length > 0 ? (
+                            <div className="space-y-4">
+                                {/* Improved Mock Logic for Demo Purposes if real types aren't distinguished yet */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Property Investments</span>
+                                        <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                            {formatCurrency(transactions.filter(t => t.type === 'INVESTMENT').reduce((acc, t) => acc + t.amount, 0))}
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${totalRevenue > 0 ? (transactions.filter(t => t.type === 'INVESTMENT').reduce((acc, t) => acc + t.amount, 0) / totalRevenue) * 100 : 0}%` }}></div>
+                                    </div>
                                 </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '62.5%' }}></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Exit Fees</span>
-                                    <span className="text-sm font-bold text-slate-900 dark:text-white">₦18,250 (23.4%)</span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                                    <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '23.4%' }}></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Management Fees</span>
-                                    <span className="text-sm font-bold text-slate-900 dark:text-white">₦11,000 (14.1%)</span>
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: '14.1%' }}></div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Wallet Deposits</span>
+                                        <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                            {formatCurrency(transactions.filter(t => t.type === 'DEPOSIT').reduce((acc, t) => acc + t.amount, 0))}
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                        <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${totalRevenue > 0 ? (transactions.filter(t => t.type === 'DEPOSIT').reduce((acc, t) => acc + t.amount, 0) / totalRevenue) * 100 : 0}%` }}></div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="text-center py-8 text-slate-500">No revenue data available for breakdown.</div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -192,15 +192,21 @@ export default function AdminFinancialsPage() {
                     <CardContent className="space-y-4">
                         <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
                             <span className="text-sm text-slate-500">Total Transactions</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">142</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">{transactions.length}</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
                             <span className="text-sm text-slate-500">Avg Transaction</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">₦36,620</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                {transactions.length > 0 ? formatCurrency(totalRevenue / transactions.length) : '₦0'}
+                            </span>
                         </div>
                         <div className="flex justify-between items-center py-2">
-                            <span className="text-sm text-slate-500">Processing Success Rate</span>
-                            <span className="text-sm font-bold text-emerald-600">98.5%</span>
+                            <span className="text-sm text-slate-500">Success Rate</span>
+                            <span className="text-sm font-bold text-emerald-600">
+                                {transactions.length > 0
+                                    ? ((transactions.filter(t => t.status === 'COMPLETED' || t.status === 'SUCCESS').length / transactions.length) * 100).toFixed(1)
+                                    : 0}%
+                            </span>
                         </div>
                     </CardContent>
                 </Card>
