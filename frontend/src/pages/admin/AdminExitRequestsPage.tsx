@@ -1,27 +1,35 @@
 import { useState } from 'react';
-import { useFetch, apiClient } from '../../hooks/useApi'; // Ensure apiClient is imported
+import { useFetch, apiClient } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 
 interface ExitRequest {
     id: number;
-    user: string;
-    userId: string;
-    email: string;
-    asset: string;
+    user: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+    };
+    ownership: {
+        property: {
+            name: string;
+        };
+    };
     units: number;
-    price: string;
-    total: string;
-    date: string;
-    status: 'Pending' | 'Approved' | 'Rejected';
-    reason: string;
-    accountNumber?: string;
-    bankName?: string;
+    pricePerUnit: string;
+    totalAmount: string; // Ensure backend sends this or calculate it
+    createdAt: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    reason?: string;
+    // Add other fields as per backend response
 }
 
 export default function AdminExitRequestsPage() {
-    const { data: requests, refetch } = useFetch<ExitRequest[]>('/transfer-requests/all');
+    // Use the correct Admin Endpoint for listing all requests
+    const { data: responseData, refetch } = useFetch<any>('/admin/transfers');
+    const requests: ExitRequest[] = responseData?.data || [];
 
     const [selectedRequest, setSelectedRequest] = useState<ExitRequest | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -29,7 +37,7 @@ export default function AdminExitRequestsPage() {
     const handleApprove = async (id: number) => {
         if (!confirm('Are you sure you want to approve this request? This action cannot be undone.')) return;
         try {
-            await apiClient.patch(`/transfer-requests/${id}/approve`);
+            await apiClient.put(`/admin/transfers/${id}/approve`);
             refetch();
             setShowDetailModal(false);
             alert('Request approved successfully');
@@ -43,7 +51,7 @@ export default function AdminExitRequestsPage() {
         const reason = prompt('Please enter a rejection reason:');
         if (!reason) return;
         try {
-            await apiClient.patch(`/transfer-requests/${id}/reject`, { rejectionReason: reason });
+            await apiClient.put(`/admin/transfers/${id}/reject`, { rejectionReason: reason });
             refetch();
             setShowDetailModal(false);
             alert('Request rejected');
@@ -87,54 +95,73 @@ export default function AdminExitRequestsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                                {(requests || []).map((req) => (
-                                    <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                        <td className="p-4 text-sm font-medium text-slate-900 dark:text-white">#{req.id}</td>
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{req.user}</td>
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{req.asset}</td>
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{req.units} @ {req.price}</td>
-                                        <td className="p-4 text-sm font-bold text-slate-900 dark:text-white">{req.total}</td>
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{req.date}</td>
-                                        <td className="p-4">
-                                            <Badge className={
-                                                req.status === 'Pending' ? 'bg-orange-100 text-orange-700' :
-                                                    req.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                                                        'bg-red-100 text-red-700'
-                                            }>
-                                                {req.status}
-                                            </Badge>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => openDetailView(req)}
-                                                    className="h-8 w-8 p-0 flex items-center justify-center border border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
-                                                    title="View Details"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm">visibility</span>
-                                                </button>
-                                                {req.status === 'Pending' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleApprove(req.id)}
-                                                            className="h-8 w-8 p-0 flex items-center justify-center border border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20 rounded transition-colors"
-                                                            title="Approve"
-                                                        >
-                                                            <span className="material-symbols-outlined text-sm">check</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleReject(req.id)}
-                                                            className="h-8 w-8 p-0 flex items-center justify-center border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 rounded transition-colors"
-                                                            title="Reject"
-                                                        >
-                                                            <span className="material-symbols-outlined text-sm">close</span>
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
+                                {requests.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="p-8 text-center text-slate-500">
+                                            No exit requests found.
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    requests.map((req) => (
+                                        <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                            <td className="p-4 text-sm font-medium text-slate-900 dark:text-white">#{req.id}</td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                                                {req.user?.firstName} {req.user?.lastName}
+                                            </td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                                                {req.ownership?.property?.name}
+                                            </td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                                                {req.units} @ {req.pricePerUnit}
+                                            </td>
+                                            <td className="p-4 text-sm font-bold text-slate-900 dark:text-white">
+                                                {/* Calculate total if not provided, assuming price is number string */}
+                                                {req.totalAmount || "N/A"}
+                                            </td>
+                                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
+                                                {new Date(req.createdAt).toLocaleDateString()}
+                                            </td>
+                                            <td className="p-4">
+                                                <Badge className={
+                                                    req.status === 'PENDING' ? 'bg-orange-100 text-orange-700' :
+                                                        req.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                                                            'bg-red-100 text-red-700'
+                                                }>
+                                                    {req.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => openDetailView(req)}
+                                                        className="h-8 w-8 p-0 flex items-center justify-center border border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                                        title="View Details"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">visibility</span>
+                                                    </button>
+                                                    {req.status === 'PENDING' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleApprove(req.id)}
+                                                                className="h-8 w-8 p-0 flex items-center justify-center border border-green-200 text-green-600 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20 rounded transition-colors"
+                                                                title="Approve"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm">check</span>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReject(req.id)}
+                                                                className="h-8 w-8 p-0 flex items-center justify-center border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                                title="Reject"
+                                                            >
+                                                                <span className="material-symbols-outlined text-sm">close</span>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -165,19 +192,15 @@ export default function AdminExitRequestsPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Name</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.user}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">User ID</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.userId}</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.user?.firstName} {selectedRequest.user?.lastName}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Email</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.email}</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.user?.email}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Request Date</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.date}</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{new Date(selectedRequest.createdAt).toLocaleString()}</p>
                                     </div>
                                 </div>
                             </div>
@@ -188,7 +211,7 @@ export default function AdminExitRequestsPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Property</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.asset}</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.ownership?.property?.name}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Units to Sell</p>
@@ -196,44 +219,21 @@ export default function AdminExitRequestsPage() {
                                     </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Unit Price</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.price}</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.pricePerUnit}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-slate-500 mb-1">Total Value</p>
-                                        <p className="text-sm font-bold text-primary">{selectedRequest.total}</p>
+                                        <p className="text-sm font-bold text-primary">{selectedRequest.totalAmount || "N/A"}</p>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Payment Information */}
-                            <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
-                                <h3 className="text-sm font-bold text-slate-500 uppercase mb-3">Payment Details</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Bank Name</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.bankName}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-slate-500 mb-1">Account Number</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.accountNumber}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Reason */}
-                            <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
-                                <h3 className="text-sm font-bold text-slate-500 uppercase mb-3">Reason for Exit</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
-                                    {selectedRequest.reason}
-                                </p>
                             </div>
 
                             {/* Status */}
                             <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
                                 <h3 className="text-sm font-bold text-slate-500 uppercase mb-3">Status</h3>
                                 <Badge className={
-                                    selectedRequest.status === 'Pending' ? 'bg-orange-100 text-orange-700 text-sm px-3 py-1' :
-                                        selectedRequest.status === 'Approved' ? 'bg-emerald-100 text-emerald-700 text-sm px-3 py-1' :
+                                    selectedRequest.status === 'PENDING' ? 'bg-orange-100 text-orange-700 text-sm px-3 py-1' :
+                                        selectedRequest.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 text-sm px-3 py-1' :
                                             'bg-red-100 text-red-700 text-sm px-3 py-1'
                                 }>
                                     {selectedRequest.status}
@@ -242,7 +242,7 @@ export default function AdminExitRequestsPage() {
                         </div>
 
                         {/* Action Buttons */}
-                        {selectedRequest.status === 'Pending' && (
+                        {selectedRequest.status === 'PENDING' && (
                             <div className="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
                                 <Button
                                     variant="outline"
