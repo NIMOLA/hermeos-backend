@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 
 export default function AdminUserDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { data: responseData, loading, error, refetch } = useFetch<any>(`/admin/users/${id}`);
+    const { data: responseData, isLoading, error, refetch } = useFetch<any>(`/admin/users/${id}`);
 
     // Safety check: Backend returns { success: true, data: user }
     const user = responseData?.data;
@@ -49,7 +49,7 @@ export default function AdminUserDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading user details...</div>;
+    if (isLoading) return <div className="p-8 text-center">Loading user details...</div>;
     if (error || !user) return <div className="p-8 text-center text-red-500">Error loading user or user not found.</div>;
 
     // Helper to determine badge color

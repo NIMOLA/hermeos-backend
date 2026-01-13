@@ -31,7 +31,8 @@ export default function EditPropertyPage() {
             // Fetch Property Details
             apiClient.get(`/properties/${id}`)
                 .then(res => {
-                    const p = res.data.data || res.data; // Handle structure variation
+                    const data = (res as any).data; // Cast to any to handle unknown type
+                    const p = data?.data || data; // Handle structure variation
                     if (p) {
                         setFormData({
                             name: p.name,
