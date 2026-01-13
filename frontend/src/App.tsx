@@ -20,6 +20,7 @@ const AdminFinancialsPage = lazy(() => import('./pages/admin/AdminFinancialsPage
 const EditPropertyPage = lazy(() => import('./pages/admin/EditPropertyPage'));
 const AuditTrailPage = lazy(() => import('./pages/admin/AuditTrailPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const AdminLoginPage = lazy(() => import('./pages/auth/AdminLoginPage'));
 const SignupPage = lazy(() => import('./pages/auth/SignupPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 const KYCInfoPage = lazy(() => import('./pages/kyc/KYCInfoPage'));
@@ -53,6 +54,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/terms" element={<TermsPage />} />

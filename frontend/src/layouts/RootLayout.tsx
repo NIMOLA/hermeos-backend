@@ -49,12 +49,12 @@ export default function RootLayout() {
                             <img
                                 src={logoFull}
                                 alt="Hermeos Proptech"
-                                className="h-14 w-auto hidden md:block dark:filter-none filter brightness-0 transition-all duration-300"
+                                className="h-28 w-auto hidden md:block dark:filter-none filter brightness-0 transition-all duration-300"
                             />
                             <img
                                 src={logoIcon}
                                 alt="Hermeos"
-                                className="h-10 w-auto md:hidden dark:filter-none filter brightness-0 transition-all duration-300"
+                                className="h-20 w-auto md:hidden dark:filter-none filter brightness-0 transition-all duration-300"
                             />
                         </Link>
 
@@ -191,7 +191,7 @@ export default function RootLayout() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-sm text-slate-500">© 2026 Hermeos Proptech. All rights reserved.</p>
                         <div className="flex gap-6">
-                            <Link to="/admin" className="text-sm text-slate-500 hover:text-primary transition-colors">Admin Login</Link>
+                            <Link to="/admin/login" className="text-sm text-slate-500 hover:text-primary transition-colors">Admin Login</Link>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Privacy Policy</a>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Terms of Service</a>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Contact</a>
