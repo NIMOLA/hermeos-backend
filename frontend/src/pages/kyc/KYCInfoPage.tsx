@@ -40,7 +40,7 @@ export default function KYCInfoPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link to="/proceeds">
+                    <Link to="/dashboard">
                         <Button variant="outline" className="w-full sm:w-auto">Do This Later</Button>
                     </Link>
                     <Link to="/kyc/status">

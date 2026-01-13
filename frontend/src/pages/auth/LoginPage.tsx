@@ -209,9 +209,6 @@ export default function LoginPage() {
                         Don't have an account? <Link to="/signup" className="font-semibold text-primary hover:text-blue-500">Sign up</Link>
                     </p>
 
-                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-                        <Link to="/admin" className="text-xs text-slate-400 hover:text-slate-600">Admin Portal Login</Link>
-                    </div>
                 </div>
             </div>
 

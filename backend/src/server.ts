@@ -28,6 +28,9 @@ import exitRequestRoutes from './routes/exitRequest.routes';
 import investmentRoutes from './routes/investment.routes';
 import paymentRoutes from './routes/payment.routes';
 import twoFactorRoutes from './routes/twoFactor.routes';
+import uploadRoutes from './routes/upload.routes';
+import bankRoutes from './routes/bank.routes';
+import path from 'path';
 
 dotenv.config();
 
@@ -55,6 +58,9 @@ app.use('/api/', limiter);
 // Body Parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve Static Uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
@@ -100,6 +106,8 @@ app.use('/api/exit-requests', exitRequestRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/2fa', twoFactorRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/bank', bankRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

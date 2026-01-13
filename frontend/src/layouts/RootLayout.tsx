@@ -46,8 +46,16 @@ export default function RootLayout() {
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
                         <Link to="/" className="flex items-center gap-2 group">
-                            <img src={logoFull} alt="Hermeos Proptech" className="h-10 w-auto hidden md:block" />
-                            <img src={logoIcon} alt="Hermeos" className="h-8 w-auto md:hidden" />
+                            <img
+                                src={logoFull}
+                                alt="Hermeos Proptech"
+                                className="h-14 w-auto hidden md:block dark:filter-none filter brightness-0 transition-all duration-300"
+                            />
+                            <img
+                                src={logoIcon}
+                                alt="Hermeos"
+                                className="h-10 w-auto md:hidden dark:filter-none filter brightness-0 transition-all duration-300"
+                            />
                         </Link>
 
                         {/* Public Action (Login/Theme) - Show on Landing Page only */}
@@ -181,8 +189,9 @@ export default function RootLayout() {
             <footer className="bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-border-dark mt-16">
                 <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 mobile:px-reduced">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p className="text-sm text-slate-500">© 2024 Hermeos Proptech. All rights reserved.</p>
+                        <p className="text-sm text-slate-500">© 2026 Hermeos Proptech. All rights reserved.</p>
                         <div className="flex gap-6">
+                            <Link to="/admin" className="text-sm text-slate-500 hover:text-primary transition-colors">Admin Login</Link>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Privacy Policy</a>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Terms of Service</a>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Contact</a>

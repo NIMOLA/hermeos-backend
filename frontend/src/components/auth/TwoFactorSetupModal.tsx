@@ -31,9 +31,9 @@ export function TwoFactorSetupModal({ isOpen, onClose }: TwoFactorSetupModalProp
     const fetchSetup = async () => {
         try {
             setLoading(true);
-            const response = await apiClient.post('/auth/2fa/setup');
-            setQrCode(response.data.data.qrCode);
-            setSecret(response.data.data.secret);
+            const response = await apiClient.post<{ qrCode: string; secret: string }>('/auth/2fa/setup');
+            setQrCode(response.qrCode);
+            setSecret(response.secret);
             setStep('qr');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to initialize 2FA setup');

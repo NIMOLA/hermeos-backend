@@ -123,4 +123,38 @@ export class PaymentService {
             return { ownership, transaction };
         });
     }
+
+    /**
+     * Get list of banks
+     */
+    async getBanks() {
+        if (!this.paystack) throw new AppError('Payment gateway not configured', 500);
+        try {
+            const response = await this.paystack.misc.list_banks({ country: 'nigeria' });
+            return response.data;
+        } catch (error: any) {
+            throw new AppError(`Failed to fetch banks: ${error.message}`, 502);
+        }
+    }
+
+    /**
+     * Resolve Account Number
+     */
+    async resolveAccountNumber(accountNumber: string, bankCode: string) {
+        if (!this.paystack) throw new AppError('Payment gateway not configured', 500);
+        try {
+            const response = await this.paystack.verification.resolveAccount({
+                account_number: accountNumber,
+                bank_code: bankCode
+            });
+
+            if (!response.status || !response.data) {
+                throw new AppError('Could not resolve account details', 400);
+            }
+
+            return response.data; // verified account name
+        } catch (error: any) {
+            throw new AppError(`Account verification failed: ${error.message}`, 400);
+        }
+    }
 }

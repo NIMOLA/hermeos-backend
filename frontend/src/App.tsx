@@ -5,7 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
 // Lazy load all page components
-const ProceedsPage = lazy(() => import('./pages/dashboard/ProceedsPage'));
+
 const PortfolioPage = lazy(() => import('./pages/dashboard/PortfolioPage'));
 const PropertiesListPage = lazy(() => import('./pages/dashboard/PropertiesListPage'));
 const PropertyDetailsPage = lazy(() => import('./pages/dashboard/PropertyDetailsPage'));
@@ -107,14 +107,7 @@ function App() {
               }
             />
 
-            <Route
-              path="/proceeds"
-              element={
-                <ProtectedRoute>
-                  <ProceedsPage />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/performance"
               element={
