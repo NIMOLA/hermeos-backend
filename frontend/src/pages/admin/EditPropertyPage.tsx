@@ -1,36 +1,141 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { apiClient } from '../../hooks/useApi';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
 
 export default function EditPropertyPage() {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const isNew = !id;
+
+    const [loading, setLoading] = useState(!isNew);
+    const [saving, setSaving] = useState(false);
+
+    // Form State
+    const [formData, setFormData] = useState({
+        name: '',
+        location: '',
+        description: '',
+        totalValue: 0,
+        targetCap: 0,
+        totalUnits: 0,
+        pricePerUnit: 0,
+        capitalRaised: 0,
+        status: 'OPEN', // OPEN, CLOSED, PENDING
+        images: [] as string[]
+    });
+
+    useEffect(() => {
+        if (!isNew && id) {
+            // Fetch Property Details
+            apiClient.get(`/properties/${id}`)
+                .then(res => {
+                    const p = res.data.data || res.data; // Handle structure variation
+                    if (p) {
+                        setFormData({
+                            name: p.name,
+                            location: p.location,
+                            description: p.description || '',
+                            totalValue: Number(p.totalValue),
+                            targetCap: Number(p.totalValue),
+                            totalUnits: Number(p.totalUnits),
+                            pricePerUnit: Number(p.pricePerUnit),
+                            capitalRaised: Number(p.capitalRaised || 0),
+                            status: p.status || 'OPEN',
+                            images: p.images || []
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to load property", err);
+                    alert("Failed to load property details");
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [id, isNew]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'number' ? Number(value) : value
+        }));
+    };
+
+    const handleSave = async () => {
+        if (!formData.name || !formData.location || !formData.totalValue || !formData.totalUnits || !formData.pricePerUnit) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const payload = {
+                ...formData,
+                startDate: new Date(),
+                endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+                annualReturnRate: 15.5,
+                minInvestment: formData.pricePerUnit
+            };
+
+            if (isNew) {
+                await apiClient.post('/properties', payload);
+                alert("Asset created successfully!");
+                navigate('/admin/assets');
+            } else {
+                await apiClient.put(`/properties/${id}`, payload);
+                alert("Asset updated successfully!");
+                navigate('/admin/assets');
+            }
+        } catch (error) {
+            console.error("Save failed", error);
+            alert("Failed to save asset. Check console for details.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return <div className="p-10 text-center">Loading asset details...</div>;
+
     return (
         <div className="max-w-6xl mx-auto flex flex-col gap-6">
             <nav className="flex flex-wrap gap-2 items-center text-sm">
-                <a href="#" className="text-slate-500 hover:text-primary transition-colors font-medium">Dashboard</a>
+                <Link to="/admin" className="text-slate-500 hover:text-primary transition-colors font-medium">Dashboard</Link>
                 <span className="text-slate-400">/</span>
-                <a href="#" className="text-slate-500 hover:text-primary transition-colors font-medium">Assets</a>
+                <Link to="/admin/assets" className="text-slate-500 hover:text-primary transition-colors font-medium">Assets</Link>
                 <span className="text-slate-400">/</span>
-                <span className="text-slate-900 dark:text-white font-semibold">The Eko Atlantic Heights</span>
+                <span className="text-slate-900 dark:text-white font-semibold">{isNew ? 'New Asset' : formData.name}</span>
             </nav>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-10">
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-[#0e141b] dark:text-white text-2xl md:text-3xl font-extrabold tracking-tight">Edit Asset: The Eko Atlantic Heights</h1>
-                    <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">Active</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">Ref: #PROP-LG-8821</span>
-                    </div>
+                    <h1 className="text-[#0e141b] dark:text-white text-2xl md:text-3xl font-extrabold tracking-tight">
+                        {isNew ? 'Create New Asset' : `Edit: ${formData.name}`}
+                    </h1>
+                    {!isNew && (
+                        <div className="flex items-center gap-2">
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+                                {formData.status}
+                            </Badge>
+                            <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">ID: {id}</span>
+                        </div>
+                    )}
                 </div>
                 <div className="flex gap-3 mt-2 md:mt-0">
-                    <button className="px-5 h-11 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2">
+                    <Button variant="outline" onClick={() => navigate('/admin/assets')}>
                         Cancel
-                    </button>
-                    <button className="px-5 h-11 rounded-lg bg-primary hover:bg-blue-600 text-white font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[18px]">save</span>
-                        Save Changes
-                    </button>
+                    </Button>
+                    <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-blue-600 text-white">
+                        {saving ? 'Saving...' : 'Save Changes'}
+                        {!saving && <span className="material-symbols-outlined ml-2 text-[18px]">save</span>}
+                    </Button>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 flex flex-col gap-6">
+                    {/* Asset Information */}
                     <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -39,24 +144,45 @@ export default function EditPropertyPage() {
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Asset Designation</label>
-                                <input className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary" type="text" defaultValue="The Eko Atlantic Heights" />
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Asset Designation (Name) *</label>
+                                <input
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border"
+                                    type="text"
+                                    placeholder="e.g. The Eko Atlantic Heights"
+                                />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Physical Address</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Physical Address *</label>
                                 <div className="relative">
                                     <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400">location_on</span>
-                                    <input className="w-full pl-10 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary" type="text" defaultValue="Block 15, Admiralty Way, Victoria Island, Lagos" />
+                                    <input
+                                        name="location"
+                                        value={formData.location}
+                                        onChange={handleInputChange}
+                                        className="w-full pl-10 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border"
+                                        type="text"
+                                        placeholder="Full address"
+                                    />
                                 </div>
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Operational Summary</label>
-                                <textarea className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-3" rows={4} defaultValue="Premium mixed-use development situated in the high-demand Victoria Island district. Features state-of-the-art office spaces and luxury residential units. Strategic proximity to major financial institutions and the Eko Hotel." />
-                                <p className="text-xs text-slate-500 mt-1 text-right">0/500 characters</p>
+                                <textarea
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleInputChange}
+                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-3 border"
+                                    rows={4}
+                                    placeholder="Describe the asset..."
+                                />
                             </div>
                         </div>
                     </div>
 
+                    {/* Valuation & Capital */}
                     <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -66,62 +192,50 @@ export default function EditPropertyPage() {
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Asset Valuation</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Asset Valuation *</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
-                                    <input className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono" type="text" defaultValue="850,000,000" />
+                                    <input
+                                        name="totalValue"
+                                        type="number"
+                                        value={formData.totalValue}
+                                        onChange={handleInputChange}
+                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono p-2 border"
+                                    />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Target Acquisition Cap</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Units *</label>
+                                <input
+                                    name="totalUnits"
+                                    type="number"
+                                    value={formData.totalUnits}
+                                    onChange={handleInputChange}
+                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono p-2 border"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Price Per Unit *</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
-                                    <input className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono" type="text" defaultValue="280,000,000" />
+                                    <input
+                                        name="pricePerUnit"
+                                        type="number"
+                                        value={formData.pricePerUnit}
+                                        onChange={handleInputChange}
+                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono p-2 border"
+                                    />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Allocated Units</label>
-                                <input className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono" type="number" defaultValue="200" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Capital Raised</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Capital Raised (Read Only)</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
-                                    <input className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary font-mono bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30" type="text" defaultValue="227,500,000" />
-                                </div>
-                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
-                                    <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '81%' }}></div>
-                                </div>
-                                <p className="text-xs text-slate-500 mt-1">81% Subscribed</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-slate-400">imagesmode</span> Asset Imagery
-                            </h2>
-                            <button className="text-primary text-sm font-bold hover:underline">+ Upload New</button>
-                        </div>
-                        <div className="p-6">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {[
-                                    "https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547",
-                                    "https://lh3.googleusercontent.com/aida-public/AB6AXuChSFacPfW-wVMZkURKr2s7e6L6KJSUqiT0LR7afVCSxHbpfJnTbuvK7riTpX_j0QcCd44A-uSdDNIgPpYkoKDLZNo9X1pdzvGxURvBlqeZ_haFgln_wwC4aBN2Ar32Lo5qZG2sH50ELODrHhGmG4wGtSTDZgdU4Wz3CXmcke6D8bADczIRGdOpesMe_MlyMhEatDur48Y3N0gcIFQ2WLFgDMq_dFJOqVXP_N3bMb6uJVNin9R5DsyVTNTMpO9Owib4jF8R1RSF5uuA",
-                                    "https://lh3.googleusercontent.com/aida-public/AB6AXuBr35SEsJSv75OLs1GXGJV46A8L3_FgBB8AgbbttLll_U2R_rsatWL46jj1gt3PJxqgyTF7gUR_Cs_32xaWfn-F6CeWKFF39uz3x3vHVfETpSnLsFjr3DZntAyx08Jm1I_zaNjdKdgsPych0NxwccV3Nyah5ySxAJ9Z0cmT4e_UGRf7jDxvIHRs51ryrX8FZen3R139lCmQnyveJ1V48Vz6yM6Fsag6j0xVXor2wz61W_w1Kp6D07vOTBe0P1TGJbdy-tiXBwGFgMu0"
-                                ].map((src, i) => (
-                                    <div key={i} className="group relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                                        <img alt="Property" className="w-full h-full object-cover" src={src} />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                            <button className="p-1.5 bg-white rounded-full text-slate-900 hover:text-primary"><span className="material-symbols-outlined text-lg">edit</span></button>
-                                            <button className="p-1.5 bg-white rounded-full text-red-600 hover:bg-red-50"><span className="material-symbols-outlined text-lg">delete</span></button>
-                                        </div>
-                                    </div>
-                                ))}
-                                <div className="aspect-square bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group">
-                                    <span className="material-symbols-outlined text-slate-400 group-hover:text-primary text-3xl mb-1">cloud_upload</span>
-                                    <span className="text-xs font-semibold text-slate-500 group-hover:text-primary">Upload</span>
+                                    <input
+                                        disabled
+                                        value={formData.capitalRaised.toLocaleString()}
+                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 font-mono p-2 border cursor-not-allowed"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -129,6 +243,7 @@ export default function EditPropertyPage() {
                 </div>
 
                 <div className="lg:col-span-1 flex flex-col gap-6">
+                    {/* Status Configuration */}
                     <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -138,96 +253,17 @@ export default function EditPropertyPage() {
                         <div className="p-6 flex flex-col gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Asset Status</label>
-                                <select className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary">
-                                    <option>Draft Mode</option>
-                                    <option defaultChecked>Open for Subscription</option>
-                                    <option>Offer Pending</option>
-                                    <option>Transaction Closed</option>
+                                <select
+                                    name="status"
+                                    value={formData.status}
+                                    onChange={handleInputChange}
+                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border"
+                                >
+                                    <option value="OPEN">Open for Subscription</option>
+                                    <option value="CLOSED">Transaction Closed</option>
+                                    <option value="PENDING">Offer Pending</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Processing Stage</label>
-                                <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                                    <div className="size-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Due Diligence Review</span>
-                                </div>
-                            </div>
-                            <div className="pt-2">
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" className="w-4 h-4 text-primary focus:ring-primary border-slate-300 rounded" defaultChecked />
-                                    <span className="text-sm text-slate-700 dark:text-slate-300">Publicly Visible to Partners</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-slate-400">description</span> Documentation
-                            </h2>
-                        </div>
-                        <div className="p-0">
-                            <div className="flex flex-col">
-                                {[
-                                    { name: 'C_of_O.pdf', size: '2.4 MB', date: 'Oct 12, 2023', type: 'picture_as_pdf', color: 'bg-red-50 text-red-600' },
-                                    { name: 'Valuation_Report_Lagos.docx', size: '1.1 MB', date: 'Sep 28, 2023', type: 'article', color: 'bg-blue-50 text-blue-600' }
-                                ].map((doc, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`${doc.color} p-2 rounded-lg`}>
-                                                <span className="material-symbols-outlined text-[20px]">{doc.type}</span>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">{doc.name}</span>
-                                                <span className="text-xs text-slate-500">{doc.size} • {doc.date}</span>
-                                            </div>
-                                        </div>
-                                        <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><span className="material-symbols-outlined">more_vert</span></button>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="p-4 pt-2">
-                                <button className="w-full py-2 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all text-sm font-medium flex justify-center items-center gap-2">
-                                    <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                                    Upload File
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-slate-400">history</span> Audit Trail
-                            </h2>
-                        </div>
-                        <div className="p-6">
-                            <ol className="relative border-l border-slate-200 dark:border-slate-700 ml-2">
-                                <li className="mb-6 ml-6">
-                                    <span className="absolute flex items-center justify-center w-5 h-5 bg-blue-100 rounded-full -left-2.5 ring-4 ring-white dark:ring-slate-900 dark:bg-blue-900">
-                                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                                    </span>
-                                    <h3 className="flex items-center mb-1 text-sm font-semibold text-slate-900 dark:text-white">Updated Valuation</h3>
-                                    <p className="mb-1 text-xs font-normal text-slate-500 dark:text-slate-400">Adjusted from ₦820M to ₦850M</p>
-                                    <time className="block mb-2 text-xs font-normal text-slate-400">Just now by You</time>
-                                </li>
-                                <li className="mb-6 ml-6">
-                                    <span className="absolute flex items-center justify-center w-5 h-5 bg-slate-100 rounded-full -left-2.5 ring-4 ring-white dark:ring-slate-900 dark:bg-slate-700">
-                                        <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                                    </span>
-                                    <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">New Document Added</h3>
-                                    <p className="mb-1 text-xs font-normal text-slate-500 dark:text-slate-400">C_of_O.pdf uploaded</p>
-                                    <time className="block mb-2 text-xs font-normal text-slate-400">2 hours ago by Chinedu O.</time>
-                                </li>
-                                <li className="ml-6">
-                                    <span className="absolute flex items-center justify-center w-5 h-5 bg-slate-100 rounded-full -left-2.5 ring-4 ring-white dark:ring-slate-900 dark:bg-slate-700">
-                                        <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                                    </span>
-                                    <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Record Created</h3>
-                                    <time className="block mb-2 text-xs font-normal text-slate-400">Oct 10, 2023 by System</time>
-                                </li>
-                            </ol>
                         </div>
                     </div>
                 </div>

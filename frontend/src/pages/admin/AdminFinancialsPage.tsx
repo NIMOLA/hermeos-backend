@@ -68,6 +68,12 @@ export default function AdminFinancialsPage() {
         });
     };
 
+    // Calculate KPIs from transactions
+    const totalRevenue = transactions.reduce((acc, t) => acc + t.amount, 0);
+    const platformFees = transactions.reduce((acc, t) => acc + (t.fee || 0), 0);
+    const distributions = transactions.filter(t => t.type === 'DISTRIBUTION').reduce((acc, t) => acc + t.amount, 0);
+    const pendingSettlements = transactions.filter(t => t.status === 'PENDING').reduce((acc, t) => acc + t.amount, 0);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -101,8 +107,8 @@ export default function AdminFinancialsPage() {
                             <p className="text-sm font-medium text-slate-500 uppercase">Total Revenue</p>
                             <span className="material-symbols-outlined text-emerald-500">trending_up</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">₦5,200,000</h3>
-                        <p className="text-xs text-emerald-600 mt-1">+18% vs last month</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(totalRevenue)}</h3>
+                        <p className="text-xs text-emerald-600 mt-1">Based on {transactions.length} transactions</p>
                     </CardContent>
                 </Card>
 
@@ -112,8 +118,8 @@ export default function AdminFinancialsPage() {
                             <p className="text-sm font-medium text-slate-500 uppercase">Platform Fees</p>
                             <span className="material-symbols-outlined text-blue-500">account_balance</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">₦78,000</h3>
-                        <p className="text-xs text-slate-500 mt-1">1.5% avg fee rate</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(platformFees)}</h3>
+                        <p className="text-xs text-slate-500 mt-1">{totalRevenue > 0 ? ((platformFees / totalRevenue) * 100).toFixed(1) : 0}% fee rate</p>
                     </CardContent>
                 </Card>
 
@@ -123,8 +129,8 @@ export default function AdminFinancialsPage() {
                             <p className="text-sm font-medium text-slate-500 uppercase">Distributions Paid</p>
                             <span className="material-symbols-outlined text-purple-500">payments</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">₦2,400,000</h3>
-                        <p className="text-xs text-slate-500 mt-1">8 properties</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(distributions)}</h3>
+                        <p className="text-xs text-slate-500 mt-1">Total Payouts</p>
                     </CardContent>
                 </Card>
 
@@ -134,8 +140,8 @@ export default function AdminFinancialsPage() {
                             <p className="text-sm font-medium text-slate-500 uppercase">Pending Settlements</p>
                             <span className="material-symbols-outlined text-amber-500">pending</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">₦350,000</h3>
-                        <p className="text-xs text-amber-600 mt-1">1 exit request</p>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(pendingSettlements)}</h3>
+                        <p className="text-xs text-amber-600 mt-1">{transactions.filter(t => t.status === 'PENDING').length} pending</p>
                     </CardContent>
                 </Card>
             </div>
