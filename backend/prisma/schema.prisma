@@ -109,7 +109,6 @@ model User {
   paymentProofs           PaymentProof[]
   adminInvitationsCreated AdminInvitation[] @relation("AdminCreator")
   auditLogs               AuditLog[]
-  auditLogs               AuditLog[]
   savedProperties         SavedProperty[]
   bankAccounts            BankAccount[]
 
