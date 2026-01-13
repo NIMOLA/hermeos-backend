@@ -61,6 +61,9 @@ export default function RootLayout() {
                         {/* Public Action (Login/Theme) - Show on Landing Page only */}
                         {isLandingPage && (
                             <div className="flex items-center gap-4">
+                                <Link to="/admin/login" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors hidden md:block">
+                                    Admin
+                                </Link>
                                 <button
                                     onClick={toggleTheme}
                                     className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
@@ -191,7 +194,6 @@ export default function RootLayout() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-sm text-slate-500">© 2026 Hermeos Proptech. All rights reserved.</p>
                         <div className="flex gap-6">
-                            <Link to="/admin/login" className="text-sm text-slate-500 hover:text-primary transition-colors">Admin Login</Link>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Privacy Policy</a>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Terms of Service</a>
                             <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Contact</a>
