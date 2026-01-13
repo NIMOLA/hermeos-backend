@@ -21,7 +21,31 @@ async function main() {
         });
     }
 
-    console.log('Seeding complete.');
+    // Seed Super Admin
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash('Hermeos@2026!', 12);
+
+    const adminEmail = 'admin@hermeos.com';
+    const adminUser = await prisma.user.upsert({
+        where: { email: adminEmail },
+        update: {},
+        create: {
+            email: adminEmail,
+            password: hashedPassword,
+            firstName: 'Super',
+            lastName: 'Admin',
+            role: 'SUPER_ADMIN',
+            isVerified: true,
+            tier: 'Institutional', // Higher tier for admin
+            capabilities: {
+                create: capabilities.map(cap => ({
+                    capability: { connect: { name: cap.name } }
+                }))
+            }
+        },
+    });
+
+    console.log(`Seeding complete. Super Admin created: ${adminEmail} / Hermeos@2026!`);
 }
 
 main()
