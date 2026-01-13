@@ -127,13 +127,36 @@ export class PaymentService {
     /**
      * Get list of banks
      */
+    /**
+     * Get list of banks
+     */
     async getBanks() {
-        if (!this.paystack) throw new AppError('Payment gateway not configured', 500);
+        // Fallback list of major Nigerian banks
+        const fallbackBanks = [
+            { name: 'Access Bank', code: '044', slug: 'access-bank', id: 1 },
+            { name: 'Guaranty Trust Bank', code: '058', slug: 'guaranty-trust-bank', id: 2 },
+            { name: 'Zenith Bank', code: '057', slug: 'zenith-bank', id: 3 },
+            { name: 'First Bank of Nigeria', code: '011', slug: 'first-bank-of-nigeria', id: 4 },
+            { name: 'United Bank For Africa', code: '033', slug: 'united-bank-for-africa', id: 5 },
+            { name: 'Fidelity Bank', code: '070', slug: 'fidelity-bank', id: 6 },
+            { name: 'Stanbic IBTC Bank', code: '221', slug: 'stanbic-ibtc-bank', id: 7 },
+            { name: 'Kuda Bank', code: '50211', slug: 'kuda-bank', id: 8 },
+            { name: 'Opay', code: '999992', slug: 'opay', id: 9 },
+            { name: 'PalmPay', code: '999991', slug: 'palmpay', id: 10 }
+        ];
+
         try {
-            const response = await this.paystack.misc.list_banks({ country: 'nigeria' });
-            return response.data;
+            if (this.paystack) {
+                const response = await this.paystack.misc.list_banks({ country: 'nigeria' });
+                if (response.status && response.data && response.data.length > 0) {
+                    return response.data;
+                }
+            }
+            console.warn('Paystack unconfigured or returned empty list. Using fallback banks.');
+            return fallbackBanks;
         } catch (error: any) {
-            throw new AppError(`Failed to fetch banks: ${error.message}`, 502);
+            console.error(`Failed to fetch banks from Paystack: ${error.message}. Using fallback.`);
+            return fallbackBanks;
         }
     }
 
