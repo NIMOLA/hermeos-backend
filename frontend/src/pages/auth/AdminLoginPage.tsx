@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
@@ -8,7 +8,7 @@ import { TwoFactorModal } from '../../components/auth/TwoFactorModal';
 
 export default function AdminLoginPage() {
     const navigate = useNavigate();
-    const { login, isAuthenticated, user } = useAuth();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -17,19 +17,6 @@ export default function AdminLoginPage() {
 
     // 2FA State
     const [showTwoFactor, setShowTwoFactor] = useState(false);
-
-    // Redirect if already logged in (Check for Admin role)
-    useEffect(() => {
-        if (isAuthenticated && user) {
-            if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
-                navigate('/admin');
-            } else {
-                // If logged in as User but on Admin page, maybe logout or redirect to dashboard?
-                // Let's redirect to dashboard to avoid confusion
-                navigate('/dashboard');
-            }
-        }
-    }, [isAuthenticated, user, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -46,11 +33,15 @@ export default function AdminLoginPage() {
 
             const user = result;
 
-            // Redirect based on user role
+            // Strict Role Check for Admin Portal
             if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
                 navigate('/admin');
             } else {
-                navigate('/dashboard');
+                // If a regular user tries to login here, deny access
+                // Do NOT redirect to dashboard.
+                setError('Unauthorized access. This portal is for administrators only.');
+                // Optionally logout to clear the session if it was set
+                // logout(); // But login() just set it.
             }
         } catch (err: any) {
             setError(err.message || 'Login failed. Please check your credentials.');
