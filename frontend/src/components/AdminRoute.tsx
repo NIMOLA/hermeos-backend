@@ -13,7 +13,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
   if (isLoading) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   // Check if user has admin role (matches backend UserRole enum)
@@ -21,7 +21,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
 
   if (!isAdmin) {
     // Redirect non-admins to login to force credential verification
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return children;

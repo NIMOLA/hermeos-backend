@@ -1,101 +1,122 @@
 import { Link } from 'react-router-dom';
-import { Button } from '../components/ui/button';
+import { useTheme } from '../context/ThemeContext';
 
 export default function LandingPage() {
+    const { theme } = useTheme();
+
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex-grow flex flex-col items-center w-full">
             {/* Hero Section */}
-            <section className="relative h-[600px] flex items-center justify-center overflow-hidden bg-slate-900 text-white">
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/80 to-slate-900/40 z-10" />
-                    <img
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547"
-                        alt="Modern Architecture"
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-
-                <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-8 text-center md:text-left w-full mobile:px-reduced">
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight max-w-3xl">
-                        Build Wealth with <span className="text-primary">Premium Real Estate</span>
-                    </h1>
-                    <p className="text-lg md:text-xl text-slate-300 mb-8 max-w-2xl leading-relaxed">
-                        Access verified, high-yield smart apartments in Nigeria's fastest-growing markets. Start your portfolio with as little as ₦500,000.
-                    </p>
-                    <div className="flex flex-col md:flex-row gap-4 justify-center md:justify-start">
-                        <Link to="/login">
-                            <Button size="lg" className="w-full md:w-auto text-base font-bold h-12 px-8 bg-accent hover:bg-accent/90 text-white">
-                                Start Owning
-                            </Button>
-                        </Link>
-                        <Link to="/properties">
-                            <Button variant="outline" size="lg" className="w-full md:w-auto text-base font-bold h-12 px-8 bg-transparent text-white border-white hover:bg-white/10 hover:text-white">
-                                View Properties
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </section>
-
-            {/* Stats Section */}
-            <section className="bg-primary text-white py-12">
-                <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                    <div>
-                        <h3 className="text-3xl md:text-4xl font-bold mb-1">₦2.5B+</h3>
-                        <p className="text-blue-100 font-medium">Assets Funded</p>
-                    </div>
-                    <div>
-                        <h3 className="text-3xl md:text-4xl font-bold mb-1">14%</h3>
-                        <p className="text-blue-100 font-medium">Avg. Annual Yield</p>
-                    </div>
-                    <div>
-                        <h3 className="text-3xl md:text-4xl font-bold mb-1">2,000+</h3>
-                        <p className="text-blue-100 font-medium">Equity Partners</p>
-                    </div>
-                    <div>
-                        <h3 className="text-3xl md:text-4xl font-bold mb-1">0%</h3>
-                        <p className="text-blue-100 font-medium">Default Rate</p>
-                    </div>
-                </div>
-            </section>
-
-            {/* Features Grid */}
-            <section className="py-20 bg-background-light dark:bg-background-dark">
-                <div className="max-w-7xl mx-auto px-4 md:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Why Own with Hermeos?</h2>
-                        <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">We're democratizing access to institutional-grade real estate opportunities.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mobile:px-reduced">
-                        {[
-                            { title: "Fractional Ownership", desc: "Buy shares of premium properties instead of the whole building. Diversify your risk across multiple assets.", icon: "pie_chart", color: "blue" },
-                            { title: "Passive Income", desc: "Receive rental income dividends directly to your wallet every quarter. Track performance in real-time.", icon: "payments", color: "emerald" },
-                            { title: "Capital Appreciation", desc: "Benefit from property value growth over time. Trade your shares or hold for long-term gains.", icon: "trending_up", color: "purple" }
-                        ].map((feature, i) => (
-                            <div key={i} className="bg-white dark:bg-surface-dark p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                                <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-${feature.color}-50 dark:bg-${feature.color}-900/20 flex items-center justify-center text-${feature.color}-600 dark:text-${feature.color}-400 mb-6`}>
-                                    <span className="material-symbols-outlined text-2xl md:text-3xl">{feature.icon}</span>
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{feature.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm md:text-base">{feature.desc}</p>
+            <section className="w-full max-w-7xl px-4 md:px-10 py-12 md:py-20">
+                <div className="@container">
+                    <div className="flex flex-col-reverse gap-8 md:gap-12 lg:flex-row lg:items-center">
+                        {/* Content */}
+                        <div className="flex flex-1 flex-col gap-6 lg:max-w-xl">
+                            <div className="flex flex-col gap-4 text-left">
+                                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
+                                    Own a Piece of <span className="text-primary">Nigeria’s Future</span>
+                                </h1>
+                                <h2 className="text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                                    Hermeos Proptech simplifies property acquisition and equity participation in premium managed real estate assets across Nigeria.
+                                </h2>
                             </div>
-                        ))}
+                            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                                <Link to="/signup">
+                                    <button className="flex h-12 w-full sm:w-auto items-center justify-center rounded-lg bg-primary px-8 text-base font-bold text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-95">
+                                        <span className="truncate">Start Your Journey</span>
+                                    </button>
+                                </Link>
+                                <Link to="/properties">
+                                    <button className="flex h-12 w-full sm:w-auto items-center justify-center rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-8 text-base font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                        <span className="truncate">Explore Properties</span>
+                                    </button>
+                                </Link>
+                            </div>
+                            {/* Trust Indicators */}
+                            <div className="flex items-center gap-6 pt-4 opacity-80">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary text-[20px]">verified</span>
+                                    <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Vetted Assets</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary text-[20px]">lock</span>
+                                    <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Secure Titles</span>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Hero Image */}
+                        <div className="flex-1 w-full">
+                            <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl bg-slate-200 dark:bg-slate-800">
+                                <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-105 duration-700" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDjFRaQM7ylP_VQQICKaahO2LecH3Jw-4P5UF48VgfpJC5sRkzy_x7kkxofiP-JuyJqCUXm1cnwqXXhc9jFyLlwwRi1G_pWWAXfNtgBx0oKCb-U1yD_Ixaqp6Hiuyf_H-aEJ9NIP6RqdyWjXANobfCO5REUgk-0ILjzbHLpPoNw6L4TBhROtD9GH85_9fwFDuALJ2-emeuv_JJOCF8PIq41Z_Bz-iCdu7uTLyfNgZI2XsxV2aXHXprNrOd-YXKyO6YPkdemeYtTP2MY")' }}>
+                                </div>
+                                <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-md text-xs font-bold shadow-sm flex items-center gap-1 text-slate-900 dark:text-white">
+                                    <span className="material-symbols-outlined text-primary text-[16px]">location_on</span>
+                                    <span>Victoria Island, Lagos</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-20 bg-slate-50 dark:bg-[#111921]">
-                <div className="max-w-5xl mx-auto px-4 md:px-8 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">Ready to grow your ownership?</h2>
-                    <p className="text-lg text-slate-500 dark:text-slate-400 mb-8 max-w-2xl mx-auto">Join thousands of partners building wealth with Hermeos Proptech today.</p>
-                    <div className="flex justify-center gap-4">
-                        <Link to="/login">
-                            <Button size="lg" className="text-base font-bold h-12 px-10 shadow-lg shadow-primary/20">
-                                Create Free Account
-                            </Button>
-                        </Link>
+            {/* Important Disclaimer Band */}
+            <section className="w-full bg-primary/10 border-y border-primary/20">
+                <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-center gap-3 text-center sm:text-left">
+                    <span className="material-symbols-outlined text-primary shrink-0">info</span>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                        <strong>Disclaimer:</strong> Hermeos Proptech is a property technology platform, not an investment advisory or financial services firm. All asset participation involves risk.
+                    </p>
+                </div>
+            </section>
+
+            {/* Feature Section */}
+            <section className="w-full max-w-7xl px-4 md:px-10 py-16 md:py-24">
+                <div className="flex flex-col gap-12">
+                    <div className="max-w-2xl">
+                        <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-4">
+                            Why Choose Hermeos?
+                        </h2>
+                        <p className="text-lg text-slate-600 dark:text-slate-400">
+                            We provide a secure and transparent pathway to real estate ownership, handling the complexities so you can focus on building your portfolio.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Feature 1 */}
+                        <div className="group flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-primary/50 transition-colors shadow-sm hover:shadow-md">
+                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span className="material-symbols-outlined text-3xl">gavel</span>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Vetted Titles & Documentation</h3>
+                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    We ensure every asset has clean, verified government documentation before it ever hits our platform.
+                                </p>
+                            </div>
+                        </div>
+                        {/* Feature 2 */}
+                        <div className="group flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-primary/50 transition-colors shadow-sm hover:shadow-md">
+                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span className="material-symbols-outlined text-3xl">apartment</span>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Managed Property Assets</h3>
+                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    Our properties are professionally managed to maintain high asset quality and tenant satisfaction.
+                                </p>
+                            </div>
+                        </div>
+                        {/* Feature 3 */}
+                        <div className="group flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-primary/50 transition-colors shadow-sm hover:shadow-md">
+                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span className="material-symbols-outlined text-3xl">policy</span>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Transparent Equity Structure</h3>
+                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                    Enjoy a clear, legal framework for your property ownership participation with full digital transparency.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

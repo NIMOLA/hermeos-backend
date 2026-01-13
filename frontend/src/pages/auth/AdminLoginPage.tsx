@@ -1,14 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { TwoFactorModal } from '../../components/auth/TwoFactorModal';
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, isAuthenticated, user } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +17,19 @@ export default function LoginPage() {
 
     // 2FA State
     const [showTwoFactor, setShowTwoFactor] = useState(false);
+
+    // Redirect if already logged in (Check for Admin role)
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+                navigate('/admin');
+            } else {
+                // If logged in as User but on Admin page, maybe logout or redirect to dashboard?
+                // Let's redirect to dashboard to avoid confusion
+                navigate('/dashboard');
+            }
+        }
+    }, [isAuthenticated, user, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
