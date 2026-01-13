@@ -41,6 +41,30 @@ export default function AdminUsersPage() {
             });
     }, []);
 
+    const handleExportCSV = () => {
+        if (!users.length) return alert('No users to export');
+        const headers = ['ID', 'First Name', 'Last Name', 'Email', 'Role', 'Status', 'Joined'];
+        const csvContent = [
+            headers.join(','),
+            ...users.map(u => [u.id, u.firstName, u.lastName, u.email, u.role, u.kycStatus, new Date(u.createdAt).toISOString()].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
+    const handleInviteUser = () => {
+        const email = prompt("Enter email to invite:");
+        if (email) {
+            // Mock invitation
+            alert(`Invitation sent to ${email}`);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -49,8 +73,8 @@ export default function AdminUsersPage() {
                     <p className="text-slate-500 dark:text-slate-400 text-sm">Track and manage partner accounts and KYC status.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline"><span className="material-symbols-outlined mr-2">download</span> Export CSV</Button>
-                    <Button><span className="material-symbols-outlined mr-2">person_add</span> Invite User</Button>
+                    <Button variant="outline" onClick={handleExportCSV}><span className="material-symbols-outlined mr-2">download</span> Export CSV</Button>
+                    <Button onClick={handleInviteUser}><span className="material-symbols-outlined mr-2">person_add</span> Invite User</Button>
                 </div>
             </div>
 
@@ -135,8 +159,8 @@ export default function AdminUsersPage() {
                                         <td className="p-4 text-sm text-slate-600 dark:text-slate-300">{new Date(user.createdAt).toLocaleDateString()}</td>
                                         <td className="p-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.kycStatus === 'verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30' :
-                                                    user.kycStatus === 'pending' || user.kycStatus === 'submitted' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30' :
-                                                        'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30'
+                                                user.kycStatus === 'pending' || user.kycStatus === 'submitted' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30' :
+                                                    'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30'
                                                 }`}>
                                                 {user.kycStatus || 'Not Submitted'}
                                             </span>

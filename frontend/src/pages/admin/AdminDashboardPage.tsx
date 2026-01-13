@@ -50,9 +50,10 @@ export default function AdminDashboardPage() {
     const handleSendAnnouncement = () => {
         // Mock send functionality
         console.log('Sending announcement:', announcementData);
+        alert(`Announcement "${announcementData.subject}" broadcasted to ${announcementData.recipient} users!`);
         setShowAnnouncementModal(false);
         setAnnouncementData({ recipient: 'all', subject: '', message: '' });
-        // In a real app, this would call an API
+        // In a real app, this would call an API like /api/admin/announcements
     };
 
     const kpiData = kpis ? [
@@ -150,7 +151,7 @@ export default function AdminDashboardPage() {
                     <div className="bg-white dark:bg-[#1a2632] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
                         <h3 className="font-bold text-slate-900 dark:text-white mb-4">Quick Actions</h3>
                         <div className="grid grid-cols-2 gap-3">
-                            <Link to="/admin/edit-property" className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col items-center gap-2 text-center group">
+                            <Link to="/admin/assets/new" className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col items-center gap-2 text-center group">
                                 <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">add_home</span>
                                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">New Asset</span>
                             </Link>

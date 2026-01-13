@@ -181,6 +181,7 @@ function App() {
             >
               <Route index element={<AdminDashboardPage />} />
               <Route path="assets" element={<AdminAssetsPage />} />
+              <Route path="assets/new" element={<EditPropertyPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:id" element={<AdminUserDetailPage />} />
               <Route path="financials" element={<AdminFinancialsPage />} />
