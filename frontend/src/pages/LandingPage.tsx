@@ -33,7 +33,7 @@ export default function LandingPage() {
                                 </Link>
                             </div>
                             {/* Trust Indicators */}
-                            <div className="flex items-center gap-6 pt-4 opacity-80">
+                            <div className="flex items-center gap-6 pt-4 opacity-80 flex-wrap">
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-primary text-[20px]">verified</span>
                                     <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Vetted Assets</span>
@@ -41,6 +41,10 @@ export default function LandingPage() {
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-primary text-[20px]">lock</span>
                                     <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Secure Titles</span>
+                                </div>
+                                <div className="flex items-center gap-4 ml-auto sm:ml-0">
+                                    <Link to="/about" className="text-sm font-bold text-primary hover:underline">About Us</Link>
+                                    <Link to="/support" className="text-sm font-bold text-primary hover:underline">Support</Link>
                                 </div>
                             </div>
                         </div>

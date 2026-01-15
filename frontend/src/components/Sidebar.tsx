@@ -17,6 +17,7 @@ import {
     Menu
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import ThemeToggle from './ThemeToggle';
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -144,6 +145,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                         >
                             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                         </button>
+                        <ThemeToggle className="text-slate-400 hover:text-slate-900 dark:hover:text-white" />
                         <button
                             onClick={logout}
                             className="p-1.5 rounded-md hover:bg-red-50 hover:text-red-500 text-slate-400 transition-colors"

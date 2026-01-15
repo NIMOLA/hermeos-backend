@@ -7,6 +7,7 @@ import logoFull from '../assets/logo-full.png';
 import logoIcon from '../assets/logo-icon.png';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function RootLayout() {
     const { isAuthenticated, user, logout } = useAuth();
@@ -78,6 +79,7 @@ export default function RootLayout() {
                             </Link>
 
                             <div className="flex items-center gap-4">
+                                <ThemeToggle className="hover:text-primary" />
                                 <Link to="/admin/login">
                                     <button className="text-slate-600 dark:text-slate-300 hover:text-primary font-medium text-sm transition-colors hidden md:block">
                                         Admin Login
