@@ -13,6 +13,11 @@ export default function RootLayout() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Define route state variables
+    const isLandingPage = location.pathname === '/';
+    const isAuthPage = ['/login', '/signup', '/forgot-password', '/verify-email', '/password-reset-sent', '/admin/login'].includes(location.pathname);
+    const shouldHideNav = isLandingPage || isAuthPage;
+
     const handleLogout = () => {
         logout();
         navigate('/login');

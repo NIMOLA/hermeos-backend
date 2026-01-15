@@ -6,15 +6,18 @@ import App from './App.tsx'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { GlobalErrorBoundary } from './components/GlobalErrorBoundary'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <GlobalErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </GlobalErrorBoundary>
   </StrictMode>,
 )
