@@ -1,5 +1,6 @@
 
 import { PrismaClient } from '@prisma/client';
+import { getAllCapabilities } from '../src/config/capabilities';
 
 const prisma = new PrismaClient();
 
@@ -28,56 +29,21 @@ async function main() {
     await prisma.user.deleteMany({});
     console.log('✓ Database wiped.');
 
-    // 2. Seed Capabilities
-    console.log('🌱 Seeding Capabilities...');
+    // 2. Seed Capabilities from Registry
+    console.log('🌱 Seeding Capabilities from Registry...');
 
-    const capabilities = [
-        // Tier 1 (Default)
-        {
-            name: 'browse_properties',
-            description: 'View property listings',
-            defaultOnSignup: true
-        },
-        {
-            name: 'view_pricing',
-            description: 'View property pricing and returns',
-            defaultOnSignup: true
-        },
-        {
-            name: 'save_property',
-            description: 'Bookmark properties',
-            defaultOnSignup: true
-        },
-        {
-            name: 'initiate_action',
-            description: 'Start investment process (gated later)',
-            defaultOnSignup: true
-        },
-
-        // Tier 2 (Verified) - NOT default
-        {
-            name: 'invest_funds',
-            description: 'Complete investments',
-            defaultOnSignup: false
-        },
-        {
-            name: 'view_sensitive_docs',
-            description: 'View Title Deeds and Legal docs',
-            defaultOnSignup: false
-        },
-        {
-            name: 'withdraw_funds',
-            description: 'Withdraw from wallet',
-            defaultOnSignup: false
-        }
-    ];
+    const capabilities = getAllCapabilities();
 
     for (const cap of capabilities) {
         await prisma.capability.create({
-            data: cap
+            data: {
+                name: cap.name,
+                description: cap.description,
+                defaultOnSignup: cap.defaultOnSignup
+            }
         });
     }
-    console.log(`✓ Seeded ${capabilities.length} capabilities.`);
+    console.log(`✓ Seeded ${capabilities.length} capabilities from Registry.`);
 
     console.log('✅ Initialization Complete.');
 }
