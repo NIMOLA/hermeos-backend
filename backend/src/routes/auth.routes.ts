@@ -28,6 +28,8 @@ router.post('/refresh-token', authController.refreshToken);
 router.post('/forgot-password', body('email').isEmail(), authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 router.get('/me', protect, authController.getMe);
+router.post('/verify-email', protect, authController.verifyEmail);
+router.post('/resend-verification', protect, authController.resendVerification);
 // 2FA Routes
 router.post('/2fa/setup', protect, twoFactorController.setup2FA);
 router.post('/2fa/verify', protect, twoFactorController.verify2FA);

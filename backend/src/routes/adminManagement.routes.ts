@@ -6,7 +6,11 @@ import {
     acceptAdminInvitation,
     listAdmins,
     updateAdminRole,
-    revokeAdminAccess
+    revokeAdminAccess,
+    getAdminUserDetail,
+    suspendUser,
+    updateUserProfile,
+    getAdminAuditLogs
 } from '../controllers/adminManagement.controller';
 
 const router = Router();
@@ -25,5 +29,14 @@ router.post('/create-invitation', createAdminInvitation);
 router.get('/list-admins', listAdmins);
 router.patch('/:adminId/role', updateAdminRole);
 router.delete('/:adminId/revoke', revokeAdminAccess);
+
+// User Management Routes
+router.get('/users/:userId', getAdminUserDetail);
+router.put('/users/:userId/suspend', suspendUser);
+router.put('/users/:userId/suspend', suspendUser);
+router.put('/users/:userId/profile', updateUserProfile);
+
+// Audit Logs
+router.get('/audit-logs', getAdminAuditLogs);
 
 export default router;

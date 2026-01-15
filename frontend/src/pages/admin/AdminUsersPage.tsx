@@ -69,8 +69,8 @@ export default function AdminUsersPage() {
         <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Partners</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">Track and manage partner accounts and KYC status.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Users</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">Track and manage user accounts and KYC status.</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={handleExportCSV}><span className="material-symbols-outlined mr-2">download</span> Export CSV</Button>
@@ -117,7 +117,7 @@ export default function AdminUsersPage() {
                     <div className="flex gap-2">
                         <select className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg px-3 py-2 text-sm outline-none">
                             <option>All Roles</option>
-                            <option>Partner</option>
+                            <option>User</option>
                             <option>Admin</option>
                         </select>
                         <select className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg px-3 py-2 text-sm outline-none">

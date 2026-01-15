@@ -9,53 +9,62 @@ export default {
         extend: {
             colors: {
                 'primary': {
-                    DEFAULT: '#0F172A', // Deep Navy
-                    50: '#f0f4f8',
-                    100: '#dbeafe',
-                    200: '#bfdbfe',
-                    300: '#93c5fd',
-                    400: '#60a5fa',
-                    500: '#3b82f6',
-                    600: '#2563eb',
-                    700: '#1d4ed8',
-                    800: '#1e40af',
-                    900: '#0F172A', // Deep Navy
+                    DEFAULT: '#002B5B', // Deep Blue (Core)
+                    50: '#f0f6fc',
+                    100: '#e1ecf8',
+                    200: '#c3d9f1',
+                    300: '#a5c6ea',
+                    400: '#68a1dc',
+                    500: '#2b7ccf',
+                    600: '#002B5B', // Main Brand Color
+                    700: '#002249',
+                    800: '#001a37',
+                    900: '#001124',
                 },
                 'secondary': {
-                    DEFAULT: '#059669', // Emerald Green
-                    50: '#ecfdf5',
-                    100: '#d1fae5',
-                    200: '#a7f3d0',
+                    DEFAULT: '#00A86B', // Emerald Green
+                    50: '#e6f7f0',
+                    100: '#ccefe1',
+                    200: '#99dfc3',
                     300: '#6ee7b7',
-                    400: '#34d399',
-                    500: '#10b981',
-                    600: '#059669',
-                    700: '#047857',
-                    800: '#065f46',
-                    900: '#064e3b',
+                    400: '#33bf87',
+                    500: '#00A86B', // Core Green
+                    600: '#008656',
+                    700: '#006540',
+                    800: '#00432b',
+                    900: '#002215',
                 },
                 'accent': {
-                    DEFAULT: '#C5A059', // Hermeos Gold
-                    50: '#fffbeb',
-                    100: '#fef3c7',
-                    200: '#fde68a',
-                    300: '#fcd34d',
-                    400: '#fbbf24',
-                    500: '#f59e0b',
-                    600: '#d97706',
-                    700: '#b45309',
-                    800: '#92400e',
-                    900: '#78350f',
+                    DEFAULT: '#D4AF37', // Gold Accent
+                    50: '#fcf7eb',
+                    100: '#faefd6',
+                    200: '#f5dfad',
+                    300: '#f0cf85',
+                    400: '#ebbf5c',
+                    500: '#D4AF37', // Core Gold
+                    600: '#aa8c2c',
+                    700: '#806921',
+                    800: '#554616',
+                    900: '#2b230b',
                 },
-                "background-light": "#f6f7f8",
-                "background-dark": "#0F172A", // Deep Navy
-                "surface-dark": "#1C252E",
-                "border-dark": "#2A3B4C",
-                "text-secondary": "#93adc8",
+                "background-light": "#F5F5F5", // Light Grey
+                "background-dark": "#111921", // Dark Slate/Blue mix for UI bg
+                "surface-light": "#FFFFFF",
+                "surface-dark": "#1e293b",
+
+                "border-light": "#e5e7eb",
+                "border-dark": "#334155",
+
                 "text-main": "#0e141b",
+                "text-secondary": "#64748B",
+
+                // Legacy support
+                "text-primary-light": "#0e141b",
+                "text-primary-dark": "#f8fafc",
+                "text-secondary-light": "#64748B",
+                "text-secondary-dark": "#94A3B8",
                 "card-dark": "#1e293b",
-                "card-border": "#344d65",
-                "surface-light": "#ffffff",
+                "card-border": "#334155",
             },
             fontFamily: {
                 "display": ["Manrope", "sans-serif"]

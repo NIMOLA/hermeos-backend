@@ -151,8 +151,8 @@ export const reviewKYC = async (req: AuthRequest, res: Response, next: NextFunct
     try {
         const { id } = req.params;
         const note = req.body.note || 'Reviewed by Moderator';
-        if (!['MODERATOR', 'SUPER_ADMIN'].includes(req.user?.role || '')) {
-            return next(new AppError('Only Moderators can submit for review', 403));
+        if (!['MODERATOR', 'ADMIN', 'SUPER_ADMIN'].includes(req.user?.role || '')) {
+            return next(new AppError('Only Moderators/Admins can submit for review', 403));
         }
         const user = await prisma.user.findUnique({ where: { id } });
         if (!user) return next(new AppError('User not found', 404));
@@ -167,27 +167,7 @@ export const reviewKYC = async (req: AuthRequest, res: Response, next: NextFunct
     }
 };
 
-export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    try {
-        const { id } = req.params;
-        if (!['ADMIN', 'SUPER_ADMIN'].includes(req.user?.role || '')) {
-            return next(new AppError('Only Admins can grant final approval', 403));
-        }
-        const user = await prisma.user.findUnique({ where: { id } });
-        if (!user) return next(new AppError('User not found', 404));
-        if (user.kycStatus !== 'pending_admin_review' && req.user?.role !== 'SUPER_ADMIN') {
-            return next(new AppError('Violation: KYC must be reviewed by a Moderator first (Status: pending_admin_review)', 400));
-        }
-        const updatedUser = await prisma.user.update({
-            where: { id },
-            data: { kycStatus: 'verified', isVerified: true, verificationStatus: 'approved' }
-        });
-        console.log(`[AUDIT] KYC Approved by ${req.user?.email} for user ${user.email}`);
-        res.status(200).json({ success: true, data: updatedUser });
-    } catch (error) {
-        next(error);
-    }
-};
+
 
 export const rejectKYC = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -196,11 +176,85 @@ export const rejectKYC = async (req: AuthRequest, res: Response, next: NextFunct
         if (!['ADMIN', 'SUPER_ADMIN'].includes(req.user?.role || '')) {
             return next(new AppError('Only Admins can reject applications', 403));
         }
+
+        // 1. Update User Status
         const updatedUser = await prisma.user.update({
             where: { id },
             data: { kycStatus: 'rejected', isVerified: false, verificationStatus: 'rejected' }
         });
+
+        // 2. Update KYC Record (Sync Rejection Reason)
+        // Find latest KYC record for user
+        const kycRecord = await prisma.kYC.findFirst({
+            where: { userId: id },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (kycRecord) {
+            await prisma.kYC.update({
+                where: { id: kycRecord.id },
+                data: {
+                    status: 'REJECTED',
+                    rejectionReason: reason,
+                    reviewedAt: new Date(),
+                    reviewedBy: req.user?.id
+                }
+            });
+        }
+
+        // 3. Notify User
+        await prisma.notification.create({
+            data: {
+                userId: id,
+                title: 'KYC Application Rejected',
+                message: `Your KYC application was rejected. Reason: ${reason || 'Document validation failed'}`,
+                type: 'error'
+            }
+        });
+
         console.log(`[AUDIT] KYC Rejected by ${req.user?.email}. Reason: ${reason}`);
+        res.status(200).json({ success: true, data: updatedUser });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const approveKYC = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        if (!['ADMIN', 'SUPER_ADMIN'].includes(req.user?.role || '')) {
+            return next(new AppError('Only Admins can approve applications', 403));
+        }
+
+        const user = await prisma.user.findUnique({ where: { id } });
+        if (!user) return next(new AppError('User not found', 404));
+
+        if (user.kycStatus !== 'pending_admin_review') {
+            // Optional: allow approval if just pending, but strict flow prefers review first.
+            // Continuing with Strict Flow assumption from previous session
+            return next(new AppError('Application must be reviewed by moderator first (status: pending_admin_review)', 400));
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: {
+                kycStatus: 'verified',
+                isVerified: true,
+                verificationStatus: 'verified'
+            }
+        });
+
+        // Notify User
+        await prisma.notification.create({
+            data: {
+                userId: id,
+                title: 'KYC Approved',
+                message: 'Your identity has been verified. You can now invest.',
+                type: 'success'
+            }
+        });
+
+        console.log(`[AUDIT] KYC Approved for user ${user.email} by ${req.user?.email}`);
         res.status(200).json({ success: true, data: updatedUser });
     } catch (error) {
         next(error);

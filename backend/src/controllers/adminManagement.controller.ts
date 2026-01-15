@@ -4,7 +4,70 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
-import { logSecurityEvent } from '../utils/logger';
+import {
+    logSecurityEvent,
+    logAdminAction
+} from '../utils/logger';
+
+// ... (existing imports)
+
+// ...
+
+/**
+ * Suspend/Activate User
+ */
+export const suspendUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.params;
+        /* @ts-ignore */
+        const adminId = req.user.id;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return next(new AppError('User not found', 404));
+
+        const isSuspended = !!user.lockedUntil && user.lockedUntil > new Date();
+        const newLockedUntil = isSuspended ? null : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year lock
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { lockedUntil: newLockedUntil }
+        });
+
+        // Log Action
+        await logAdminAction(adminId, isSuspended ? 'ACTIVATE_USER' : 'SUSPEND_USER', { targetUserId: userId }, { type: 'USER', id: userId });
+
+        res.json({ success: true, message: isSuspended ? 'User activated' : 'User suspended' });
+    } catch (e) { next(e); }
+};
+
+/**
+ * Update User Profile
+ */
+export const updateUserProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.params;
+        /* @ts-ignore */
+        const adminId = req.user.id;
+        const { firstName, lastName, phone, address, state, lga, dateOfBirth } = req.body;
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                firstName,
+                lastName,
+                phone,
+                address,
+                state,
+                lga,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined
+            }
+        });
+
+        // Log Action
+        await logAdminAction(adminId, 'UPDATE_USER_PROFILE', { targetUserId: userId, updates: Object.keys(req.body) }, { type: 'USER', id: userId });
+
+        res.json({ success: true, message: 'Profile updated successfully' });
+    } catch (e) { next(e); }
+};
 
 const prisma = new PrismaClient();
 
@@ -334,4 +397,61 @@ export const revokeAdminAccess = async (req: AuthRequest, res: Response, next: N
     } catch (error) {
         next(error);
     }
+};
+
+/**
+ * Get detailed user profile (Admin)
+ */
+export const getAdminUserDetail = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.params;
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                kyc: true,
+                documents: true,
+                ownerships: { include: { property: true } },
+                transactions: { orderBy: { createdAt: 'desc' } },
+                bankAccounts: true
+            }
+        });
+        if (!user) return next(new AppError('User not found', 404));
+
+        res.json({ success: true, data: user });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
+/**
+ * Get Admin Audit Logs
+ */
+export const getAdminAuditLogs = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+
+        const [logs, total] = await Promise.all([
+            prisma.adminAuditLog.findMany({
+                skip,
+                take: limit,
+                include: {
+                    admin: {
+                        select: { firstName: true, lastName: true, email: true }
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.adminAuditLog.count()
+        ]);
+
+        res.json({
+            success: true,
+            data: logs,
+            pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+        });
+    } catch (e) { next(e); }
 };

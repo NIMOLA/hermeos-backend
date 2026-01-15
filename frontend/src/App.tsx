@@ -10,7 +10,7 @@ const PortfolioPage = lazy(() => import('./pages/dashboard/PortfolioPage'));
 const PropertiesListPage = lazy(() => import('./pages/dashboard/PropertiesListPage'));
 const PropertyDetailsPage = lazy(() => import('./pages/dashboard/PropertyDetailsPage'));
 const PerformancePage = lazy(() => import('./pages/dashboard/PerformancePage'));
-const SupportPage = lazy(() => import('./pages/support/SupportPage'));
+const SupportPage = lazy(() => import('./pages/dashboard/UserInboxPage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
 const AdminLayout = lazy(() => import('./layouts/admin/AdminLayout'));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
@@ -28,17 +28,25 @@ const KYCStatusPage = lazy(() => import('./pages/kyc/KYCStatusPage'));
 const AdminUserDetailPage = lazy(() => import('./pages/admin/AdminUserDetailPage'));
 const AdminExitRequestsPage = lazy(() => import('./pages/admin/AdminExitRequestsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
+const AdminTeamPage = lazy(() => import('./pages/admin/AdminTeamPage'));
+const AdminPaymentVerificationPage = lazy(() => import('./pages/admin/AdminPaymentVerificationPage'));
+const AdminApprovalsPage = lazy(() => import('./pages/admin/AdminApprovalsPage'));
+const AdminKYCPage = lazy(() => import('./pages/admin/AdminKYCPage'));
 const DashboardOverviewPage = lazy(() => import('./pages/dashboard/DashboardOverviewPage'));
 const DashboardTourPage = lazy(() => import('./pages/dashboard/DashboardTourPage'));
 const AcquisitionReviewPage = lazy(() => import('./pages/dashboard/AcquisitionReviewPage'));
-const PaymentStatusPage = lazy(() => import('./pages/dashboard/PaymentStatusPage'));
-const ExitRequestPage = lazy(() => import('./pages/dashboard/ExitRequestPage'));
 const NotificationsPage = lazy(() => import('./pages/dashboard/NotificationsPage'));
+const ReferralsPage = lazy(() => import('./pages/dashboard/ReferralsPage'));
+const EducationHubPage = lazy(() => import('./pages/dashboard/EducationHubPage'));
+const PropertyComparisonPage = lazy(() => import('./pages/dashboard/PropertyComparisonPage'));
 const DocumentsPage = lazy(() => import('./pages/dashboard/DocumentsPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const EmailVerificationPage = lazy(() => import('./pages/auth/EmailVerificationPage'));
+const PasswordResetConfirmationPage = lazy(() => import('./pages/auth/PasswordResetConfirmationPage'));
+const TransactionHistoryPage = lazy(() => import('./pages/dashboard/TransactionHistoryPage'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -57,6 +65,8 @@ function App() {
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/verify-email" element={<EmailVerificationPage />} />
+          <Route path="/password-reset-sent" element={<PasswordResetConfirmationPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
 
@@ -87,6 +97,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <PortfolioPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/transactions"
+              element={
+                <ProtectedRoute>
+                  <TransactionHistoryPage />
                 </ProtectedRoute>
               }
             />
@@ -144,6 +162,30 @@ function App() {
             />
 
             <Route
+              path="/referrals"
+              element={
+                <ProtectedRoute>
+                  <ReferralsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/education"
+              element={
+                <ProtectedRoute>
+                  <EducationHubPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/compare"
+              element={
+                <ProtectedRoute>
+                  <PropertyComparisonPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/settings"
               element={
                 <ProtectedRoute>
@@ -184,11 +226,60 @@ function App() {
               <Route path="assets/new" element={<EditPropertyPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:id" element={<AdminUserDetailPage />} />
-              <Route path="financials" element={<AdminFinancialsPage />} />
-              <Route path="exits" element={<AdminExitRequestsPage />} />
-              <Route path="audit-trail" element={<AuditTrailPage />} />
+
+              {/* Strict Role Protected Routes */}
+              <Route
+                path="financials"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AdminFinancialsPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="financials/payments"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AdminPaymentVerificationPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="kyc"
+                element={
+                  <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
+                    <AdminKYCPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="exits"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AdminExitRequestsPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="approvals"
+                element={
+                  <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
+                    <AdminApprovalsPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="audit-trail"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AuditTrailPage />
+                  </AdminRoute>
+                }
+              />
+
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="properties/edit/:id" element={<EditPropertyPage />} />
+              <Route path="team" element={<AdminTeamPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

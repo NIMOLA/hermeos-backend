@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function AdminLayout() {
     const location = useLocation();
@@ -10,15 +11,44 @@ export default function AdminLayout() {
         return location.pathname.startsWith(path);
     };
 
-    const navItems = [
-        { path: '/admin', label: 'Dashboard', icon: 'dashboard' },
-        { path: '/admin/assets', label: 'Assets', icon: 'apartment' },
-        { path: '/admin/users', label: 'Partners', icon: 'group' },
-        { path: '/admin/exits', label: 'Exit Requests', icon: 'logout' },
-        { path: '/admin/financials', label: 'Financials', icon: 'attach_money' },
-        { path: '/admin/audit-trail', label: 'Audit Trail', icon: 'history' },
-        { path: '/admin/settings', label: 'Settings', icon: 'settings' },
-    ];
+    // Role-based Navigation Configuration
+    const getNavItems = (role?: string) => {
+        const inputRole = role || 'USER';
+
+        // Base items for all admin types (Dashboard is common? Or restricted?)
+        // User said: Moderator can see Dashboard.
+        const items = [
+            { path: '/admin', label: 'Dashboard', icon: 'dashboard' },
+            { path: '/admin/assets', label: 'Assets', icon: 'apartment' },
+            { path: '/admin/users', label: 'Users', icon: 'group' },
+        ];
+
+        // Moderator Specific
+        if (inputRole === 'MODERATOR' || inputRole === 'ADMIN' || inputRole === 'SUPER_ADMIN') {
+            items.push({ path: '/admin/approvals', label: 'Approvals', icon: 'fact_check' });
+        }
+
+        // Admin Specific (Financials, Exits, Payments)
+        if (inputRole === 'ADMIN' || inputRole === 'SUPER_ADMIN') {
+            items.push(
+                { path: '/admin/financials', label: 'Financials', icon: 'attach_money' },
+                { path: '/admin/audit-trail', label: 'Audit Trail', icon: 'history' }
+            );
+        }
+
+        // Super Admin: Add Team & Settings
+        if (inputRole === 'SUPER_ADMIN') {
+            items.push(
+                { path: '/admin/team', label: 'Team', icon: 'badge' },
+                { path: '/admin/settings', label: 'Settings', icon: 'settings' }
+            );
+        }
+
+        return items;
+    };
+
+    const { user } = useAuth();
+    const navItems = getNavItems(user?.role);
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-background-light dark:bg-background-dark text-[#0e141b] dark:text-[#e2e8f0] font-display antialiased">

@@ -4,6 +4,10 @@ import { apiClient } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+    Info, MapPin, DollarSign, UploadCloud, Trash2, Plus,
+    ChevronRight, Save, LayoutDashboard, Building2, Users, FileText, Settings, ListPlus, Layers
+} from 'lucide-react';
 
 export default function EditPropertyPage() {
     const { id } = useParams<{ id: string }>();
@@ -17,20 +21,36 @@ export default function EditPropertyPage() {
     // Form State
     const [formData, setFormData] = useState({
         name: '',
-        location: '',
+        propertyType: 'Multi-family Residential',
+        yearBuilt: new Date().getFullYear(),
         description: '',
+        address: '',
+        city: '',
+        state: '',
+        postalCode: '',
         totalValue: 0,
-        targetCap: 0,
-        totalUnits: 0,
         pricePerUnit: 0,
-        capitalRaised: 0,
-        status: 'DRAFT', // Default for new
-        images: [] as string[]
+        totalUnits: 0,
+        minInvestment: 0,
+        expectedReturn: '',
+        status: 'DRAFT',
+        images: [] as string[],
+
+        // New Comparison Features
+        amenities: [] as string[], // Infrastructure
+        locationHighlights: [] as string[],
+        floorLevel: '',
+        size: '', // Existing in schema but might need input
+        bedrooms: 0,
+        bathrooms: 0
     });
+
+    // Helper for array inputs (comma separated)
+    const [amenitiesInput, setAmenitiesInput] = useState('');
+    const [highlightsInput, setHighlightsInput] = useState('');
 
     useEffect(() => {
         if (!isNew && id) {
-            // Fetch Property Details
             apiClient.get(`/properties/${id}`)
                 .then(res => {
                     const data = (res as any).data;
@@ -38,16 +58,30 @@ export default function EditPropertyPage() {
                     if (p) {
                         setFormData({
                             name: p.name,
-                            location: p.location,
+                            propertyType: p.propertyType || 'Multi-family Residential',
+                            yearBuilt: p.yearBuilt || new Date().getFullYear(),
                             description: p.description || '',
+                            address: p.address || '',
+                            city: p.city || '',
+                            state: p.state || '',
+                            postalCode: p.postalCode || '',
                             totalValue: Number(p.totalValue),
-                            targetCap: Number(p.totalValue),
-                            totalUnits: Number(p.totalUnits),
                             pricePerUnit: Number(p.pricePerUnit),
-                            capitalRaised: Number(p.capitalRaised || 0),
+                            totalUnits: Number(p.totalUnits),
+                            minInvestment: Number(p.minInvestment || p.pricePerUnit),
+                            expectedReturn: p.expectedReturn ? String(p.expectedReturn) : '',
                             status: p.status || 'DRAFT',
-                            images: p.images || []
+                            images: p.images || [],
+
+                            amenities: p.amenities || [],
+                            locationHighlights: p.locationHighlights || [],
+                            floorLevel: p.floorLevel || '',
+                            size: p.size || '',
+                            bedrooms: p.bedrooms || 0,
+                            bathrooms: p.bathrooms || 0
                         });
+                        setAmenitiesInput((p.amenities || []).join(', '));
+                        setHighlightsInput((p.locationHighlights || []).join(', '));
                     }
                 })
                 .catch(err => {
@@ -66,265 +100,214 @@ export default function EditPropertyPage() {
         }));
     };
 
+    const handleArrayInputBlur = (field: 'amenities' | 'locationHighlights', value: string) => {
+        const arr = value.split(',').map(s => s.trim()).filter(Boolean);
+        setFormData(prev => ({ ...prev, [field]: arr }));
+    };
+
     const handleSave = async () => {
-        if (!formData.name || !formData.location || !formData.totalValue || !formData.totalUnits || !formData.pricePerUnit) {
-            alert("Please fill in all required fields.");
+        if (!formData.name || !formData.address || !formData.totalValue) {
+            alert("Please fill in required fields.");
             return;
         }
 
         setSaving(true);
         try {
+            let finalTotalUnits = formData.totalUnits;
+            if (finalTotalUnits === 0 && formData.pricePerUnit > 0) {
+                finalTotalUnits = Math.floor(formData.totalValue / formData.pricePerUnit);
+            }
+
             const payload = {
                 ...formData,
+                totalUnits: finalTotalUnits || 1,
+                expectedReturn: parseFloat(String(formData.expectedReturn).match(/(\d+(\.\d+)?)/)?.[0] || '0'),
+                location: `${formData.city}, ${formData.state}`,
                 startDate: new Date(),
-                endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-                annualReturnRate: 15.5,
-                minInvestment: formData.pricePerUnit
+                // Arrays are already in formData
             };
 
             if (isNew) {
-                // Create (always DRAFT)
                 await apiClient.post('/properties', payload);
-                alert("Asset drafted successfully!");
+                alert("Property Created Successfully!");
                 navigate('/admin/assets');
             } else {
-                // Update
                 await apiClient.put(`/properties/${id}`, payload);
-                alert("Asset updated successfully!");
+                alert("Property Updated Successfully!");
             }
         } catch (error: any) {
             console.error("Save failed", error);
-            alert(error.response?.data?.message || "Failed to save asset.");
+            alert(error.response?.data?.message || "Failed to save property.");
         } finally {
             setSaving(false);
         }
     };
 
-    const handleSubmitForReview = async () => {
-        if (!confirm("Submit this property for Admin review?")) return;
-        setSaving(true);
-        try {
-            await apiClient.put(`/properties/${id}/submit`);
-            alert("Property Submitted for Review!");
-            navigate('/admin/assets');
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to submit.");
-        } finally {
-            setSaving(false);
+    const handleImageUpload = () => {
+        const url = prompt("Enter Image URL (Mock Upload):");
+        if (url) {
+            setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
         }
     };
 
-    const handlePublish = async () => {
-        if (!confirm("Are you sure you want to PUBLISH this property live?")) return;
-        setSaving(true);
-        try {
-            await apiClient.put(`/properties/${id}/publish`);
-            alert("Property Published Live!");
-            navigate('/admin/assets'); // Or reload
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to publish.");
-        } finally {
-            setSaving(false);
-        }
+    const removeImage = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
     };
 
-    if (loading) return <div className="p-10 text-center">Loading asset details...</div>;
-
-    const isModerator = user?.role === 'MODERATOR';
-    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
-    const isPublished = formData.status === 'PUBLISHED' || formData.status === 'LISTED';
-    const isPending = formData.status === 'PENDING_REVIEW';
-    const isDraft = formData.status === 'DRAFT';
-
-    // Restriction Logic
-    // Moderators cannot edit if Published
-    const isReadOnly = isModerator && isPublished;
+    if (loading) return <div className="p-10 text-center flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
 
     return (
-        <div className="max-w-6xl mx-auto flex flex-col gap-6">
-            <nav className="flex flex-wrap gap-2 items-center text-sm">
-                <Link to="/admin" className="text-slate-500 hover:text-primary transition-colors font-medium">Dashboard</Link>
-                <span className="text-slate-400">/</span>
-                <Link to="/admin/assets" className="text-slate-500 hover:text-primary transition-colors font-medium">Assets</Link>
-                <span className="text-slate-400">/</span>
-                <span className="text-slate-900 dark:text-white font-semibold">{isNew ? 'New Asset' : formData.name}</span>
-            </nav>
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-10">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-[#0e141b] dark:text-white text-2xl md:text-3xl font-extrabold tracking-tight">
-                        {isNew ? 'Create New Asset' : `Edit: ${formData.name}`}
-                    </h1>
-                    {!isNew && (
-                        <div className="flex items-center gap-2">
-                            <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
-                                {formData.status}
-                            </Badge>
-                            <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">ID: {id?.substring(0, 8)}</span>
-                        </div>
-                    )}
-                </div>
-                <div className="flex gap-3 mt-2 md:mt-0">
-                    <Button variant="outline" onClick={() => navigate('/admin/assets')}>
-                        Cancel
-                    </Button>
-
-                    {/* Save Button (Draft/Edit) */}
-                    {!isReadOnly && (
-                        <Button onClick={handleSave} disabled={saving || isReadOnly} className="bg-slate-800 text-white hover:bg-slate-700">
-                            {saving ? 'Saving...' : 'Save Draft'}
-                        </Button>
-                    )}
-
-                    {/* Moderator Action: Submit */}
-                    {!isNew && isModerator && isDraft && (
-                        <Button onClick={handleSubmitForReview} disabled={saving} className="bg-blue-600 text-white hover:bg-blue-700">
-                            Submit for Review
-                        </Button>
-                    )}
-
-                    {/* Admin Action: Publish */}
-                    {!isNew && isAdmin && (isPending || isDraft) && (
-                        <Button onClick={handlePublish} disabled={saving} className="bg-emerald-600 text-white hover:bg-emerald-700">
-                            Publish Live
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 flex flex-col gap-6">
-                    {/* Asset Information */}
-                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-slate-400">info</span> Asset Information
-                            </h2>
-                        </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Asset Designation (Name) *</label>
-                                <input
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    disabled={isReadOnly}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
-                                    type="text"
-                                    placeholder="e.g. The Eko Atlantic Heights"
-                                />
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Physical Address *</label>
-                                <div className="relative">
-                                    <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400">location_on</span>
-                                    <input
-                                        name="location"
-                                        value={formData.location}
-                                        onChange={handleInputChange}
-                                        disabled={isReadOnly}
-                                        className="w-full pl-10 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
-                                        type="text"
-                                        placeholder="Full address"
-                                    />
-                                </div>
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Operational Summary</label>
-                                <textarea
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                    disabled={isReadOnly}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-3 border disabled:opacity-50"
-                                    rows={4}
-                                    placeholder="Describe the asset..."
-                                />
-                            </div>
-                        </div>
+        <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
+            <div className="w-full max-w-[1200px] mx-auto p-4 md:p-8 flex flex-col gap-6">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                            {isNew ? 'Create New Property' : 'Edit Property'}
+                        </h1>
+                        <p className="text-slate-500 mt-1">Detailed specifications for comparison and valuation.</p>
                     </div>
-
-                    {/* Valuation & Capital */}
-                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-slate-400">payments</span> Valuation & Capital
-                            </h2>
-                            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">Naira (₦)</span>
-                        </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Asset Valuation *</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
-                                    <input
-                                        name="totalValue"
-                                        value={formData.totalValue}
-                                        onChange={handleInputChange}
-                                        // Moderators cannot edit valuation once set? Or maybe just restricted in general? 
-                                        // For now, allow edit unless published
-                                        disabled={isReadOnly}
-                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
-                                        type="number"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Price Per Unit *</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2.5 text-slate-500 font-semibold">₦</span>
-                                    <input
-                                        name="pricePerUnit"
-                                        value={formData.pricePerUnit}
-                                        onChange={handleInputChange}
-                                        disabled={isReadOnly}
-                                        className="w-full pl-8 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
-                                        type="number"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Units *</label>
-                                <input
-                                    name="totalUnits"
-                                    value={formData.totalUnits}
-                                    onChange={handleInputChange}
-                                    disabled={isReadOnly}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2 border disabled:opacity-50"
-                                    type="number"
-                                />
-                            </div>
-                        </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" onClick={() => navigate('/admin/assets')}>Cancel</Button>
+                        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 text-white gap-2 shadow-lg shadow-primary/25">
+                            <Save className="w-4 h-4" />
+                            {saving ? 'Saving...' : 'Save Property'}
+                        </Button>
                     </div>
                 </div>
 
-                {/* Sidebar / Status */}
-                <div className="flex flex-col gap-6">
-                    <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
-                        <h3 className="font-bold text-slate-900 dark:text-white mb-4">Status & Workflow</h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-500">Current Status</span>
-                                <Badge>{formData.status}</Badge>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
+                    <div className="lg:col-span-2 flex flex-col gap-6">
+
+                        {/* Basic Info */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                <Info className="w-5 h-5 text-primary" /> Basic Information
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-semibold mb-2">Property Name *</label>
+                                    <input name="name" value={formData.name} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm focus:border-primary focus:ring-primary outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Property Type</label>
+                                    <select name="propertyType" value={formData.propertyType} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm focus:border-primary focus:ring-primary outline-none">
+                                        <option>Multi-family Residential</option>
+                                        <option>Commercial Office</option>
+                                        <option>Industrial Warehouse</option>
+                                        <option>Mixed Use</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Desc</label>
+                                    <input name="description" value={formData.description} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
+                                </div>
                             </div>
+                        </div>
 
-                            {isModerator && isPublished && (
-                                <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-100">
-                                    Property is Published. Contact Admin for changes.
+                        {/* Specs & Features (New) */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                <ListPlus className="w-5 h-5 text-primary" /> Specifications & Features
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Size (sqm)</label>
+                                    <input name="size" value={formData.size} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" placeholder="e.g. 1200 sqm" />
                                 </div>
-                            )}
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-2">Bedrooms</label>
+                                        <input name="bedrooms" type="number" value={formData.bedrooms} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-2">Bathrooms</label>
+                                        <input name="bathrooms" type="number" value={formData.bathrooms} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Floor Level</label>
+                                    <input name="floorLevel" value={formData.floorLevel} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" placeholder="e.g. 5th Floor" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Amenities / Infrastructure</label>
+                                    <input
+                                        value={amenitiesInput}
+                                        onChange={(e) => setAmenitiesInput(e.target.value)}
+                                        onBlur={(e) => handleArrayInputBlur('amenities', e.target.value)}
+                                        className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm"
+                                        placeholder="Comma separated (e.g. Pool, Gym, Power)"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Infrastructure features for comparison</p>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-semibold mb-2">Location Highlights</label>
+                                    <input
+                                        value={highlightsInput}
+                                        onChange={(e) => setHighlightsInput(e.target.value)}
+                                        onBlur={(e) => handleArrayInputBlur('locationHighlights', e.target.value)}
+                                        className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm"
+                                        placeholder="Comma separated (e.g. Near CBD, Airport Access)"
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                            {isModerator && isPending && (
-                                <div className="p-3 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100">
-                                    Submited for Review. Waiting for Admin.
+                        {/* Location */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                <MapPin className="w-5 h-5 text-primary" /> Location
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-semibold mb-2">Address *</label>
+                                    <input name="address" value={formData.address} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
                                 </div>
-                            )}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">City</label>
+                                    <input name="city" value={formData.city} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Postal Code</label>
+                                    <input name="postalCode" value={formData.postalCode} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
+                                </div>
+                            </div>
+                        </div>
 
-                            {isAdmin && isPending && (
-                                <div className="p-3 bg-green-50 text-green-800 text-xs rounded border border-green-100">
-                                    Ready for Review. Check details before publishing.
+                        {/* Financials */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                                <DollarSign className="w-5 h-5 text-primary" /> Financials
+                            </h2>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Total Value</label>
+                                    <input name="totalValue" type="number" value={formData.totalValue} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
                                 </div>
-                            )}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">Price Per Unit</label>
+                                    <input name="pricePerUnit" type="number" value={formData.pricePerUnit} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {/* Sidebar */}
+                    <div className="lg:col-span-1 flex flex-col gap-6">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                            <h2 className="text-lg font-bold mb-4">Status</h2>
+                            <select name="status" value={formData.status} onChange={handleInputChange} className="w-full rounded-lg bg-slate-50 dark:bg-slate-900 p-2.5 text-sm mb-4">
+                                <option value="DRAFT">Draft</option>
+                                <option value="PUBLISHED">Published</option>
+                                <option value="PENDING_REVIEW">Pending Review</option>
+                            </select>
+                            <div className="flex flex-col gap-2">
+                                <Button className="w-full" onClick={handleSave}>Save Changes</Button>
+                            </div>
                         </div>
                     </div>
                 </div>

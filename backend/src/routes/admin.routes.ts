@@ -2,41 +2,55 @@ import { Router } from 'express';
 import { protect, authorize } from '../middleware/auth';
 import * as adminController from '../controllers/admin.controller';
 import * as adminPaymentController from '../controllers/adminPayment.controller';
+import * as transferController from '../controllers/transfer.controller';
+import * as adminSupportController from '../controllers/adminSupport.controller';
 
 const router = Router();
 
 // All admin routes require authentication and admin role
 router.use(protect);
-router.use(authorize('ADMIN', 'SUPER_ADMIN'));
+// All admin routes require authentication and at least moderator role
+router.use(protect);
+router.use(authorize('MODERATOR', 'ADMIN', 'SUPER_ADMIN'));
+
+// Special Middleware for Write Access (Admin+)
+const adminOnly = authorize('ADMIN', 'SUPER_ADMIN');
+const superAdminOnly = authorize('SUPER_ADMIN');
 
 // Dashboard stats
 router.get('/dashboard/stats', adminController.getDashboardStats);
 
 // Invitation
-router.post('/invite', adminController.inviteAdmin);
+router.post('/invite', superAdminOnly, adminController.inviteAdmin);
 
 // User management
 router.get('/users', adminController.getAllUsers);
 router.get('/users/:id', adminController.getUserById);
-router.put('/users/:id/verify', adminController.verifyUser);
-router.put('/users/:id/role', adminController.updateUserRole);
+router.put('/users/:id/verify', adminOnly, adminController.verifyUser);
+router.put('/users/:id/role', superAdminOnly, adminController.updateUserRole);
 
 // KYC management
 router.get('/kyc/pending', adminController.getPendingKYC);
-router.put('/kyc/:id/review', adminController.reviewKYC); // Mod action
-router.put('/kyc/:id/approve', adminController.approveKYC);
-router.put('/kyc/:id/reject', adminController.rejectKYC);
+router.put('/kyc/:id/review', adminController.reviewKYC); // Mod action allowed
+router.put('/kyc/:id/approve', adminOnly, adminController.approveKYC);
+router.put('/kyc/:id/reject', adminOnly, adminController.rejectKYC);
 
 // Transfer requests
 router.get('/transfers', adminController.getAllTransferRequests);
+router.put('/transfers/:id/approve', adminOnly, transferController.approveTransferRequest);
+router.put('/transfers/:id/reject', adminOnly, transferController.rejectTransferRequest);
+
+// Support Management
+router.get('/support-tickets', adminSupportController.getAllTickets);
+router.put('/support-tickets/:id/resolve', adminSupportController.resolveTicket);
 
 // Payment proof verification
 router.get('/payment-proofs', adminPaymentController.getPendingPaymentProofs);
 router.get('/payment-proofs/:id', adminPaymentController.getPaymentProofDetails);
-router.post('/payment-proofs/:id/verify', adminPaymentController.verifyPaymentProof);
-router.post('/payment-proofs/:id/reject', adminPaymentController.rejectPaymentProof);
+router.post('/payment-proofs/:id/verify', adminOnly, adminPaymentController.verifyPaymentProof);
+router.post('/payment-proofs/:id/reject', adminOnly, adminPaymentController.rejectPaymentProof);
 
 // Audit logs
-router.get('/audit-logs', adminController.getAuditLogs);
+router.get('/audit-logs', adminOnly, adminController.getAuditLogs);
 
 export default router;

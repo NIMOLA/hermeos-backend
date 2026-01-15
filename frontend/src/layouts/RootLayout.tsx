@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Chatbot from '../components/Chatbot';
 import { useAuth } from '../contexts/AuthContext';
 import logoFull from '../assets/logo-full.png';
 import logoIcon from '../assets/logo-icon.png';
+import Sidebar from '../components/Sidebar';
 
 export default function RootLayout() {
     const { isAuthenticated, user, logout } = useAuth();
@@ -27,183 +29,92 @@ export default function RootLayout() {
         { path: '/portfolio', label: 'Portfolio', icon: 'account_balance_wallet' },
         { path: '/performance', label: 'Performance', icon: 'trending_up' },
         { path: '/notifications', label: 'Notifications', icon: 'notifications' },
+        { path: '/notifications', label: 'Notifications', icon: 'notifications' },
+        { path: '/referrals', label: 'Referrals', icon: 'group_add' },
+        { path: '/education', label: 'Learn', icon: 'school' },
         { path: '/support', label: 'Support', icon: 'support_agent' },
         { path: '/settings', label: 'Settings', icon: 'settings' },
     ];
 
-    // Build the navItems depending on auth state
-    const navItems = isAuthenticated ? [...privateNav, ...publicNav] : [...publicNav];
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    const isLandingPage = location.pathname === '/';
-    const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(location.pathname);
-    const isAdminRoute = location.pathname.startsWith('/admin');
-    const shouldHideNav = isLandingPage || isAuthPage || isAdminRoute;
+    // Close mobile menu on route change
+    useEffect(() => {
+        setIsMobileOpen(false);
+    }, [location.pathname]);
+
+    // Handle authentication redirect
+    if (!isAuthenticated && !isLandingPage && !isAuthPage) {
+        // This is handled by ProtectedRoute, but RootLayout wraps everything.
+        // We can just render Outlet, but the Sidebar won't have user data.
+        // It's safer to let ProtectedRoute handle redirects, but for layout purposes:
+    }
+
+    if (shouldHideNav) {
+        return (
+            <div className="min-h-screen bg-background-light dark:bg-background-dark">
+                {/* Only show simplified header for Auth/Landing if needed, or just Outlet */}
+                {/* Re-use the existing Landing Page header logic if we want, or let LandingPage handle its own header */}
+                {/* For now, we'll keep the minimal header for Auth/Landing inside this return or assume pages handle it if we return just Outlet */}
+                <div className="min-h-screen bg-background-light dark:bg-background-dark">
+                    {/* We can reproduce the Landing Header here or just render Outlet. 
+                         The previous implementation had a specific Header for Landing. 
+                         Let's keep the Outlet. LandingPage usually has its own Layout if complex.
+                     */}
+                    <header className="sticky top-0 z-40 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark shadow-sm">
+                        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 mobile:px-reduced">
+                            <div className="flex items-center justify-between h-16">
+                                <Link to="/" className="flex items-center gap-2 group">
+                                    {/* Logo Logic */}
+                                    <img src={logoFull} alt="Hermeos" className="h-8 w-auto hidden md:block dark:hidden" />
+                                    {/* Dark mode logo handling if needed */}
+                                    <span className="font-bold text-xl md:hidden">Hermeos</span>
+                                </Link>
+
+                                {isLandingPage && (
+                                    <div className="flex items-center gap-4">
+                                        <Link to="/login"><button className="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold">Login</button></Link>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </header>
+                    <main>
+                        <Outlet />
+                    </main>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark">
-            {/* Header */}
-            <header className="sticky top-0 z-40 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark shadow-sm">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 mobile:px-reduced">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link to="/" className="flex items-center gap-2 group">
-                            <img
-                                src={logoFull}
-                                alt="Hermeos Proptech"
-                                className="h-28 w-auto hidden md:block dark:filter-none filter brightness-0 transition-all duration-300"
-                            />
-                            <img
-                                src={logoIcon}
-                                alt="Hermeos"
-                                className="h-20 w-auto md:hidden dark:filter-none filter brightness-0 transition-all duration-300"
-                            />
-                        </Link>
+        <div className="min-h-screen bg-background-light dark:bg-background-dark flex font-display text-slate-900 dark:text-white">
+            <Sidebar
+                isCollapsed={isCollapsed}
+                toggleCollapse={() => setIsCollapsed(!isCollapsed)}
+                isMobileOpen={isMobileOpen}
+                toggleMobile={() => setIsMobileOpen(!isMobileOpen)}
+            />
 
-                        {/* Public Action (Login/Theme) - Show on Landing Page only */}
-                        {isLandingPage && (
-                            <div className="flex items-center gap-4">
-                                <Link to="/admin/login" className="text-sm font-medium text-slate-500 hover:text-primary transition-colors hidden md:block">
-                                    Admin
-                                </Link>
-                                <button
-                                    onClick={toggleTheme}
-                                    className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                                >
-                                    <span className="material-symbols-outlined">
-                                        {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-                                    </span>
-                                </button>
-                                <Link to="/login">
-                                    <button className="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-blue-600 transition-colors">
-                                        Login
-                                    </button>
-                                </Link>
-                            </div>
-                        )}
+            {/* Main Content Wrapper */}
+            <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
 
-                        {/* Show only theme toggle on Auth pages */}
-                        {isAuthPage && (
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={toggleTheme}
-                                    className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                                >
-                                    <span className="material-symbols-outlined">
-                                        {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-                                    </span>
-                                </button>
-                            </div>
-                        )}
+                {/* Mobile Header */}
+                <header className="md:hidden sticky top-0 z-30 bg-white dark:bg-surface-dark border-b border-slate-200 dark:border-slate-800 h-16 flex items-center justify-between px-4">
+                    <button onClick={() => setIsMobileOpen(true)} className="p-2 -ml-2 text-slate-600 dark:text-slate-400">
+                        <span className="material-symbols-outlined">menu</span>
+                    </button>
+                    <span className="font-bold text-lg">Hermeos</span>
+                    <div className="w-8"></div> {/* Spacer */}
+                </header>
 
-                        {!shouldHideNav && (
-                            <>
-                                {/* Desktop Navigation */}
-                                <nav className="hidden md:flex items-center gap-1">
-                                    {navItems.map((item) => (
-                                        <Link
-                                            key={item.path}
-                                            to={item.path}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive(item.path)
-                                                ? 'bg-primary/10 text-primary'
-                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
-                                                }`}
-                                        >
-                                            <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                                            <span>{item.label}</span>
-                                        </Link>
-                                    ))}
-                                </nav>
+                {/* Content Area */}
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+                    <Outlet />
+                </main>
+            </div>
 
-                                {/* User Menu - show only when authenticated */}
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={toggleTheme}
-                                        className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                                        title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                                    >
-                                        <span className="material-symbols-outlined">
-                                            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-                                        </span>
-                                    </button>
-
-                                    {isAuthenticated ? (
-                                        <>
-                                            <button className="relative p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                                                <span className="material-symbols-outlined">notifications</span>
-                                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                                            </button>
-                                            <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-700">
-                                                <div className="hidden sm:block text-right">
-                                                    <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.firstName ?? 'User'} {user?.lastName ?? ''}</p>
-                                                    <p className="text-xs text-slate-500">{/* Insert tier or role if available */}</p>
-                                                </div>
-                                                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                                                    {user?.firstName?.[0] ?? 'U'}{user?.lastName?.[0] ?? ''}
-                                                </div>
-
-                                            </div>
-                                            <button
-                                                onClick={handleLogout}
-                                                className="hidden sm:flex items-center justify-center p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Logout"
-                                            >
-                                                <span className="material-symbols-outlined">logout</span>
-                                            </button>
-                                        </>
-                                    ) : (
-                                        // If not authenticated show login button only (or avatar placeholder)
-                                        <div className="flex items-center gap-3">
-                                            <Link to="/login" className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary">
-                                                Login
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {!shouldHideNav && (
-                        /* Mobile Navigation */
-                        <nav className="md:hidden flex items-center gap-1 overflow-x-auto pb-2 scrollbar-hide">
-                            {navItems.map((item) => (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    className={`flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${isActive(item.path)
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'text-slate-500 dark:text-slate-400'
-                                        }`}
-                                >
-                                    <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                                    <span>{item.label}</span>
-                                </Link>
-                            ))}
-                        </nav>
-                    )}
-                </div>
-            </header>
-
-            {/* Main Content */}
-            <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6 mobile:px-reduced">
-                <Outlet />
-            </main>
-
-            {/* Footer */}
-            <footer className="bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-border-dark mt-16">
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 mobile:px-reduced">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p className="text-sm text-slate-500">© 2026 Hermeos Proptech. All rights reserved.</p>
-                        <div className="flex gap-6">
-                            <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Privacy Policy</a>
-                            <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Terms of Service</a>
-                            <a href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">Contact</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
-
-            {/* Chatbot Assistant */}
             <Chatbot />
         </div>
     );

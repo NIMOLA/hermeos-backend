@@ -115,7 +115,8 @@ export function useFetch<T = any>(endpoint: string, params?: Record<string, any>
 
 export function useMutation<T = any, B = any>(
     endpoint: string,
-    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST'
+    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST',
+    options: { onSuccess?: (data: T) => void; onError?: (err: ApiError) => void } = {}
 ) {
     const [data, setData] = useState<T | null>(null);
     const [error, setError] = useState<ApiError | null>(null);
@@ -147,16 +148,18 @@ export function useMutation<T = any, B = any>(
                 }
 
                 setData(result);
+                options.onSuccess?.(result);
                 return result;
             } catch (err) {
                 const apiError = err as ApiError;
                 setError(apiError);
+                options.onError?.(apiError);
                 throw apiError;
             } finally {
                 setIsLoading(false);
             }
         },
-        [endpoint, method]
+        [endpoint, method, options.onSuccess, options.onError]
     );
 
     return { mutate, data, error, isLoading };

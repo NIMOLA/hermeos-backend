@@ -62,3 +62,29 @@ export function logAuthEvent(event: string, userId: string | null, ip: string, s
 export function logFinancialEvent(event: string, userId: string, amount: number, data: Record<string, any>) {
     logger.warn(`FINANCIAL: ${event}`, { userId, amount, ...data });
 }
+
+// Admin Audit Logging
+export async function logAdminAction(adminId: string, action: string, details: Record<string, any> = {}, target?: { type: string, id: string }) {
+    logger.info(`ADMIN_AUDIT: ${action} by ${adminId}`, { ...details, target });
+
+    // Fire and forget DB write to avoid blocking response
+    try {
+        // Dynamic import to avoid circular dependency if possible, or assume global prisma
+        // Check if we can import from server or separate db file.
+        // For now, assuming standard import logic.
+        const { prisma } = await import('../server'); // Adjust based on server.ts location
+
+        await prisma.adminAuditLog.create({
+            data: {
+                adminId,
+                action,
+                details,
+                targetType: target?.type,
+                targetId: target?.id,
+                ipAddress: details.ip
+            }
+        });
+    } catch (err) {
+        console.error('Failed to write admin audit log', err);
+    }
+}

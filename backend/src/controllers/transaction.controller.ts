@@ -47,6 +47,60 @@ export const getMyTransactions = async (req: AuthRequest, res: Response, next: N
     }
 };
 
+// Pay for Asset (Create Transaction)
+export const payForAsset = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.id;
+        const { propertyId, amount, units, method, reference } = req.body;
+
+        if (!propertyId || !amount || !units) {
+            return res.status(400).json({ success: false, message: 'Property ID, units, and amount are required' });
+        }
+
+        // Verify Property Exists
+        const property = await prisma.property.findUnique({ where: { id: propertyId } });
+        if (!property) {
+            return res.status(404).json({ success: false, message: 'Property not found' });
+        }
+
+        // Validate Amount
+        // Use pricePerUnit or price (fallback)
+        const price = Number(property.pricePerUnit || property.totalValue || 0); // Assuming totalValue might be used if single unit, but safely defaulting to pricePerUnit
+        // Note: Schema has pricePerUnit. If mock data used 'price', we might have issues. Assuming pricePerUnit is correct field per schema.
+
+        const expectedAmount = price * Number(units);
+
+        // Allow small difference (e.g. fees) but warn if significantly different
+        if (expectedAmount > 0 && Math.abs(Number(amount) - expectedAmount) > 1000) {
+            return res.status(400).json({ success: false, message: 'Amount mismatch with property price' });
+        }
+
+        // Create Transaction Record
+        const transaction = await prisma.transaction.create({
+            data: {
+                userId,
+                propertyId,
+                type: 'OWNERSHIP_REGISTRATION',
+                amount: Number(amount),
+                status: 'PENDING',
+                reference: reference || `REF-${Date.now()}`,
+                description: `Payment for ${units} unit(s) of ${property.name} via ${method || 'Online'}`,
+                paymentMethod: method || 'Online'
+            }
+        });
+
+        // Notify Admins (Optional placeholder)
+
+        res.status(201).json({
+            success: true,
+            data: transaction,
+            message: 'Payment initiated successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Get transaction details
 export const getTransactionById = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {

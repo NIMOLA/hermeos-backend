@@ -1,9 +1,10 @@
-
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFetch } from '../../hooks/useApi';
+import { CheckoutConsent } from '../../components/payment/CheckoutConsent';
 
 // Reusing Property interface or defining a subset
 interface Property {
@@ -20,6 +21,7 @@ export default function AcquisitionReviewPage() {
     const { user } = useAuth();
     const { id } = useParams<{ id: string }>();
     const { data: property, isLoading, error } = useFetch<Property>(id ? `/properties/${id}` : '');
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     // Simple state for quantity (could be expanded)
     const quantity = 10; // Default for now, or derive from query param?
@@ -78,6 +80,9 @@ export default function AcquisitionReviewPage() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Consent Checkbox */}
+                    <CheckoutConsent checked={agreedToTerms} onCheckedChange={setAgreedToTerms} />
                 </div>
 
                 <div className="space-y-6">
@@ -106,7 +111,12 @@ export default function AcquisitionReviewPage() {
                     <div className="flex flex-col gap-3">
                         {user?.isVerified ? (
                             <Link to="/payment/status">
-                                <Button className="w-full h-12 text-lg shadow-lg">Confirm Purchase</Button>
+                                <Button
+                                    className="w-full h-12 text-lg shadow-lg"
+                                    disabled={!agreedToTerms}
+                                >
+                                    Confirm Purchase
+                                </Button>
                             </Link>
                         ) : (
                             <Link to="/kyc/info">
@@ -120,9 +130,7 @@ export default function AcquisitionReviewPage() {
                             <Button variant="outline" className="w-full">Cancel</Button>
                         </Link>
                         <p className="text-xs text-center text-slate-500 mt-2">
-                            {user?.isVerified
-                                ? "By clicking confirm, you agree to the Terms of Purchase and Co-Ownership Agreement."
-                                : "Identity verification is required to complete this investment under regulatory guidelines."}
+                            Identity verification is required to complete this investment under regulatory guidelines.
                         </p>
                     </div>
                 </div>

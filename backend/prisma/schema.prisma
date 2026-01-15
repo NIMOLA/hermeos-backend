@@ -66,40 +66,51 @@ enum KYCStatus {
 
 // MODELS
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
-  password              String
-  firstName             String
-  lastName              String
-  phone                 String?
-  role                  UserRole  @default(USER)
-  tier                  String    @default("Tier 1")
-  isVerified            Boolean   @default(false)
-  kycStatus             String?   @default("not_submitted")
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String
+  firstName  String
+  lastName   String
+  phone      String?
+  role       UserRole @default(USER)
+  tier       String   @default("Tier 1")
+  isVerified Boolean  @default(false)
+  kycStatus  String?  @default("not_submitted")
+  verificationCode String?
+  verificationExpires DateTime?
+
+  // Personal Info
+  address     String?
+  state       String?
+  lga         String?
+  dateOfBirth DateTime?
 
   // Security fields
-  failedLoginAttempts   Int       @default(0)
-  lockedUntil           DateTime?
-  twoFactorSecret       String?
-  twoFactorEnabled      Boolean   @default(false)
-  lastLogin             DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  twoFactorSecret     String?
+  twoFactorEnabled    Boolean   @default(false)
+  lastLogin           DateTime?
 
   // OAuth fields
-  googleId              String?   @unique
-  appleId               String?   @unique
+  googleId String? @unique
+  appleId  String? @unique
 
   // Financial
-  walletBalance         Decimal   @default(0) @db.Decimal(15, 2)
+  walletBalance Decimal @default(0) @db.Decimal(15, 2)
+
+  // Cooperative Membership
+  coopMembershipId String? @unique
 
   // Soft delete
-  deletedAt             DateTime?
+  deletedAt DateTime?
 
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Capabilities
-  verificationStatus    String           @default("pending") // pending, approved, rejected
-  capabilities          UserCapability[]
+  verificationStatus String           @default("pending") // pending, approved, rejected
+  capabilities       UserCapability[]
 
   // Relations
   ownerships              Ownership[]
@@ -121,108 +132,115 @@ model User {
 }
 
 model Property {
-  id                String          @id @default(uuid())
-  name              String
-  description       String
-  address           String
-  city              String
-  state             String
-  country           String          @default("Nigeria")
-  location          String?
-  totalUnits        Int
-  availableUnits    Int
-  pricePerUnit      Decimal         @db.Decimal(15, 2)
-  totalValue        Decimal         @db.Decimal(15, 2)
-  expectedReturn    Decimal         @db.Decimal(5, 2)
+  id             String  @id @default(uuid())
+  name           String
+  description    String
+  address        String
+  city           String
+  state          String
+  country        String  @default("Nigeria")
+  location       String?
+  totalUnits     Int
+  availableUnits Int
+  pricePerUnit   Decimal @db.Decimal(15, 2)
+  totalValue     Decimal @db.Decimal(15, 2)
+  expectedReturn Decimal @db.Decimal(5, 2)
 
   // Additional fields required by property controller
-  expectedAnnualIncome Decimal?     @db.Decimal(15, 2)
+  expectedAnnualIncome Decimal?  @db.Decimal(15, 2)
   propertyType         String?
   bedrooms             Int?
   bathrooms            Int?
   size                 String?
-  listedAt             DateTime?    @default(now())
+  listedAt             DateTime? @default(now())
   lastDistributionDate DateTime?
   titleDeedUrl         String?
   certificateUrl       String?
 
-  status            PropertyStatus  @default(LISTED)
-  images            String[]
-  documents         String[]
+  // New Features for Comparison
+  amenities          String[] // For Infrastructure
+  locationHighlights String[]
+  floorLevel         String?
+  yearBuilt          Int?
+  postalCode         String?
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  status    PropertyStatus @default(LISTED)
+  images    String[]
+  documents String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  ownerships        Ownership[]
-  transactions      Transaction[]
-  transferRequests  TransferRequest[]
-  distributions     Distribution[]
-  paymentProofs     PaymentProof[]
-  savedByUsers      SavedProperty[]
+  ownerships       Ownership[]
+  transactions     Transaction[]
+  transferRequests TransferRequest[]
+  distributions    Distribution[]
+  paymentProofs    PaymentProof[]
+  savedByUsers     SavedProperty[]
 
   @@index([status])
   @@index([city])
 }
 
 model SavedProperty {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
   propertyId String
-  property  Property @relation(fields: [propertyId], references: [id])
-  createdAt DateTime @default(now())
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
 
   @@unique([userId, propertyId])
   @@index([userId])
 }
 
 model Ownership {
-  id                String   @id @default(uuid())
-  userId            String
-  user              User     @relation(fields: [userId], references: [id])
-  propertyId        String
-  property          Property @relation(fields: [propertyId], references: [id])
-  units             Int
-  acquisitionPrice  Decimal  @db.Decimal(15, 2)
-  acquisitionDate   DateTime @default(now())
-  currentValue      Decimal  @default(0) @db.Decimal(15, 2)
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  propertyId       String
+  property         Property @relation(fields: [propertyId], references: [id])
+  units            Int
+  acquisitionPrice Decimal  @db.Decimal(15, 2)
+  acquisitionDate  DateTime @default(now())
+  currentValue     Decimal  @default(0) @db.Decimal(15, 2)
 
   // Status cannot be optional if controller expects string logic
-  status            String  @default("active")
+  status String @default("active")
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  transactions      Transaction[]
-  transferRequests  TransferRequest[] @relation("OwnershipTransfers")
+  transactions     Transaction[]
+  transferRequests TransferRequest[] @relation("OwnershipTransfers")
 
+  @@unique([userId, propertyId])
   @@index([userId])
   @@index([propertyId])
-  @@unique([userId, propertyId])
 }
 
 model Transaction {
-  id            String            @id @default(uuid())
-  userId        String
-  user          User              @relation(fields: [userId], references: [id])
-  propertyId    String?
-  property      Property?         @relation(fields: [propertyId], references: [id])
-  ownershipId   String?
-  ownership     Ownership?        @relation(fields: [ownershipId], references: [id])
-  type          TransactionType
-  amount        Decimal           @db.Decimal(15, 2)
-  status        TransactionStatus @default(PENDING)
-  reference     String            @unique @default(uuid())
-  description   String?
+  id               String            @id @default(uuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id])
+  propertyId       String?
+  property         Property?         @relation(fields: [propertyId], references: [id])
+  ownershipId      String?
+  ownership        Ownership?        @relation(fields: [ownershipId], references: [id])
+  type             TransactionType
+  amount           Decimal           @db.Decimal(15, 2)
+  status           TransactionStatus @default(PENDING)
+  reference        String            @unique @default(uuid())
+  description      String?
   // Fee field used in ownership controller
-  fee           Decimal?          @default(0) @db.Decimal(15, 2)
-  paymentMethod String?           @default("wallet")
+  fee              Decimal?          @default(0) @db.Decimal(15, 2)
+  paymentMethod    String?           @default("wallet")
   paymentReference String?
 
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([type])
@@ -231,22 +249,22 @@ model Transaction {
 }
 
 model TransferRequest {
-  id                String         @id @default(uuid())
-  userId            String
-  user              User           @relation(fields: [userId], references: [id])
-  propertyId        String?
-  property          Property?      @relation(fields: [propertyId], references: [id])
-  ownershipId       String?
-  ownership         Ownership?     @relation("OwnershipTransfers", fields: [ownershipId], references: [id])
-  units             Int
-  status            TransferStatus @default(PENDING)
-  reason            String?
-  requestType       String?        @default("transfer")
-  rejectionReason   String?
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  propertyId      String?
+  property        Property?      @relation(fields: [propertyId], references: [id])
+  ownershipId     String?
+  ownership       Ownership?     @relation("OwnershipTransfers", fields: [ownershipId], references: [id])
+  units           Int
+  status          TransferStatus @default(PENDING)
+  reason          String?
+  requestType     String?        @default("transfer")
+  rejectionReason String?
 
   // Payment info
-  amount            Decimal?       @db.Decimal(15, 2)
-  requestedPrice    Decimal?       @db.Decimal(15, 2)
+  amount         Decimal? @db.Decimal(15, 2)
+  requestedPrice Decimal? @db.Decimal(15, 2)
 
   // Bank details
   bankName          String?
@@ -255,11 +273,11 @@ model TransferRequest {
   accountNumber     String?
   accountName       String?
 
-  reviewedBy        String?
-  reviewedAt        DateTime?
+  reviewedBy String?
+  reviewedAt DateTime?
 
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -282,47 +300,60 @@ model Notification {
 }
 
 model Document {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  filename    String
-  url         String
-  type        String
-  size        Int
-  uploadedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  filename   String
+  url        String
+  type       String
+  size       Int
+  uploadedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
   @@index([userId])
 }
 
 model SupportTicket {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  subject     String
-  message     String
-  category    String?
-  assetRef    String?
-  status      String   @default("open")
-  priority    String   @default("medium")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  subject   String
+  message   String
+  category  String?
+  assetRef  String?
+  status    String   @default("open")
+  priority  String   @default("medium")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages TicketMessage[]
 
   @@index([userId])
   @@index([status])
 }
 
+model TicketMessage {
+  id        String   @id @default(uuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id])
+  sender    String   // 'user', 'bot', 'admin'
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
 model KYC {
-  id              String     @id @default(uuid())
-  userId          String     @unique
-  user            User       @relation(fields: [userId], references: [id])
-  status          KYCStatus  @default(NOT_SUBMITTED)
-  idType          String?
-  idNumber        String?
-  idDocument      String?
-  proofOfAddress  String?
-  bvn             String?
-  submittedAt     DateTime?
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  status         KYCStatus @default(NOT_SUBMITTED)
+  idType         String?
+  idNumber       String?
+  idDocument     String?
+  proofOfAddress String?
+  bvn            String?
+  submittedAt    DateTime?
 
   reviewedAt      DateTime?
   reviewedBy      String?
@@ -330,55 +361,55 @@ model KYC {
   verifiedBy      String?
   rejectionReason String?
 
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
 }
 
 model PaymentProof {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   userId          String
-  user            User     @relation(fields: [userId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
   propertyId      String?
   property        Property? @relation(fields: [propertyId], references: [id])
-  amount          Decimal  @db.Decimal(15, 2)
+  amount          Decimal   @db.Decimal(15, 2)
   paymentMethod   String
-  receiptUrl      String?  // Made optional as controller might not provide it optionally? No, schema says receiptUrl is required but controller misses it.
-                         // Wait, error says 'receiptUrl' is missing in type... but required.
-                         // Checking controller logic, if it's missing in input, we must make it optional or provide default.
-                         // Making it optional is safer.
-  status          String   @default("pending")
+  receiptUrl      String? // Made optional as controller might not provide it optionally? No, schema says receiptUrl is required but controller misses it.
+  // Wait, error says 'receiptUrl' is missing in type... but required.
+  // Checking controller logic, if it's missing in input, we must make it optional or provide default.
+  // Making it optional is safer.
+  status          String    @default("pending")
   verifiedBy      String?
   verifiedAt      DateTime?
   rejectionReason String?
-  
+
   units             Int?
   depositorName     String?
   transferDate      DateTime?
   transferReference String?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
 }
 
 model AdminAuditLog {
-  id          String   @id @default(uuid())
-  adminId     String
-  admin       User     @relation(fields: [adminId], references: [id])
-  action      String
-  entityType  String?
-  entityId    String?
-  targetType  String?
-  targetId    String?
-  details     Json?
-  ipAddress   String?
-  
-  createdAt   DateTime @default(now())
+  id         String  @id @default(uuid())
+  adminId    String
+  admin      User    @relation(fields: [adminId], references: [id])
+  action     String
+  entityType String?
+  entityId   String?
+  targetType String?
+  targetId   String?
+  details    Json?
+  ipAddress  String?
+
+  createdAt DateTime @default(now())
 
   @@index([adminId])
   @@index([createdAt])
@@ -421,11 +452,11 @@ model Distribution {
   amount           Decimal  @db.Decimal(15, 2)
   distributionDate DateTime
 
-  period           String?
-  description      String?
+  period      String?
+  description String?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([propertyId])
   @@index([distributionDate])
@@ -434,14 +465,14 @@ model Distribution {
 // CAPABILITY SYSTEM
 
 model Capability {
-  id              String           @id @default(uuid())
-  name            String           @unique
+  id              String   @id @default(uuid())
+  name            String   @unique
   description     String?
-  defaultOnSignup Boolean          @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  defaultOnSignup Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  users           UserCapability[]
+  users UserCapability[]
 }
 
 model UserCapability {
@@ -456,18 +487,18 @@ model UserCapability {
 }
 
 model BankAccount {
-  id            String   @id @default(uuid())
+  id            String  @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  user          User    @relation(fields: [userId], references: [id])
   bankName      String
   bankCode      String
   accountNumber String
   accountName   String
-  currency      String   @default("NGN")
-  isVerified    Boolean  @default(false)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  currency      String  @default("NGN")
+  isVerified    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }

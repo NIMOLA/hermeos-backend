@@ -1,7 +1,9 @@
-
 import { Button } from '../../components/ui/button';
+import { useAuth } from '../../contexts/AuthContext';
+import { DigitalSlotCertificate } from '../../components/dashboard/DigitalSlotCertificate';
 
 export default function DocumentsPage() {
+    const { user } = useAuth();
     const documents = [
         { id: 1, name: 'Oceanview Apartments - Deed of Assignment', type: 'Legal', date: 'Dec 24, 2023', size: '2.4 MB' },
         { id: 2, name: 'Q4 2023 Rental Distribution Statement', type: 'Financial', date: 'Dec 01, 2023', size: '1.1 MB' },
@@ -12,6 +14,18 @@ export default function DocumentsPage() {
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-8">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">My Documents</h1>
+
+            {/* Featured Certificate */}
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-8 rounded-xl">
+                <h2 className="text-xl font-bold text-center mb-6 text-slate-900 dark:text-white">Latest Asset Certificate</h2>
+                <DigitalSlotCertificate
+                    holderName={user ? `${user.firstName} ${user.lastName}` : "Guest User"}
+                    membershipId={user?.coopMembershipId || "MM-COOP-PENDING"}
+                    slots={25}
+                    propertyName="The Iré Portfolio (Lekki Phase 1)"
+                    location="12 Admiralty Way, Lekki, Lagos"
+                />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {/* Filters Sidebar */}

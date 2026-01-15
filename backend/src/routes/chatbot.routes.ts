@@ -1,10 +1,10 @@
-import { Router } from 'express';
-import { getChatResponse } from '../controllers/chatbot.controller';
+import express from 'express';
 import { protect } from '../middleware/auth';
+import * as chatbotController from '../controllers/chatbot.controller';
 
-const router = Router();
+const router = express.Router();
 
-// Allow both guest and logged in users if needed, but let's protect it for now
-router.post('/query', protect, getChatResponse);
+router.post('/message', protect, chatbotController.handleChat);
+router.get('/broadcasts', protect, chatbotController.getBroadcasts);
 
 export default router;
