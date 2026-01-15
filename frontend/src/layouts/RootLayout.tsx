@@ -16,11 +16,13 @@ export default function RootLayout() {
 
     // Define route state variables
     const isLandingPage = location.pathname === '/';
-    const isAuthPage = ['/login', '/signup', '/forgot-password', '/verify-email', '/password-reset-sent', '/admin/login'].includes(location.pathname);
-    const isAdminRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login';
+    // Public marketing/info pages that should share the public layout (no sidebar)
+    const isPublicInfoPage = ['/about', '/support', '/privacy', '/terms', '/contact'].includes(location.pathname);
+    const isAuthPage = ['/login', '/signup', '/forgot-password', '/verify-email', '/password-reset-sent', '/admin/login', '/admin/accept-invitation'].some(path => location.pathname.startsWith(path));
+    const isAdminRoute = location.pathname.startsWith('/admin') && !location.pathname.startsWith('/admin/login') && !location.pathname.startsWith('/admin/accept-invitation');
 
-    // We want to hide the User Sidebar/Nav for: Landing, Auth, AND Admin pages (which have their own layout)
-    const shouldHideNav = isLandingPage || isAuthPage || isAdminRoute;
+    // We want to hide the User Sidebar/Nav for: Landing, Auth, Admin, and Public Info pages
+    const shouldHideNav = isLandingPage || isPublicInfoPage || isAuthPage || isAdminRoute;
 
     const handleLogout = () => {
         logout();

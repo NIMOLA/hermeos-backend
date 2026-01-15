@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useRef, useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -143,10 +143,28 @@ export default function EditPropertyPage() {
         }
     };
 
-    const handleImageUpload = () => {
-        const url = prompt("Enter Image URL (Mock Upload):");
-        if (url) {
-            setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        const file = files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Assuming we have an upload endpoint at /api/upload
+            // If not, we might need to rely on the backend's upload controller directly if it's exposed differently.
+            // Based on previous analysis, there is an upload controller.
+            const res = await apiClient.post<any>('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (res.success) {
+                setFormData(prev => ({ ...prev, images: [...prev.images, res.data.url] }));
+            }
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Failed to upload image");
         }
     };
 
@@ -171,6 +189,13 @@ export default function EditPropertyPage() {
                         <p className="text-slate-500 mt-1">Detailed specifications for comparison and valuation.</p>
                     </div>
                     <div className="flex items-center gap-3">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            id="image-upload"
+                            onChange={handleImageUpload}
+                        />
                         <Button variant="outline" onClick={() => navigate('/admin/assets')}>Cancel</Button>
                         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 text-white gap-2 shadow-lg shadow-primary/25">
                             <Save className="w-4 h-4" />
@@ -206,6 +231,38 @@ export default function EditPropertyPage() {
                                     <input name="description" value={formData.description} onChange={handleInputChange} className="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 p-3 text-sm" />
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Images & Media */}
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                                    <UploadCloud className="w-5 h-5 text-primary" /> Property Images
+                                </h2>
+                                <Button size="sm" variant="outline" onClick={() => document.getElementById('image-upload')?.click()}>
+                                    <Plus className="w-4 h-4 mr-2" /> Add Image
+                                </Button>
+                            </div>
+
+                            {formData.images.length === 0 ? (
+                                <div className="text-center p-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                                    <p className="text-slate-500">No images uploaded yet.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {formData.images.map((img, idx) => (
+                                        <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                                            <img src={img} alt={`Property ${idx}`} className="w-full h-full object-cover" />
+                                            <button
+                                                onClick={() => removeImage(idx)}
+                                                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Specs & Features (New) */}

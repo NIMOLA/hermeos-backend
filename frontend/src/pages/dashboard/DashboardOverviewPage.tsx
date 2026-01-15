@@ -1,9 +1,10 @@
-
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFetch } from '../../hooks/useApi';
+import DepositModal from '../../components/modals/DepositModal';
 
 interface DashboardStats {
     portfolioValue: number;
@@ -28,10 +29,12 @@ interface NewOpportunity {
     type: string;
     targetYield: string;
     imageUrl: string;
+    // Add other fields as needed
 }
 
 export default function DashboardOverviewPage() {
     const { user } = useAuth();
+    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
     // Fetch dashboard stats
     const { data: stats, isLoading: statsLoading } = useFetch<DashboardStats>('/user/dashboard/stats');
@@ -95,7 +98,13 @@ export default function DashboardOverviewPage() {
                     </p>
                 </div>
                 <div className="flex flex-row gap-3">
-
+                    <Button
+                        onClick={() => setIsDepositModalOpen(true)}
+                        className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                        <span className="material-symbols-outlined sm:mr-2">add</span>{' '}
+                        <span className="hidden sm:inline">Fund Wallet</span>
+                    </Button>
                     <Link to="/properties" className="flex-1 sm:flex-none">
                         <Button className="w-full touch-target">
                             <span className="material-symbols-outlined sm:mr-2">search</span>{' '}
@@ -301,6 +310,8 @@ export default function DashboardOverviewPage() {
                     </Card>
                 </div>
             </div>
+
+            <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />
         </div>
     );
 }

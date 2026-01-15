@@ -10,7 +10,6 @@ const PortfolioPage = lazy(() => import('./pages/dashboard/PortfolioPage'));
 const PropertiesListPage = lazy(() => import('./pages/dashboard/PropertiesListPage'));
 const PropertyDetailsPage = lazy(() => import('./pages/dashboard/PropertyDetailsPage'));
 const PerformancePage = lazy(() => import('./pages/dashboard/PerformancePage'));
-const SupportPage = lazy(() => import('./pages/dashboard/UserInboxPage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
 const AdminLayout = lazy(() => import('./layouts/admin/AdminLayout'));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
@@ -46,6 +45,14 @@ const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const EmailVerificationPage = lazy(() => import('./pages/auth/EmailVerificationPage'));
 const PasswordResetConfirmationPage = lazy(() => import('./pages/auth/PasswordResetConfirmationPage'));
+const AdminAcceptInvitationPage = lazy(() => import('./pages/auth/AdminAcceptInvitationPage'));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
+const AdminSupportPage = lazy(() => import('./pages/admin/AdminSupportPage'));
+const AboutUsPage = lazy(() => import('./pages/AboutUsPage'));
+const SupportHubPage = lazy(() => import('./pages/SupportHubPage'));
+const CertificatePage = lazy(() => import('./pages/CertificatePage'));
+const EmailPreviewPage = lazy(() => import('./pages/preview/EmailPreviewPage'));
+const UserInboxPage = lazy(() => import('./pages/dashboard/UserInboxPage'));
 const TransactionHistoryPage = lazy(() => import('./pages/dashboard/TransactionHistoryPage'));
 
 // Loading component
@@ -67,8 +74,15 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-email" element={<EmailVerificationPage />} />
           <Route path="/password-reset-sent" element={<PasswordResetConfirmationPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/admin/accept-invitation/:token" element={<AdminAcceptInvitationPage />} />
+
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/about" element={<AboutUsPage />} />
+          <Route path="/certificate" element={<CertificatePage />} />
+          <Route path="/email-preview" element={<EmailPreviewPage />} />
+          <Route path="/support" element={<SupportHubPage />} />
 
           {/* Root App Layout */}
           <Route element={<RootLayout />}>
@@ -145,10 +159,10 @@ function App() {
               }
             />
             <Route
-              path="/support"
+              path="/inbox"
               element={
                 <ProtectedRoute>
-                  <SupportPage />
+                  <UserInboxPage />
                 </ProtectedRoute>
               }
             />
@@ -226,6 +240,7 @@ function App() {
               <Route path="assets/new" element={<EditPropertyPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:id" element={<AdminUserDetailPage />} />
+              <Route path="support" element={<AdminSupportPage />} />
 
               {/* Strict Role Protected Routes */}
               <Route

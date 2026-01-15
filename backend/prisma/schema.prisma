@@ -78,6 +78,8 @@ model User {
   kycStatus  String?  @default("not_submitted")
   verificationCode String?
   verificationExpires DateTime?
+  resetToken       String?
+  resetTokenExpires DateTime?
 
   // Personal Info
   address     String?

@@ -21,6 +21,7 @@ export default function AdminLayout() {
             { path: '/admin', label: 'Dashboard', icon: 'dashboard' },
             { path: '/admin/assets', label: 'Assets', icon: 'apartment' },
             { path: '/admin/users', label: 'Users', icon: 'group' },
+            { path: '/admin/support', label: 'Support', icon: 'support_agent' },
         ];
 
         // Moderator Specific

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useFetch } from '../../hooks/useApi';
+import DepositModal from '../../components/modals/DepositModal';
+import ExitRequestModal from '../../components/modals/ExitRequestModal';
 
 interface PortfolioSummary {
     totalValue: number;
@@ -30,6 +32,8 @@ interface PropertyHolding {
 
 export default function PortfolioPage() {
     const [searchQuery, setSearchQuery] = useState('');
+    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [selectedHoldingForExit, setSelectedHoldingForExit] = useState<PropertyHolding | null>(null);
 
     // Fetch portfolio summary
     const { data: summary, isLoading: summaryLoading } = useFetch<PortfolioSummary>('/user/portfolio/summary');
@@ -82,10 +86,19 @@ export default function PortfolioPage() {
                         Overview of your asset holdings and performance.
                     </p>
                 </div>
-                <button className="flex items-center gap-2 rounded-lg bg-white dark:bg-[#1a2632] border border-gray-200 dark:border-slate-700 px-4 py-2 text-sm font-bold text-slate-700 dark:text-white shadow-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                    <span className="material-symbols-outlined text-[20px]">download</span>
-                    <span>Export Portfolio</span>
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setIsDepositModalOpen(true)}
+                        className="flex items-center gap-2 rounded-lg bg-primary hover:bg-primary/90 text-white border border-transparent px-4 py-2 text-sm font-bold shadow-sm transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+                        <span>Fund Wallet</span>
+                    </button>
+                    <button className="flex items-center gap-2 rounded-lg bg-white dark:bg-[#1a2632] border border-gray-200 dark:border-slate-700 px-4 py-2 text-sm font-bold text-slate-700 dark:text-white shadow-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                        <span className="material-symbols-outlined text-[20px]">download</span>
+                        <span>Export</span>
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
@@ -279,7 +292,7 @@ export default function PortfolioPage() {
                                     ))
                                 ) : filteredHoldings.length > 0 ? (
                                     filteredHoldings.map((holding) => (
-                                        <tr key={holding.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group cursor-pointer">
+                                        <tr key={holding.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <Link to={`/properties/${holding.id}`} className="flex items-center gap-4">
                                                     <div className="size-10 rounded-lg bg-cover bg-center shrink-0" style={{ backgroundImage: `url('${holding.imageUrl}')` }}></div>
@@ -304,8 +317,15 @@ export default function PortfolioPage() {
                                             <td className="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-400">
                                                 {formatCurrency(holding.totalYield)}
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="material-symbols-outlined text-slate-400 group-hover:text-primary">chevron_right</span>
+                                            <td className="px-6 py-4 text-right">
+                                                {holding.status === 'active' && (
+                                                    <button
+                                                        onClick={() => setSelectedHoldingForExit(holding)}
+                                                        className="text-slate-400 hover:text-red-500 text-xs font-semibold px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
+                                                    >
+                                                        Request Exit
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -325,6 +345,9 @@ export default function PortfolioPage() {
                     </div>
                 </div>
             </div>
+
+            <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />
+            <ExitRequestModal holding={selectedHoldingForExit} isOpen={!!selectedHoldingForExit} onClose={() => setSelectedHoldingForExit(null)} />
         </div>
     );
 }
