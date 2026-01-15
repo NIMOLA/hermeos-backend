@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import logoFull from '../assets/logo-full.png';
 import logoIcon from '../assets/logo-icon.png';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 
 export default function RootLayout() {
     const { isAuthenticated, user, logout } = useAuth();
@@ -34,7 +35,6 @@ export default function RootLayout() {
         { path: '/portfolio', label: 'Portfolio', icon: 'account_balance_wallet' },
         { path: '/performance', label: 'Performance', icon: 'trending_up' },
         { path: '/notifications', label: 'Notifications', icon: 'notifications' },
-        { path: '/notifications', label: 'Notifications', icon: 'notifications' },
         { path: '/referrals', label: 'Referrals', icon: 'group_add' },
         { path: '/education', label: 'Learn', icon: 'school' },
         { path: '/support', label: 'Support', icon: 'support_agent' },
@@ -58,37 +58,34 @@ export default function RootLayout() {
 
     if (shouldHideNav) {
         return (
-            <div className="min-h-screen bg-background-light dark:bg-background-dark">
-                {/* Only show simplified header for Auth/Landing if needed, or just Outlet */}
-                {/* Re-use the existing Landing Page header logic if we want, or let LandingPage handle its own header */}
-                {/* For now, we'll keep the minimal header for Auth/Landing inside this return or assume pages handle it if we return just Outlet */}
-                <div className="min-h-screen bg-background-light dark:bg-background-dark">
-                    {/* We can reproduce the Landing Header here or just render Outlet. 
-                         The previous implementation had a specific Header for Landing. 
-                         Let's keep the Outlet. LandingPage usually has its own Layout if complex.
-                     */}
-                    <header className="sticky top-0 z-40 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark shadow-sm">
-                        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 mobile:px-reduced">
-                            <div className="flex items-center justify-between h-16">
-                                <Link to="/" className="flex items-center gap-2 group">
-                                    {/* Logo Logic */}
-                                    <img src={logoFull} alt="Hermeos" className="h-8 w-auto hidden md:block dark:hidden" />
-                                    {/* Dark mode logo handling if needed */}
-                                    <span className="font-bold text-xl md:hidden">Hermeos</span>
-                                </Link>
+            <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col">
+                <header className="sticky top-0 z-40 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark shadow-sm">
+                    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 mobile:px-reduced">
+                        <div className="flex items-center justify-between h-16">
+                            <Link to="/" className="flex items-center gap-2 group">
+                                <img src={logoFull} alt="Hermeos" className="h-8 w-auto hidden md:block dark:hidden" />
+                                <span className="font-bold text-xl md:hidden">Hermeos</span>
+                            </Link>
 
-                                {isLandingPage && (
-                                    <div className="flex items-center gap-4">
-                                        <Link to="/login"><button className="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold">Login</button></Link>
-                                    </div>
-                                )}
+                            <div className="flex items-center gap-4">
+                                <Link to="/admin/login">
+                                    <button className="text-slate-600 dark:text-slate-300 hover:text-primary font-medium text-sm transition-colors hidden md:block">
+                                        Admin Login
+                                    </button>
+                                </Link>
+                                <Link to="/login">
+                                    <button className="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-blue-600 transition-colors">
+                                        Login
+                                    </button>
+                                </Link>
                             </div>
                         </div>
-                    </header>
-                    <main>
-                        <Outlet />
-                    </main>
-                </div>
+                    </div>
+                </header>
+                <main className="flex-grow w-full">
+                    <Outlet />
+                </main>
+                <Footer />
             </div>
         );
     }
