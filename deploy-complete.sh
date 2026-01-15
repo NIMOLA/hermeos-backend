@@ -79,6 +79,16 @@ echo ""
 echo -e "${YELLOW}🎨 Step 5: Building frontend...${NC}"
 cd frontend
 npm install
+
+# Auto-generate .env for frontend
+echo -e "${YELLOW}📝 Generating frontend .env from root .env...${NC}"
+if [ -f ../.env ]; then
+    grep "^VITE_" ../.env > .env
+    echo -e "${GREEN}✓ Frontend .env generated with VITE_ variables${NC}"
+else
+    echo -e "${RED}⚠ Root .env not found. Frontend build may fail or show blank page.${NC}"
+fi
+
 npm run build
 echo -e "${GREEN}✓ Frontend built${NC}"
 echo ""
