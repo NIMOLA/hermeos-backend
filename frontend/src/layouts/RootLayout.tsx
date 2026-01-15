@@ -17,7 +17,10 @@ export default function RootLayout() {
     // Define route state variables
     const isLandingPage = location.pathname === '/';
     const isAuthPage = ['/login', '/signup', '/forgot-password', '/verify-email', '/password-reset-sent', '/admin/login'].includes(location.pathname);
-    const shouldHideNav = isLandingPage || isAuthPage;
+    const isAdminRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login';
+
+    // We want to hide the User Sidebar/Nav for: Landing, Auth, AND Admin pages (which have their own layout)
+    const shouldHideNav = isLandingPage || isAuthPage || isAdminRoute;
 
     const handleLogout = () => {
         logout();
@@ -57,6 +60,11 @@ export default function RootLayout() {
     }
 
     if (shouldHideNav) {
+        // For Admin Routes (excluding login), we strictly return Outlet because AdminLayout handles the UI
+        if (isAdminRoute) {
+            return <Outlet />;
+        }
+
         return (
             <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col">
                 <header className="sticky top-0 z-40 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark shadow-sm">

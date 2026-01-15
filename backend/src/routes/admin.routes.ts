@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { protect, authorize } from '../middleware/auth';
 import * as adminController from '../controllers/admin.controller';
+import * as adminDashboardController from '../controllers/adminDashboard.controller';
 import * as adminPaymentController from '../controllers/adminPayment.controller';
 import * as transferController from '../controllers/transfer.controller';
 import * as adminSupportController from '../controllers/adminSupport.controller';
@@ -17,8 +18,11 @@ router.use(authorize('MODERATOR', 'ADMIN', 'SUPER_ADMIN'));
 const adminOnly = authorize('ADMIN', 'SUPER_ADMIN');
 const superAdminOnly = authorize('SUPER_ADMIN');
 
-// Dashboard stats
-router.get('/dashboard/stats', adminController.getDashboardStats);
+// Dashboard stats (Using Dashboard Controller)
+router.get('/dashboard/stats', adminDashboardController.getDashboardStats);
+router.get('/dashboard/system-status', adminDashboardController.getSystemStatus);
+router.get('/dashboard/activity', adminDashboardController.getRecentActivity);
+router.get('/dashboard/transactions', adminDashboardController.getFinancialTransactions);
 
 // Invitation
 router.post('/invite', superAdminOnly, adminController.inviteAdmin);

@@ -11,40 +11,26 @@ export default function AdminDashboardPage() {
     });
     const [kpis, setKpis] = useState<any>(null);
     const [activities, setActivities] = useState<any[]>([]);
+    const [systemStatus, setSystemStatus] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch dashboard stats
-        fetch('/api/admin/dashboard/stats', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    setKpis(data.data);
-                }
-            })
-            .catch(err => console.error('Error fetching dashboard stats:', err));
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}` };
 
-        // Fetch recent activity
-        fetch('/api/admin/dashboard/activity?limit=5', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    setActivities(data.data);
-                }
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error('Error fetching activity:', err);
-                setLoading(false);
-            });
+        Promise.all([
+            fetch('/api/admin/dashboard/stats', { headers }).then(res => res.json()),
+            fetch('/api/admin/dashboard/activity?limit=5', { headers }).then(res => res.json()),
+            fetch('/api/admin/dashboard/system-status', { headers }).then(res => res.json())
+        ]).then(([statsData, activityData, statusData]) => {
+            if (statsData.success) setKpis(statsData.data);
+            if (activityData.success) setActivities(activityData.data);
+            if (statusData.success) setSystemStatus(statusData.data);
+        }).catch(err => {
+            console.error('Error fetching dashboard data:', err);
+        }).finally(() => {
+            setLoading(false);
+        });
     }, []);
 
     const handleSendAnnouncement = () => {
@@ -177,15 +163,30 @@ export default function AdminDashboardPage() {
                         <h3 className="font-bold mb-2">System Status</h3>
                         <div className="flex items-center gap-2 mb-4">
                             <span className="flex h-3 w-3 relative">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${systemStatus?.services.api === 'Operational' ? 'bg-emerald-400' : 'bg-red-400'} opacity-75`}></span>
+                                <span className={`relative inline-flex rounded-full h-3 w-3 ${systemStatus?.services.api === 'Operational' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
                             </span>
-                            <span className="text-sm font-medium text-emerald-400">All Systems Operational</span>
+                            <span className={`text-sm font-medium ${systemStatus?.services.api === 'Operational' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {systemStatus?.services.api === 'Operational' ? 'All Systems Operational' : 'System Issues Detected'}
+                            </span>
                         </div>
                         <div className="text-xs text-slate-400 space-y-1">
-                            <p>Database: Stable</p>
-                            <p>Storage: 45% used</p>
-                            <p>API Latency: 24ms</p>
+                            <div className="flex justify-between">
+                                <span>CPU Usage:</span>
+                                <span className={systemStatus?.cpu.usage > 80 ? 'text-amber-400' : 'text-slate-300'}>{systemStatus ? `${systemStatus.cpu.usage}%` : '...'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Memory:</span>
+                                <span className={systemStatus?.memory.percentage > 80 ? 'text-amber-400' : 'text-slate-300'}>{systemStatus ? `${systemStatus.memory.percentage}%` : '...'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Database:</span>
+                                <span>{systemStatus?.services.database || '...'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>API Latency:</span>
+                                <span>{systemStatus?.latency.api || '...'}ms</span>
+                            </div>
                         </div>
                     </div>
                 </div>
