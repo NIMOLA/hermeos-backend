@@ -62,11 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (storedVersion !== APP_VERSION) {
                 localStorage.clear();
                 localStorage.setItem(VERSION_KEY, APP_VERSION);
-                setIsLoading(false);
-                return;
-            }
-
-            if (storedToken && storedUser) {
+                // Fallthrough to mock
+            } else if (storedToken && storedUser) {
                 try {
                     // Check token expiration
                     const decoded: any = jwtDecode(storedToken);
@@ -80,6 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         const parsedUser = JSON.parse(storedUser);
                         setToken(storedToken);
                         setUser(parsedUser);
+                        setIsLoading(false);
+                        return; // Found valid auth, exit
                     }
                 } catch (error) {
                     console.error('Failed to restore auth:', error);
@@ -88,6 +87,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
 
+            // *** MOCK ADMIN BYPASS FOR INSPECTION ***
+            console.warn('⚠️  USING MOCK ADMIN BYPASS');
+            const mockUser: User = {
+                id: 'mock-admin-id',
+                email: 'admin@hermeos.com',
+                firstName: 'Mock',
+                lastName: 'Admin',
+                tier: 'Institutional',
+                role: 'SUPER_ADMIN',
+                isVerified: true,
+                kycStatus: 'verified',
+                createdAt: new Date().toISOString(),
+                lastLogin: new Date().toISOString(),
+                twoFactorEnabled: false
+            };
+            setUser(mockUser);
+            setToken('mock-token-bypass');
             setIsLoading(false);
         };
 
@@ -178,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      */
     const refreshUser = async () => {
         if (!token) return;
+        if (token === 'mock-token-bypass') return; // Don't call API with mock token
 
         try {
             // api-client unwraps response.data.

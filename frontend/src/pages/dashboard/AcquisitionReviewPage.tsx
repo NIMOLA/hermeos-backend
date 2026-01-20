@@ -130,7 +130,7 @@ export default function AcquisitionReviewPage() {
                             <Button variant="outline" className="w-full">Cancel</Button>
                         </Link>
                         <p className="text-xs text-center text-slate-500 mt-2">
-                            Identity verification is required to complete this investment under regulatory guidelines.
+                            Identity verification is required to complete this participation under regulatory guidelines.
                         </p>
                     </div>
                 </div>

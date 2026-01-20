@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import logoFull from '../../assets/logo-full.png';
 
 import { TwoFactorModal } from '../../components/auth/TwoFactorModal';
 
@@ -86,10 +87,13 @@ export default function AdminLoginPage() {
 
                     <div className="p-8 sm:p-12">
                         <div className="flex flex-col items-center text-center mb-8">
-                            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
-                                <span className="material-symbols-outlined text-3xl text-red-500">admin_panel_settings</span>
+                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                                <img
+                                    src={logoFull}
+                                    alt="Hermeos Admin"
+                                    className="h-16 w-auto brightness-0 invert"
+                                />
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Admin Portal</h2>
                             <p className="text-slate-400 text-sm">
                                 Restricted access. Authorized personnel only.
                             </p>

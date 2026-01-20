@@ -14,7 +14,7 @@ export default function AdminRoute({ children, allowedRoles }: AdminRouteProps) 
   if (isLoading) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/portal-access" replace />;
   }
 
   // Check if user has admin role (matches backend UserRole enum)

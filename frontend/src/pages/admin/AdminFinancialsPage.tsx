@@ -158,7 +158,7 @@ export default function AdminFinancialsPage() {
                                 {/* Improved Mock Logic for Demo Purposes if real types aren't distinguished yet */}
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Property Investments</span>
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Property Contributions</span>
                                         <span className="text-sm font-bold text-slate-900 dark:text-white">
                                             {formatCurrency(transactions.filter(t => t.type === 'INVESTMENT').reduce((acc, t) => acc + t.amount, 0))}
                                         </span>

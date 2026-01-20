@@ -12,7 +12,7 @@ export default function EducationHubPage() {
             description: "Learn how fractional ownership allows you to invest in premium real estate with lower capital."
         },
         {
-            title: "How Co-operatives Protect Your Investment",
+            title: "How Co-operatives Protect Your Participation",
             category: "Legal",
             readTime: "8 min read",
             image: "https://images.unsplash.com/photo-1554224155-984bbcd58d86?auto=format&fit=crop&q=80&w=800",
@@ -23,7 +23,7 @@ export default function EducationHubPage() {
             category: "Strategy",
             readTime: "6 min read",
             image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800",
-            description: "Analyzing the two main ways you earn money from real estate investments."
+            description: "Analyzing the two main ways you earn money from real estate participation."
         },
         {
             title: "Navigating the KYC Process",

@@ -1,12 +1,29 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAdminDomain } from '../../utils/subdomain';
+import logoFull from '../../assets/logo-full.png';
 
 export default function AdminLayout() {
     const location = useLocation();
+    const isSubdomain = isAdminDomain();
+    // ...
+    // ... in sidebar ...
+    {/* Logo/Header */ }
+    <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-800">
+        <Link to={isSubdomain ? '/' : '/admin'} className="block">
+            <img
+                src={logoFull}
+                alt="Hermeos Admin"
+                className="h-8 w-auto dark:brightness-0 dark:invert"
+            />
+        </Link>
+    </div>
+    const basePath = isSubdomain ? '' : '/admin';
 
     const isActive = (path: string) => {
-        if (path === '/admin') {
-            return location.pathname === '/admin';
+        // Handle exact root match
+        if (path === basePath || path === '/') {
+            return location.pathname === basePath || location.pathname === '/';
         }
         return location.pathname.startsWith(path);
     };
@@ -15,33 +32,35 @@ export default function AdminLayout() {
     const getNavItems = (role?: string) => {
         const inputRole = role || 'USER';
 
-        // Base items for all admin types (Dashboard is common? Or restricted?)
-        // User said: Moderator can see Dashboard.
+        // Helper to prefix path
+        const p = (suffix: string) => `${basePath}${suffix}`;
+
+        // Base items for all admin types
         const items = [
-            { path: '/admin', label: 'Dashboard', icon: 'dashboard' },
-            { path: '/admin/assets', label: 'Assets', icon: 'apartment' },
-            { path: '/admin/users', label: 'Users', icon: 'group' },
-            { path: '/admin/support', label: 'Support', icon: 'support_agent' },
+            { path: isSubdomain ? '/' : '/admin', label: 'Dashboard', icon: 'dashboard' },
+            { path: p('/assets'), label: 'Assets', icon: 'apartment' },
+            { path: p('/users'), label: 'Users', icon: 'group' },
+            { path: p('/support'), label: 'Support', icon: 'support_agent' },
         ];
 
         // Moderator Specific
         if (inputRole === 'MODERATOR' || inputRole === 'ADMIN' || inputRole === 'SUPER_ADMIN') {
-            items.push({ path: '/admin/approvals', label: 'Approvals', icon: 'fact_check' });
+            items.push({ path: p('/approvals'), label: 'Approvals', icon: 'fact_check' });
         }
 
         // Admin Specific (Financials, Exits, Payments)
         if (inputRole === 'ADMIN' || inputRole === 'SUPER_ADMIN') {
             items.push(
-                { path: '/admin/financials', label: 'Financials', icon: 'attach_money' },
-                { path: '/admin/audit-trail', label: 'Audit Trail', icon: 'history' }
+                { path: p('/financials'), label: 'Financials', icon: 'attach_money' },
+                { path: p('/audit-trail'), label: 'Audit Trail', icon: 'history' }
             );
         }
 
         // Super Admin: Add Team & Settings
         if (inputRole === 'SUPER_ADMIN') {
             items.push(
-                { path: '/admin/team', label: 'Team', icon: 'badge' },
-                { path: '/admin/settings', label: 'Settings', icon: 'settings' }
+                { path: p('/team'), label: 'Team', icon: 'badge' },
+                { path: p('/settings'), label: 'Settings', icon: 'settings' }
             );
         }
 
@@ -57,7 +76,7 @@ export default function AdminLayout() {
             <aside className="w-64 flex-shrink-0 flex flex-col bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-slate-800 h-full overflow-y-auto z-20 hidden md:flex transition-colors duration-300">
                 {/* Logo/Header */}
                 <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <Link to="/admin" className="flex gap-3 items-center group">
+                    <Link to={isSubdomain ? '/' : '/admin'} className="flex gap-3 items-center group">
                         <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                             <span className="material-symbols-outlined text-white text-xl">shield</span>
                         </div>

@@ -21,22 +21,24 @@ async function main() {
         });
     }
 
-    // Seed Super Admin
+    // Seed Admin Accounts
     const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash('Hermeos@2026!', 12);
 
-    const adminEmail = 'admin@hermeos.com';
-    const adminUser = await prisma.user.upsert({
-        where: { email: adminEmail },
+    // Super Admin
+    const superAdminEmail = 'superadmin@hermeos.com';
+    const superAdminPassword = await bcrypt.hash('SuperAdmin@2026!', 12);
+
+    const superAdmin = await prisma.user.upsert({
+        where: { email: superAdminEmail },
         update: {},
         create: {
-            email: adminEmail,
-            password: hashedPassword,
+            email: superAdminEmail,
+            password: superAdminPassword,
             firstName: 'Super',
             lastName: 'Admin',
             role: 'SUPER_ADMIN',
             isVerified: true,
-            tier: 'Institutional', // Higher tier for admin
+            tier: 'Institutional',
             capabilities: {
                 create: capabilities.map(cap => ({
                     capability: { connect: { name: cap.name } }
@@ -45,7 +47,56 @@ async function main() {
         },
     });
 
-    console.log(`Seeding complete. Super Admin created: ${adminEmail} / Hermeos@2026!`);
+    // Admin
+    const adminEmail = 'admin@hermeos.com';
+    const adminPassword = await bcrypt.hash('Admin@2026!', 12);
+
+    const admin = await prisma.user.upsert({
+        where: { email: adminEmail },
+        update: {},
+        create: {
+            email: adminEmail,
+            password: adminPassword,
+            firstName: 'Platform',
+            lastName: 'Admin',
+            role: 'ADMIN',
+            isVerified: true,
+            tier: 'Institutional',
+            capabilities: {
+                create: capabilities.filter(c => ['market_view', 'admin_dashboard', 'manage_properties'].includes(c.name)).map(cap => ({
+                    capability: { connect: { name: cap.name } }
+                }))
+            }
+        },
+    });
+
+    // Moderator
+    const moderatorEmail = 'moderator@hermeos.com';
+    const moderatorPassword = await bcrypt.hash('Moderator@2026!', 12);
+
+    const moderator = await prisma.user.upsert({
+        where: { email: moderatorEmail },
+        update: {},
+        create: {
+            email: moderatorEmail,
+            password: moderatorPassword,
+            firstName: 'Platform',
+            lastName: 'Moderator',
+            role: 'MODERATOR',
+            isVerified: true,
+            tier: 'Professional',
+            capabilities: {
+                create: capabilities.filter(c => ['market_view', 'admin_dashboard'].includes(c.name)).map(cap => ({
+                    capability: { connect: { name: cap.name } }
+                }))
+            }
+        },
+    });
+
+    console.log(`Seeding complete. Admin accounts created:`);
+    console.log(`- Super Admin: ${superAdminEmail} / SuperAdmin@2026!`);
+    console.log(`- Admin: ${adminEmail} / Admin@2026!`);
+    console.log(`- Moderator: ${moderatorEmail} / Moderator@2026!`);
 }
 
 main()

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import logoFull from '../../assets/logo-full.png';
 
 import { TwoFactorModal } from '../../components/auth/TwoFactorModal';
 
@@ -80,7 +81,11 @@ export default function LoginPage() {
                 <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547")' }}></div>
                 <div className="relative z-10 p-12 text-white max-w-lg">
                     <div className="mb-8">
-                        <span className="material-symbols-outlined text-[48px] text-primary">apartment</span>
+                        <img
+                            src={logoFull}
+                            alt="Hermeos Proptech"
+                            className="block h-40 w-auto brightness-0 invert"
+                        />
                     </div>
                     <h1 className="text-4xl font-bold mb-6">Acquire Premium Real Estate with Confidence.</h1>
                     <p className="text-lg text-slate-300 leading-relaxed">

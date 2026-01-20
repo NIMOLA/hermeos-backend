@@ -32,7 +32,7 @@ export default function AdminAcceptInvitationPage() {
 
             if (res.success) {
                 alert("Account created successfully! Please log in.");
-                navigate('/admin/login');
+                navigate('/portal-access');
             }
         } catch (error: any) {
             console.error(error);

@@ -70,8 +70,8 @@ export default function SupportPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 py-4 border-b-2 font-bold text-sm transition-colors ${activeTab === tab.id
-                                    ? 'border-primary text-primary'
-                                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                                 }`}
                         >
                             <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
@@ -155,7 +155,7 @@ export default function SupportPage() {
                             <h2 className="text-slate-900 dark:text-white text-2xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
                             <div className="flex flex-col gap-4">
                                 {[
-                                    { q: "Is Hermeos Proptech an investment app?", a: "No. We are a Digital Cooperative Platform. When you subscribe, you join Manymiles Cooperative Multipurpose Society as a member. You are \"contributing\" to develop real assets, not buying stocks." },
+                                    { q: "Is Hermeos Proptech a trading or stock platform?", a: "No. We are a Digital Cooperative Platform. When you subscribe, you join Manymiles Cooperative Multipurpose Society as a member. You are \"contributing\" to develop real assets, not buying stocks." },
                                     { q: "Who owns the land?", a: "The legal title is held by Manymiles Cooperative Multipurpose Society on behalf of all members. You hold a Digital Certificate of Beneficial Ownership." },
                                     { q: "How do I make money?", a: "You earn Patronage Refunds. When the Cooperative generates a Surplus from the Iré Portfolio, it is distributed back to members based on the number of Slots they hold." },
                                     { q: "Is this legal?", a: "Yes. We are regulated by the Director of Cooperative Services at the Lagos State Ministry of Commerce, Industry and Cooperatives." },

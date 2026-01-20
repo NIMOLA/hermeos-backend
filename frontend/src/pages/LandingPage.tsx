@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import baruchApartments from '../assets/baruch-apartments.jpg';
 
 export default function LandingPage() {
     const { theme } = useTheme();
@@ -51,11 +52,11 @@ export default function LandingPage() {
                         {/* Hero Image */}
                         <div className="flex-1 w-full">
                             <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl bg-slate-200 dark:bg-slate-800">
-                                <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-105 duration-700" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDjFRaQM7ylP_VQQICKaahO2LecH3Jw-4P5UF48VgfpJC5sRkzy_x7kkxofiP-JuyJqCUXm1cnwqXXhc9jFyLlwwRi1G_pWWAXfNtgBx0oKCb-U1yD_Ixaqp6Hiuyf_H-aEJ9NIP6RqdyWjXANobfCO5REUgk-0ILjzbHLpPoNw6L4TBhROtD9GH85_9fwFDuALJ2-emeuv_JJOCF8PIq41Z_Bz-iCdu7uTLyfNgZI2XsxV2aXHXprNrOd-YXKyO6YPkdemeYtTP2MY")' }}>
+                                <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-105 duration-700" style={{ backgroundImage: `url(${baruchApartments})` }}>
                                 </div>
                                 <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-md text-xs font-bold shadow-sm flex items-center gap-1 text-slate-900 dark:text-white">
                                     <span className="material-symbols-outlined text-primary text-[16px]">location_on</span>
-                                    <span>Victoria Island, Lagos</span>
+                                    <span>Badore, Ajah, Lagos</span>
                                 </div>
                             </div>
                         </div>
@@ -68,7 +69,7 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-center gap-3 text-center sm:text-left">
                     <span className="material-symbols-outlined text-primary shrink-0">info</span>
                     <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">
-                        <strong>Disclaimer:</strong> Hermeos Proptech is a property technology platform, not an investment advisory or financial services firm. All asset participation involves risk.
+                        <strong>Disclaimer:</strong> Hermeos Proptech is a property technology platform, not a financial advisory or financial services firm. All asset participation involves risk.
                     </p>
                 </div>
             </section>

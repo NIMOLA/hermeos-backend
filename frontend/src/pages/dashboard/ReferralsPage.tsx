@@ -65,7 +65,7 @@ export default function ReferralsPage() {
                     <div className="space-y-2">
                         <h3 className="text-2xl font-bold">Invite & Earn</h3>
                         <p className="text-blue-100 max-w-lg">
-                            Share your unique link with friends. When they sign up and make their first investment of ₦500,000 or more, you both get a ₦5,000 bonus!
+                            Share your unique link with friends. When they sign up and make their first contribution of ₦500,000 or more, you both get a ₦5,000 bonus!
                         </p>
                     </div>
                     <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl flex items-center gap-3 w-full md:w-auto min-w-[320px]">

@@ -102,13 +102,13 @@ export default function BankTransferProofPage() {
                     <CardHeader>
                         <CardTitle>Submit Bank Transfer Proof</CardTitle>
                         <CardDescription>
-                            Upload proof of your transfer to complete your investment
+                            Upload proof of your transfer to complete your contribution
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {/* Investment Summary */}
+                        {/* Contribution Summary */}
                         <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 mb-6">
-                            <h3 className="font-semibold mb-2">Investment Summary</h3>
+                            <h3 className="font-semibold mb-2">Contribution Summary</h3>
                             <div className="space-y-1 text-sm">
                                 <p><span className="text-gray-600 dark:text-gray-400">Units:</span> <span className="font-semibold">{units}</span></p>
                                 <p><span className="text-gray-600 dark:text-gray-400">Total Amount:</span> <span className="font-semibold text-lg">₦{amount.toLocaleString()}</span></p>

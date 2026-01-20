@@ -1,18 +1,21 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import { isAdminDomain } from './utils/subdomain';
 
 // Lazy load all page components
-
 const PortfolioPage = lazy(() => import('./pages/dashboard/PortfolioPage'));
 const PropertiesListPage = lazy(() => import('./pages/dashboard/PropertiesListPage'));
 const PropertyDetailsPage = lazy(() => import('./pages/dashboard/PropertyDetailsPage'));
 const PerformancePage = lazy(() => import('./pages/dashboard/PerformancePage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
 const AdminLayout = lazy(() => import('./layouts/admin/AdminLayout'));
-const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminDashboardPage = lazy(() => import('./pages/dashboard/DashboardOverviewPage')); // Default dashboard
+// Actually admin dashboard is separate
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboardPage'));
+
 const AdminAssetsPage = lazy(() => import('./pages/admin/AdminAssetsPage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminFinancialsPage = lazy(() => import('./pages/admin/AdminFinancialsPage'));
@@ -63,13 +66,101 @@ const LoadingSpinner = () => (
 );
 
 function App() {
+  const isAdminSub = isAdminDomain();
+
+  if (isAdminSub) {
+    return (
+      <Router>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/login" element={<AdminLoginPage />} />
+            <Route path="/admin/accept-invitation/:token" element={<AdminAcceptInvitationPage />} />
+
+            {/* Redirect root to login if not authenticated, or dashboard if strict */}
+            {/* AdminRoute will handle auth redirect to /login */}
+            <Route
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="assets" element={<AdminAssetsPage />} />
+              <Route path="assets/new" element={<EditPropertyPage />} />
+              <Route path="properties/edit/:id" element={<EditPropertyPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="users/:id" element={<AdminUserDetailPage />} />
+              <Route path="support" element={<AdminSupportPage />} />
+              <Route path="team" element={<AdminTeamPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+
+              {/* Strict Role Protected Routes */}
+              <Route
+                path="financials"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AdminFinancialsPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="financials/payments"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AdminPaymentVerificationPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="kyc"
+                element={
+                  <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
+                    <AdminKYCPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="exits"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AdminExitRequestsPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="approvals"
+                element={
+                  <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
+                    <AdminApprovalsPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="audit-trail"
+                element={
+                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                    <AuditTrailPage />
+                  </AdminRoute>
+                }
+              />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Suspense>
+      </Router>
+    );
+  }
+
+  // MAIN DOMAIN ROUTES
   return (
     <Router>
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/portal-access" element={<AdminLoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-email" element={<EmailVerificationPage />} />
@@ -226,7 +317,7 @@ function App() {
               }
             />
 
-            {/* Admin Routes */}
+            {/* Local Fallback Admin Routes (Mapped to /admin/*) */}
             <Route
               path="/admin"
               element={
@@ -235,7 +326,7 @@ function App() {
                 </AdminRoute>
               }
             >
-              <Route index element={<AdminDashboardPage />} />
+              <Route index element={<AdminDashboard />} />
               <Route path="assets" element={<AdminAssetsPage />} />
               <Route path="assets/new" element={<EditPropertyPage />} />
               <Route path="users" element={<AdminUsersPage />} />

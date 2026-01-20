@@ -115,7 +115,7 @@ export default function TwoFactorSetupPage() {
                                     </li>
                                     <li className="flex items-start">
                                         <CheckCircle className="w-5 h-5 text-green-500 mr-2 mt-0.5" />
-                                        <span>Secure your investments and personal data</span>
+                                        <span>Secure your property participation and personal data</span>
                                     </li>
                                 </ul>
                             </div>

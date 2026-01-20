@@ -74,13 +74,13 @@ export default function RootLayout() {
                     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 mobile:px-reduced">
                         <div className="flex items-center justify-between h-16">
                             <Link to="/" className="flex items-center gap-2 group">
-                                <img src={logoFull} alt="Hermeos" className="h-8 w-auto hidden md:block dark:hidden" />
+                                <img src={logoFull} alt="Hermeos" className="h-32 w-auto hidden md:block brightness-0 dark:invert" />
                                 <span className="font-bold text-xl md:hidden">Hermeos</span>
                             </Link>
 
                             <div className="flex items-center gap-4">
                                 <ThemeToggle className="hover:text-primary" />
-                                <Link to="/admin/login">
+                                <Link to="/admin/login" className="hidden">
                                     <button className="text-slate-600 dark:text-slate-300 hover:text-primary font-medium text-sm transition-colors hidden md:block">
                                         Admin Login
                                     </button>

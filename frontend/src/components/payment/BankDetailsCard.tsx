@@ -52,7 +52,7 @@ export function BankDetailsCard({ onPaymentMethodChange, selectedMethod }: BankD
             <Card>
                 <CardHeader>
                     <CardTitle>Select Payment Method</CardTitle>
-                    <CardDescription>Choose how you want to pay for this investment</CardDescription>
+                    <CardDescription>Choose how you want to pay for this contribution</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {paymentMethods.map((method) => (
@@ -60,15 +60,15 @@ export function BankDetailsCard({ onPaymentMethodChange, selectedMethod }: BankD
                             key={method.type}
                             onClick={() => onPaymentMethodChange(method.type)}
                             className={`w-full p-4 rounded-lg border-2 transition-all text-left ${selectedMethod === method.type
-                                    ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                                ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
                                 }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
                                     <div className={`p-2 rounded-lg ${selectedMethod === method.type
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                                         }`}>
                                         {method.icon}
                                     </div>
@@ -170,7 +170,7 @@ export function BankDetailsCard({ onPaymentMethodChange, selectedMethod }: BankD
                             <AlertDescription>
                                 <p className="font-semibold mb-2">Important Instructions:</p>
                                 <ul className="list-disc list-inside space-y-1 text-sm">
-                                    <li>Transfer the exact investment amount</li>
+                                    <li>Transfer the exact contribution amount</li>
                                     <li>Upload your transfer receipt on the next page</li>
                                     <li>Admin will verify within 24 hours</li>
                                     <li>You'll receive a notification once approved</li>

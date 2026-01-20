@@ -147,24 +147,40 @@ export default function EditPropertyPage() {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const file = files[0];
-        const formData = new FormData();
-        formData.append('file', file);
+        // Upload all selected files concurrently
+        const uploadPromises = Array.from(files).map(async (file) => {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await apiClient.post<any>('/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                if (res.success) {
+                    return res.data.url;
+                }
+                return null;
+            } catch (error) {
+                console.error(`Upload failed for ${file.name}`, error);
+                return null;
+            }
+        });
 
         try {
-            // Assuming we have an upload endpoint at /api/upload
-            // If not, we might need to rely on the backend's upload controller directly if it's exposed differently.
-            // Based on previous analysis, there is an upload controller.
-            const res = await apiClient.post<any>('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const uploadedUrls = await Promise.all(uploadPromises);
+            const successfulUploads = uploadedUrls.filter((url): url is string => url !== null);
 
-            if (res.success) {
-                setFormData(prev => ({ ...prev, images: [...prev.images, res.data.url] }));
+            if (successfulUploads.length > 0) {
+                setFormData(prev => ({ ...prev, images: [...prev.images, ...successfulUploads] }));
+            }
+
+            if (successfulUploads.length < files.length) {
+                alert(`${files.length - successfulUploads.length} image(s) failed to upload`);
             }
         } catch (error) {
             console.error("Upload failed", error);
-            alert("Failed to upload image");
+            alert("Failed to upload images");
         }
     };
 
@@ -192,6 +208,7 @@ export default function EditPropertyPage() {
                         <input
                             type="file"
                             accept="image/*"
+                            multiple
                             className="hidden"
                             id="image-upload"
                             onChange={handleImageUpload}
