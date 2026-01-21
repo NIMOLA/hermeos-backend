@@ -23,6 +23,11 @@ export default function KYCStatusPage() {
     const [isVerifyingBank, setIsVerifyingBank] = useState(false);
     const [bankVerified, setBankVerified] = useState(false);
 
+    // ID Type State
+    const [idType, setIdType] = useState('PASSPORT');
+    const [idNumber, setIdNumber] = useState('');
+    const [bvn, setBvn] = useState('');
+
     // File Inputs
     const idInputRef = useRef<HTMLInputElement>(null);
     const addressInputRef = useRef<HTMLInputElement>(null);
@@ -157,10 +162,15 @@ export default function KYCStatusPage() {
             // The existing backend expects idType, idNumber, bvn.
             // We'll pass the bank details if API supports, but the bank/verify endpoint SAVED it already.
 
+            if (!idNumber || !bvn) {
+                alert('Please enter your ID Number and BVN');
+                return;
+            }
+
             await apiClient.post('/kyc/submit', {
-                idType: 'PASSPORT', // Hardcoded as placeholder or add UI selector
-                idNumber: 'A00000000',
-                bvn: '22222222222'
+                idType,
+                idNumber,
+                bvn
             });
 
             // 2. Update Documents (Real URLs)
@@ -248,6 +258,33 @@ export default function KYCStatusPage() {
                                 />
 
                                 {/* Document Item 1 */}
+                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 mb-4">
+                                    <label htmlFor="idTypeSelect" className="block text-xs font-bold uppercase text-slate-500 mb-2">Select ID Document Type</label>
+                                    <select
+                                        id="idTypeSelect"
+                                        className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-2.5 text-sm focus:ring-2 ring-primary/50 outline-none"
+                                        value={idType}
+                                        onChange={(e) => setIdType(e.target.value)}
+                                        disabled={status === 'review' || status === 'verified'}
+                                    >
+                                        <option value="PASSPORT">International Passport</option>
+                                        <option value="DRIVERS_LICENSE">Driver's License</option>
+                                        <option value="NATIONAL_ID">National ID / NIN Slip</option>
+                                        <option value="VOTERS_CARD">Voter's Card</option>
+                                    </select>
+                                </div>
+                                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 mb-4">
+                                    <label htmlFor="idNumber" className="block text-xs font-bold uppercase text-slate-500 mb-2">ID Number</label>
+                                    <input
+                                        id="idNumber"
+                                        type="text"
+                                        className="w-full h-10 px-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 ring-primary/50 outline-none"
+                                        placeholder="Enter ID Document Number"
+                                        value={idNumber}
+                                        onChange={(e) => setIdNumber(e.target.value)}
+                                        disabled={status === 'review' || status === 'verified'}
+                                    />
+                                </div>
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                                     <div className="flex items-center gap-4">
                                         <div className="bg-white dark:bg-[#1a2632] p-3 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -363,6 +400,20 @@ export default function KYCStatusPage() {
                                             </Button>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="mt-4 mb-4">
+                                    <label htmlFor="bvn" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Bank Verification Number (BVN)</label>
+                                    <input
+                                        id="bvn"
+                                        type="text"
+                                        className="w-full h-10 px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#1a2632] text-sm"
+                                        placeholder="11-digit BVN"
+                                        value={bvn}
+                                        onChange={(e) => setBvn(e.target.value)}
+                                        maxLength={11}
+                                        disabled={status === 'review' || status === 'verified'}
+                                    />
                                 </div>
 
                                 <div className="pt-4 flex justify-end">

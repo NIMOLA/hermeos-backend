@@ -178,10 +178,7 @@ export default function UserInboxPage() {
                                 </div>
                             )}
 
-                            {/* Placeholder for "Admin joined" */}
-                            <div className="flex justify-center my-4 opacity-50">
-                                <span className="text-xs text-gray-400">Start of conversation</span>
-                            </div>
+                            {/* System Messages could go here */}
 
                         </div>
 

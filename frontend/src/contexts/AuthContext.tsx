@@ -63,52 +63,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 localStorage.clear();
                 localStorage.setItem(VERSION_KEY, APP_VERSION);
                 // Fallthrough to mock
-            } else if (storedToken && storedUser) {
-                try {
-                    // Check token expiration
-                    const decoded: any = jwtDecode(storedToken);
-                    const currentTime = Date.now() / 1000;
+                // Check for valid token and user
+                if (storedToken && storedUser) {
+                    try {
+                        // Check token expiration
+                        const decoded: any = jwtDecode(storedToken);
+                        const currentTime = Date.now() / 1000;
 
-                    if (decoded.exp < currentTime) {
-                        console.log('Token expired');
+                        if (decoded.exp < currentTime) {
+                            console.log('Token expired');
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('user');
+                        } else {
+                            const parsedUser = JSON.parse(storedUser);
+                            setToken(storedToken);
+                            setUser(parsedUser);
+                            setIsLoading(false);
+                            return; // Found valid auth, exit
+                        }
+                    } catch (error) {
+                        console.error('Failed to restore auth:', error);
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
-                    } else {
-                        const parsedUser = JSON.parse(storedUser);
-                        setToken(storedToken);
-                        setUser(parsedUser);
-                        setIsLoading(false);
-                        return; // Found valid auth, exit
                     }
-                } catch (error) {
-                    console.error('Failed to restore auth:', error);
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
                 }
-            }
 
-            // *** MOCK ADMIN BYPASS FOR INSPECTION ***
-            console.warn('⚠️  USING MOCK ADMIN BYPASS');
-            const mockUser: User = {
-                id: 'mock-admin-id',
-                email: 'admin@hermeos.com',
-                firstName: 'Mock',
-                lastName: 'Admin',
-                tier: 'Institutional',
-                role: 'SUPER_ADMIN',
-                isVerified: true,
-                kycStatus: 'verified',
-                createdAt: new Date().toISOString(),
-                lastLogin: new Date().toISOString(),
-                twoFactorEnabled: false
+                setIsLoading(false);
             };
-            setUser(mockUser);
-            setToken('mock-token-bypass');
-            setIsLoading(false);
-        };
 
-        initAuth();
-    }, []);
+            initAuth();
+        }, []);
 
     /**
      * Login user

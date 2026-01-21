@@ -1,51 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Chatbot from '../components/Chatbot';
 import { useAuth } from '../contexts/AuthContext';
-import logoFull from '../assets/logo-full.png';
-import logoIcon from '../assets/logo-icon.png';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
-import ThemeToggle from '../components/ThemeToggle';
+import Header from '../components/Header';
 
 export default function RootLayout() {
-    const { isAuthenticated, user, logout } = useAuth();
-    const { theme, toggleTheme } = useTheme();
+    const { isAuthenticated, logout } = useAuth();
+    const { theme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
 
     // Define route state variables
     const isLandingPage = location.pathname === '/';
     // Public marketing/info pages that should share the public layout (no sidebar)
-    const isPublicInfoPage = ['/about', '/support', '/privacy', '/terms', '/contact'].includes(location.pathname);
+    // Included /properties to ensure it uses public layout
+    const isPublicInfoPage = ['/about', '/support', '/privacy', '/terms', '/contact'].includes(location.pathname) || location.pathname.startsWith('/properties');
     const isAuthPage = ['/login', '/signup', '/forgot-password', '/verify-email', '/password-reset-sent', '/admin/login', '/admin/accept-invitation'].some(path => location.pathname.startsWith(path));
     const isAdminRoute = location.pathname.startsWith('/admin') && !location.pathname.startsWith('/admin/login') && !location.pathname.startsWith('/admin/accept-invitation');
 
     // We want to hide the User Sidebar/Nav for: Landing, Auth, Admin, and Public Info pages
     const shouldHideNav = isLandingPage || isPublicInfoPage || isAuthPage || isAdminRoute;
-
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
-
-    const isActive = (path: string) => {
-        return location.pathname === path || location.pathname.startsWith(path + '/');
-    };
-
-    // Define public and private navs separately
-    const publicNav = [{ path: '/properties', label: 'Marketplace', icon: 'home_work' }];
-    const privateNav = [
-        { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-        { path: '/portfolio', label: 'Portfolio', icon: 'account_balance_wallet' },
-        { path: '/performance', label: 'Performance', icon: 'trending_up' },
-        { path: '/notifications', label: 'Notifications', icon: 'notifications' },
-        { path: '/referrals', label: 'Referrals', icon: 'group_add' },
-        { path: '/education', label: 'Learn', icon: 'school' },
-        { path: '/support', label: 'Support', icon: 'support_agent' },
-        { path: '/settings', label: 'Settings', icon: 'settings' },
-    ];
 
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -55,12 +32,10 @@ export default function RootLayout() {
         setIsMobileOpen(false);
     }, [location.pathname]);
 
-    // Handle authentication redirect
-    if (!isAuthenticated && !isLandingPage && !isAuthPage) {
-        // This is handled by ProtectedRoute, but RootLayout wraps everything.
-        // We can just render Outlet, but the Sidebar won't have user data.
-        // It's safer to let ProtectedRoute handle redirects, but for layout purposes:
-    }
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     if (shouldHideNav) {
         // For Admin Routes (excluding login), we strictly return Outlet because AdminLayout handles the UI
@@ -70,30 +45,7 @@ export default function RootLayout() {
 
         return (
             <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col">
-                <header className="sticky top-0 z-40 bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark shadow-sm">
-                    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 mobile:px-reduced">
-                        <div className="flex items-center justify-between h-16">
-                            <Link to="/" className="flex items-center gap-2 group">
-                                <img src={logoFull} alt="Hermeos" className="h-32 w-auto hidden md:block brightness-0 dark:invert" />
-                                <span className="font-bold text-xl md:hidden">Hermeos</span>
-                            </Link>
-
-                            <div className="flex items-center gap-4">
-                                <ThemeToggle className="hover:text-primary" />
-                                <Link to="/admin/login" className="hidden">
-                                    <button className="text-slate-600 dark:text-slate-300 hover:text-primary font-medium text-sm transition-colors hidden md:block">
-                                        Admin Login
-                                    </button>
-                                </Link>
-                                <Link to="/login">
-                                    <button className="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-blue-600 transition-colors">
-                                        Login
-                                    </button>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                <Header />
                 <main className="flex-grow w-full">
                     <Outlet />
                 </main>

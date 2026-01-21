@@ -1,6 +1,6 @@
 import React from 'react';
-import { Download, Printer, Share2, X, Check, Shield } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Download, Printer, X, Check, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CertificatePage: React.FC = () => {
     const navigate = useNavigate();
@@ -111,10 +111,12 @@ const CertificatePage: React.FC = () => {
                                 <div className="flex items-center gap-8">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="w-32 h-12 flex items-end justify-center pb-1">
-                                            {/* Signature Mock */}
-                                            <svg className="w-full h-full text-slate-900" viewBox="0 0 160 40" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M10,30 Q30,5 50,30 T90,20 T140,30" strokeLinecap="round"></path>
-                                            </svg>
+                                            {/* Signature Stamp */}
+                                            <div className="w-full h-full flex items-center justify-center transform -rotate-12 opacity-80">
+                                                <div className="border-[3px] border-primary px-3 py-1 rounded-sm">
+                                                    <span className="text-primary font-bold text-xs uppercase tracking-widest whitespace-nowrap">HERMEOS<br />APPROVED</span>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div className="h-px w-full bg-slate-300"></div>
                                         <span className="text-[10px] text-primary font-bold uppercase tracking-wider">Authorized Signature</span>

@@ -13,6 +13,8 @@ npm install
 echo "⚠️  Migrating Database..."
 npx prisma generate
 npx prisma db push --accept-data-loss
+echo "🌱 Seeding Database..."
+npx prisma db seed
 # Build
 npm run build
 # Restart PM2

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import logoFull from '../assets/logo-full.png';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { isAuthenticated } = useAuth();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-border-dark bg-white dark:bg-[#111a22]">
@@ -15,10 +17,9 @@ export default function Header() {
                         <img
                             src={logoFull}
                             alt="Hermeos Proptech"
-                            className="h-8 md:h-32 w-auto brightness-0 dark:invert object-contain"
-                            style={{ maxHeight: '40px' }}
+                            className="h-10 md:h-14 w-auto brightness-0 dark:invert object-contain"
                         />
-                        {/* Note: adjusted h-32 to max-height style because h-32 (128px) is too big for a h-16 (64px) header container */}
+                        {/* Note: Removed max-height restriction and increased base height to h-10 (40px) and md:h-14 (56px) for better visibility in h-16 header */}
                     </Link>
                 </div>
 
@@ -41,24 +42,35 @@ export default function Header() {
                 {/* Right Side Actions */}
                 <div className="flex items-center gap-4">
                     <ThemeToggle />
-                    <Link to="/notifications" className="relative text-slate-500 hover:text-primary transition-colors">
-                        <span className="material-symbols-outlined text-[24px]">notifications</span>
-                    </Link>
-                    <button className="hidden sm:flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow hover:bg-primary/90 transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">download</span>
-                        <span>Report</span>
-                    </button>
 
-                    {/* User Avatar */}
-                    <Link to="/dashboard">
-                        <div
-                            className="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-gray-200 dark:ring-border-dark cursor-pointer hover:ring-primary transition-all"
-                            style={{
-                                backgroundImage:
-                                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAedh3qjkN5ysGOenDMQp7NU49X0HxKA0ev6Xi9HEOtA_DBEIAqfMVCEFfFYOvd7BGhBfmvdLxNqAxuGc2Hy4LxuG1-GjnGUV1a3SmK-KXZ5Mrz9Tk8thAqshM-mxB9q7mGN7X7mRj_6CXp-eyPJcNY0SYYFIFaquOVGAAyJpDzRBQaZwIpKos72a1TtsRXJkRcw3xw7x21uHLfiASat4OxLNCSJFEzv8cZd_ZE2-0wTyaHRtT0R4P6SA4mf0uxJ-ATXFVWfY0bHAd3')",
-                            }}
-                        ></div>
-                    </Link>
+                    {isAuthenticated ? (
+                        <>
+                            <Link to="/notifications" className="relative text-slate-500 hover:text-primary transition-colors">
+                                <span className="material-symbols-outlined text-[24px]">notifications</span>
+                            </Link>
+                            <button className="hidden sm:flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow hover:bg-primary/90 transition-colors">
+                                <span className="material-symbols-outlined text-[20px]">download</span>
+                                <span>Report</span>
+                            </button>
+
+                            {/* User Avatar */}
+                            <Link to="/dashboard">
+                                <div
+                                    className="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-gray-200 dark:ring-border-dark cursor-pointer hover:ring-primary transition-all"
+                                    style={{
+                                        backgroundImage:
+                                            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAedh3qjkN5ysGOenDMQp7NU49X0HxKA0ev6Xi9HEOtA_DBEIAqfMVCEFfFYOvd7BGhBfmvdLxNqAxuGc2Hy4LxuG1-GjnGUV1a3SmK-KXZ5Mrz9Tk8thAqshM-mxB9q7mGN7X7mRj_6CXp-eyPJcNY0SYYFIFaquOVGAAyJpDzRBQaZwIpKos72a1TtsRXJkRcw3xw7x21uHLfiASat4OxLNCSJFEzv8cZd_ZE2-0wTyaHRtT0R4P6SA4mf0uxJ-ATXFVWfY0bHAd3')",
+                                    }}
+                                ></div>
+                            </Link>
+                        </>
+                    ) : (
+                        <Link to="/login">
+                            <button className="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-blue-600 transition-colors">
+                                Login
+                            </button>
+                        </Link>
+                    )}
 
                     {/* Mobile Menu Button */}
                     <button
@@ -109,14 +121,25 @@ export default function Header() {
                             Support Center
                         </Link>
                         <div className="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
-                        <Link
-                            to="/dashboard"
-                            className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            <span className="material-symbols-outlined">dashboard</span>
-                            Go to Dashboard
-                        </Link>
+                        {isAuthenticated ? (
+                            <Link
+                                to="/dashboard"
+                                className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <span className="material-symbols-outlined">dashboard</span>
+                                Go to Dashboard
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className="flex items-center gap-3 p-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <span className="material-symbols-outlined">login</span>
+                                Login
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}
