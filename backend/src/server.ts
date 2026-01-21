@@ -41,6 +41,9 @@ validateEnv();
 const app: Application = express();
 export const prisma = new PrismaClient();
 
+// Trust proxy - required when behind Nginx/reverse proxy
+app.set('trust proxy', true);
+
 // Security Middleware
 app.use(helmet());
 
