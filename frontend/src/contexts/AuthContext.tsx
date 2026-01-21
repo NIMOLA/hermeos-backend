@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { apiClient } from '../lib/api-client';
 import { jwtDecode } from 'jwt-decode';
 
-const APP_VERSION = '1.0.0'; // Bump this to force logout
+const APP_VERSION = '1.0.1'; // Bump this to force logout
 const VERSION_KEY = 'app_version';
 
 export interface User {
