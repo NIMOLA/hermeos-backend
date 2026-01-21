@@ -246,12 +246,18 @@ const AboutUsPage: React.FC = () => {
                         </div>
 
                         {/* Connecting Lines */}
-                        <div className="flex justify-center mb-6">
+                        {/* Connecting Lines - Desktop (3-Pronged) */}
+                        <div className="hidden md:flex justify-center mb-6">
                             <div className="flex gap-12">
                                 <div className="w-px h-12 bg-gradient-to-b from-blue-400 to-green-400"></div>
                                 <div className="w-px h-12 bg-gradient-to-b from-blue-400 to-purple-400"></div>
                                 <div className="w-px h-12 bg-gradient-to-b from-blue-400 to-indigo-400"></div>
                             </div>
+                        </div>
+
+                        {/* Connecting Lines - Mobile (Single) */}
+                        <div className="md:hidden flex justify-center mb-6">
+                            <div className="w-px h-8 bg-gradient-to-b from-blue-400 to-slate-400"></div>
                         </div>
 
                         {/* Second Level - Three Entities */}
