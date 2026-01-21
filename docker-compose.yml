@@ -22,12 +22,11 @@ services:
 
   db:
     image: postgres:15-alpine
+    env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-hermeos}
-    # Removed public port mapping 5432 for security.
-    # Internal services connect using the service name 'db'.
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
