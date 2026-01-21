@@ -84,7 +84,7 @@ export default function LoginPage() {
                         <img
                             src={logoFull}
                             alt="Hermeos Proptech"
-                            className="block h-40 w-auto brightness-0 invert"
+                            className="block h-80 w-auto brightness-0 invert"
                         />
                     </div>
                     <h1 className="text-4xl font-bold mb-6">Acquire Premium Real Estate with Confidence.</h1>

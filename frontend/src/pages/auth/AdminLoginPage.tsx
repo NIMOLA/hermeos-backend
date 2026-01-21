@@ -87,11 +87,11 @@ export default function AdminLoginPage() {
 
                     <div className="p-8 sm:p-12">
                         <div className="flex flex-col items-center text-center mb-8">
-                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                            <div className="w-32 h-32 rounded-full flex items-center justify-center mb-4">
                                 <img
                                     src={logoFull}
                                     alt="Hermeos Admin"
-                                    className="h-16 w-auto brightness-0 invert"
+                                    className="h-32 w-auto brightness-0 invert"
                                 />
                             </div>
                             <p className="text-slate-400 text-sm">

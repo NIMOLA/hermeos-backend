@@ -8,7 +8,7 @@ export default function Footer() {
                     <img
                         src={logoFull}
                         alt="Hermeos Proptech"
-                        className="h-20 w-auto brightness-0 dark:invert"
+                        className="h-40 w-auto brightness-0 dark:invert"
                     />
                     <p className="text-sm text-gray-500 dark:text-[#93adc8]">
                         © 2026 Hermeos Proptech. All rights reserved.

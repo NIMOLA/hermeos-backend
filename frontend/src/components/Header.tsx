@@ -10,14 +10,14 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-border-dark bg-white dark:bg-[#111a22]">
-            <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex h-32 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
                 {/* Logo Area */}
                 <div className="flex items-center gap-4">
                     <Link to="/">
                         <img
                             src={logoFull}
                             alt="Hermeos Proptech"
-                            className="h-10 md:h-14 w-auto brightness-0 dark:invert object-contain"
+                            className="h-20 md:h-28 w-auto brightness-0 dark:invert object-contain"
                         />
                         {/* Note: Removed max-height restriction and increased base height to h-10 (40px) and md:h-14 (56px) for better visibility in h-16 header */}
                     </Link>
@@ -86,7 +86,7 @@ export default function Header() {
 
             {/* Mobile Navigation Menu */}
             {isMobileMenuOpen && (
-                <div className="md:hidden absolute top-16 left-0 w-full bg-white dark:bg-[#111a22] border-b border-gray-200 dark:border-border-dark shadow-xl animate-in slide-in-from-top-5 duration-200">
+                <div className="md:hidden absolute top-32 left-0 w-full bg-white dark:bg-[#111a22] border-b border-gray-200 dark:border-border-dark shadow-xl animate-in slide-in-from-top-5 duration-200">
                     <div className="flex flex-col p-4 space-y-4">
                         <Link
                             to="/"
