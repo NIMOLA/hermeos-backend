@@ -62,37 +62,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (storedVersion !== APP_VERSION) {
                 localStorage.clear();
                 localStorage.setItem(VERSION_KEY, APP_VERSION);
-                // Fallthrough to mock
-                // Check for valid token and user
-                if (storedToken && storedUser) {
-                    try {
-                        // Check token expiration
-                        const decoded: any = jwtDecode(storedToken);
-                        const currentTime = Date.now() / 1000;
+                setIsLoading(false);
+                return;
+            }
 
-                        if (decoded.exp < currentTime) {
-                            console.log('Token expired');
-                            localStorage.removeItem('token');
-                            localStorage.removeItem('user');
-                        } else {
-                            const parsedUser = JSON.parse(storedUser);
-                            setToken(storedToken);
-                            setUser(parsedUser);
-                            setIsLoading(false);
-                            return; // Found valid auth, exit
-                        }
-                    } catch (error) {
-                        console.error('Failed to restore auth:', error);
+            // Check for valid token and user
+            if (storedToken && storedUser) {
+                try {
+                    // Check token expiration
+                    const decoded: any = jwtDecode(storedToken);
+                    const currentTime = Date.now() / 1000;
+
+                    if (decoded.exp < currentTime) {
+                        console.log('Token expired');
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
+                    } else {
+                        const parsedUser = JSON.parse(storedUser);
+                        setToken(storedToken);
+                        setUser(parsedUser);
+                        setIsLoading(false);
+                        return; // Found valid auth, exit
                     }
+                } catch (error) {
+                    console.error('Failed to restore auth:', error);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
                 }
+            }
 
-                setIsLoading(false);
-            };
+            setIsLoading(false);
+        };
 
-            initAuth();
-        }, []);
+        initAuth();
+    }, []);
 
     /**
      * Login user
