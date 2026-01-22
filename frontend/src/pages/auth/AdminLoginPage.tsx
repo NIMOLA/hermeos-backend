@@ -30,6 +30,7 @@ export default function AdminLoginPage() {
 
             if (result.requires2FA) {
                 setShowTwoFactor(true);
+                setIsLoading(false);
                 return;
             }
 
@@ -41,14 +42,16 @@ export default function AdminLoginPage() {
             if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'MODERATOR') {
                 const targetPath = isAdminDomain() ? '/' : '/admin';
                 console.log(`Redirecting to ${targetPath}...`);
-                navigate(targetPath);
+                // Use hard redirect to ensure fresh page load with localStorage state
+                window.location.href = targetPath;
             } else {
                 console.log('Role mismatch:', user?.role);
                 setError(`Unauthorized access. Your role (${user?.role}) does not have admin privileges.`);
+                setIsLoading(false);
             }
         } catch (err: any) {
+            console.error('Login error:', err);
             setError(err.message || 'Login failed. Please check your credentials.');
-        } finally {
             setIsLoading(false);
         }
     };
