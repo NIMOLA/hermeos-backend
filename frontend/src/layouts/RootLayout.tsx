@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
+import CookieConsent from '../components/CookieConsent';
 
 export default function RootLayout() {
     const { isAuthenticated, logout } = useAuth();
@@ -82,6 +83,7 @@ export default function RootLayout() {
             </div>
 
             <Chatbot />
+            <CookieConsent />
         </div>
     );
 }
