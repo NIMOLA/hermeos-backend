@@ -130,7 +130,7 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Phone Number</label>
-                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="tel" placeholder="+234..." defaultValue={profile?.phoneNumber || ''} />
+                                                <input className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="tel" placeholder="+234 201..." defaultValue={profile?.phoneNumber || ''} />
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">National Identification Number (NIN)</label>

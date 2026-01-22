@@ -188,7 +188,7 @@ export default function SupportPage() {
                                     <p className="mb-8 text-blue-100">Our Lagos-based support team is available Mon-Fri, 8am - 6pm WAT to assist with your inquiries.</p>
                                     <div className="flex flex-col gap-6">
                                         {[
-                                            { icon: 'call', title: 'Phone Support', val: '+234 1 234 5678', href: 'tel:+2341234567' },
+                                            { icon: 'call', title: 'Phone Support', val: '+234 201 330 6309', href: 'tel:+2342013306309' },
                                             { icon: 'chat', title: 'WhatsApp', val: '+234 800 HERMEOS', href: 'https://wa.me/234800437636' },
                                             { icon: 'mail', title: 'Email', val: 'support@hermeos.ng', href: 'mailto:support@hermeos.ng' },
                                             { icon: 'location_on', title: 'Office', val: '12A Admiralty Way, Lekki Phase 1, Lagos, Nigeria', href: 'https://maps.google.com/?q=12A+Admiralty+Way+Lekki' }

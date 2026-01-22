@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import baruchApartments from '../assets/baruch-apartments.jpg';
+import heroImage from '../assets/hero-modern.jpg';
 
 export default function LandingPage() {
     const { theme } = useTheme();
@@ -52,7 +52,7 @@ export default function LandingPage() {
                         {/* Hero Image */}
                         <div className="flex-1 w-full">
                             <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl bg-slate-200 dark:bg-slate-800">
-                                <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-105 duration-700" style={{ backgroundImage: `url(${baruchApartments})` }}>
+                                <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-105 duration-700" style={{ backgroundImage: `url(${heroImage})` }}>
                                 </div>
                                 <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-md text-xs font-bold shadow-sm flex items-center gap-1 text-slate-900 dark:text-white">
                                     <span className="material-symbols-outlined text-primary text-[16px]">location_on</span>

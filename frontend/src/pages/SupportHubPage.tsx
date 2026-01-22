@@ -208,7 +208,7 @@ const SupportHubPage: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-xs text-blue-200 font-bold uppercase tracking-wider">Phone Support</p>
-                                        <p className="font-bold text-lg">+234 1 234 5678</p>
+                                        <p className="font-bold text-lg">+234 201 330 6309</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
