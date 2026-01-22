@@ -1,3 +1,6 @@
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { isAdminDomain } from '../utils/subdomain';
 
 interface AdminRouteProps {
@@ -12,13 +15,28 @@ export default function AdminRoute({ children, allowedRoles }: AdminRouteProps) 
   // While auth provider is restoring, don't render content
   if (isLoading) return null;
 
-  if (!isAuthenticated) {
+  // Fallback: Check localStorage directly to handle race condition after login
+  // React state (isAuthenticated) may not be updated yet when navigate triggers
+  const storedToken = localStorage.getItem('token');
+  const storedUserRaw = localStorage.getItem('user');
+  let storedUser: { role?: string } | null = null;
+  try {
+    storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+  } catch {
+    storedUser = null;
+  }
+
+  const hasValidSession = isAuthenticated || (!!storedToken && !!storedUser);
+
+  if (!hasValidSession) {
     // On subdomain, login is at / or /login. On main, it's /portal-access
     return <Navigate to={isSubdomain ? "/login" : "/portal-access"} replace />;
   }
 
   // Check if user has admin role (matches backend UserRole enum)
-  const isStaff = ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'].includes(user?.role || '');
+  // Use stored user as fallback if React state not yet updated
+  const effectiveRole = user?.role || storedUser?.role || '';
+  const isStaff = ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'].includes(effectiveRole);
 
   if (!isStaff) {
     // Redirect non-staff to login
