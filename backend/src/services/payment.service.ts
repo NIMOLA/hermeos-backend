@@ -34,7 +34,8 @@ export class PaymentService {
                 email,
                 amount: Math.round(koboAmount),
                 metadata,
-                channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer']
+                channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
+                callback_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/payment/callback`
             });
             return response;
         } catch (error: any) {

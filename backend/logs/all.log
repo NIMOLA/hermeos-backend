@@ -12,3 +12,9 @@
 2026-01-18 21:14:37:1437 [31merror[39m: [31mInternal Server Error:[39m
 2026-01-18 21:16:49:1649 [31merror[39m: [31mInternal Server Error:[39m
 2026-01-18 21:16:53:1653 [31merror[39m: [31mInternal Server Error:[39m
+2026-01-21 13:24:31:2431 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m
+2026-01-21 13:25:20:2520 [31merror[39m: [31mInternal Server Error:[39m
+2026-01-21 13:25:24:2524 [31merror[39m: [31mInternal Server Error:[39m
+2026-01-21 15:09:29:929 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m
+2026-01-21 15:31:34:3134 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m
+2026-01-21 16:52:49:5249 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m

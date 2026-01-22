@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFetch } from '../../hooks/useApi';
+import { apiClient } from '../../lib/api-client';
 import { CheckoutConsent } from '../../components/payment/CheckoutConsent';
 
 // Reusing Property interface or defining a subset
@@ -28,6 +29,32 @@ export default function AcquisitionReviewPage() {
     const unitPrice = property?.pricePerUnit || 50000; // Fallback
     const transactionFee = unitPrice * quantity * 0.015;
     const totalAmount = (unitPrice * quantity) + transactionFee;
+
+    // State for payment processing
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handlePayment = async () => {
+        if (!property) return;
+        setIsProcessing(true);
+        try {
+            const response = await apiClient.post<{ authorizationUrl: string; reference: string }>('/payment/card/initialize', {
+                propertyId: property.id,
+                units: quantity,
+                amount: totalAmount
+            });
+
+            // Redirect to Paystack
+            if (response.authorizationUrl) {
+                window.location.href = response.authorizationUrl;
+            } else {
+                alert('Payment initialization failed: No authorization URL returned.');
+            }
+        } catch (err: any) {
+            alert(err.message || 'Failed to initialize payment');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     if (isLoading) return <div className="p-8 text-center">Loading review details...</div>;
     if (error || !property) return <div className="p-8 text-center text-red-500">Error loading property</div>;
@@ -110,14 +137,18 @@ export default function AcquisitionReviewPage() {
 
                     <div className="flex flex-col gap-3">
                         {user?.isVerified ? (
-                            <Link to="/payment/status">
-                                <Button
-                                    className="w-full h-12 text-lg shadow-lg"
-                                    disabled={!agreedToTerms}
-                                >
-                                    Confirm Purchase
-                                </Button>
-                            </Link>
+                            <Button
+                                className="w-full h-12 text-lg shadow-lg"
+                                disabled={!agreedToTerms || isProcessing}
+                                onClick={handlePayment}
+                            >
+                                {isProcessing ? (
+                                    <span className="flex items-center gap-2">
+                                        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                        Processing...
+                                    </span>
+                                ) : 'Confirm Purchase'}
+                            </Button>
                         ) : (
                             <Link to="/kyc/info">
                                 <Button className="w-full h-12 text-lg shadow-lg bg-amber-500 hover:bg-amber-600">

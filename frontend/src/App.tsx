@@ -57,6 +57,7 @@ const CertificatePage = lazy(() => import('./pages/CertificatePage'));
 const EmailPreviewPage = lazy(() => import('./pages/preview/EmailPreviewPage'));
 const UserInboxPage = lazy(() => import('./pages/dashboard/UserInboxPage'));
 const TransactionHistoryPage = lazy(() => import('./pages/dashboard/TransactionHistoryPage'));
+const PaymentCallbackPage = lazy(() => import('./pages/payment/PaymentCallbackPage'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -174,6 +175,7 @@ function App() {
           <Route path="/certificate" element={<CertificatePage />} />
           <Route path="/email-preview" element={<EmailPreviewPage />} />
           <Route path="/support" element={<SupportHubPage />} />
+          <Route path="/payment/callback" element={<PaymentCallbackPage />} />
 
           {/* Root App Layout */}
           <Route element={<RootLayout />}>
