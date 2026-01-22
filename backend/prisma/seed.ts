@@ -30,7 +30,12 @@ async function main() {
 
     const superAdmin = await prisma.user.upsert({
         where: { email: superAdminEmail },
-        update: {},
+        update: {
+            password: superAdminPassword,
+            role: 'SUPER_ADMIN',
+            isVerified: true,
+            tier: 'Institutional'
+        },
         create: {
             email: superAdminEmail,
             password: superAdminPassword,
@@ -53,7 +58,12 @@ async function main() {
 
     const admin = await prisma.user.upsert({
         where: { email: adminEmail },
-        update: {},
+        update: {
+            password: adminPassword,
+            role: 'ADMIN',
+            isVerified: true,
+            tier: 'Institutional'
+        },
         create: {
             email: adminEmail,
             password: adminPassword,
@@ -76,7 +86,12 @@ async function main() {
 
     const moderator = await prisma.user.upsert({
         where: { email: moderatorEmail },
-        update: {},
+        update: {
+            password: moderatorPassword,
+            role: 'MODERATOR',
+            isVerified: true,
+            tier: 'Professional'
+        },
         create: {
             email: moderatorEmail,
             password: moderatorPassword,
