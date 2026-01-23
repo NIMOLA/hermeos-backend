@@ -1,9 +1,33 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import heroImage from '../assets/hero-modern.jpg';
+import { useState, useEffect } from 'react';
+import heroImage from '../assets/hero-lekki.jpg';
 
 export default function LandingPage() {
     const { theme } = useTheme();
+
+    const [featuredProperties, setFeaturedProperties] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProperties = async () => {
+            try {
+                // Fetch public marketplace properties
+                // Using relative path assuming proxy is set up or base URL logic handles it
+                // If not, might need a utility. Typically /api/properties/marketplace
+                const response = await fetch('/api/properties/marketplace');
+                if (response.ok) {
+                    const data = await response.json();
+                    setFeaturedProperties(data || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch featured properties", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProperties();
+    }, []);
 
     return (
         <div className="flex-grow flex flex-col items-center w-full">
@@ -62,6 +86,67 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </div>
+            </section>
+
+            {/* Live Opportunities Carousel */}
+            <section className="w-full max-w-[1440px] px-4 md:px-10 mb-12">
+                <div className="flex items-center justify-between mb-4 px-2">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Live Opportunities</h3>
+                    <div className="hidden md:flex gap-2">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Scroll to view</span>
+                        <span className="material-symbols-outlined text-slate-400 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-64 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                        ))}
+                    </div>
+                ) : featuredProperties.length > 0 ? (
+                    <div className="flex overflow-x-auto gap-6 pb-8 snap-x scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+                        {featuredProperties.map((prop) => (
+                            <div key={prop.id} className="min-w-[300px] md:min-w-[340px] flex-shrink-0 snap-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                                <div className="h-40 w-full bg-slate-200 dark:bg-slate-800 relative bg-cover bg-center" style={{ backgroundImage: `url(${prop.imageUrl || heroImage})` }}>
+                                    <div className="absolute top-2 right-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-slate-900 dark:text-white shadow-sm">
+                                        {prop.targetYield} ROI
+                                    </div>
+                                    <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-xs font-medium text-white">
+                                        Min: ₦{Number(prop.minInvestment).toLocaleString()}
+                                    </div>
+                                </div>
+                                <div className="p-4 flex flex-col gap-3">
+                                    <div>
+                                        <h4 className="text-lg font-bold text-slate-900 dark:text-white truncate" title={prop.name}>{prop.name}</h4>
+                                        <div className="flex items-center text-slate-500 dark:text-slate-400 text-xs">
+                                            <span className="material-symbols-outlined text-[14px] mr-1">location_on</span>
+                                            <span className="truncate">{prop.location}</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800 pt-3">
+                                        <div className="flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px] text-primary">category</span>
+                                            <span className="truncate">{prop.type || 'Residential'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px] text-primary">pie_chart</span>
+                                            <span>{prop.fundingProgress}% Funded</span>
+                                        </div>
+                                    </div>
+                                    {/* Action - View Only trigger */}
+                                    <button onClick={() => window.location.href = '/signup'} className="mt-1 w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-sm font-bold transition-colors">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-8 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+                        <p className="text-slate-500">No active properties available for public preview.</p>
+                    </div>
+                )}
             </section>
 
             {/* Important Disclaimer Band */}

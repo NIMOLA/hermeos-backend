@@ -18,3 +18,10 @@
 2026-01-21 15:09:29:929 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m
 2026-01-21 15:31:34:3134 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m
 2026-01-21 16:52:49:5249 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m
+2026-01-23 10:39:05:395 [31merror[39m: [31mCRITICAL: Missing required environment variables: PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY, GOOGLE_CLIENT_ID, SMTP_HOST, SMTP_USER, SMTP_PASS[39m
+2026-01-23 10:47:57:4757 [33mwarn[39m: [33mBlocked by CORS: http://localhost:5173[39m
+2026-01-23 10:47:57:4757 [31merror[39m: [31mInternal Server Error:[39m
+2026-01-23 10:52:59:5259 [33mwarn[39m: [33mBlocked by CORS: http://localhost:5173[39m
+2026-01-23 10:52:59:5259 [31merror[39m: [31mInternal Server Error:[39m
+2026-01-23 10:53:00:530 [33mwarn[39m: [33mBlocked by CORS: http://localhost:5173[39m
+2026-01-23 10:53:00:530 [31merror[39m: [31mInternal Server Error:[39m

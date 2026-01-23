@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 @import './mobile-optimizations.css';
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
@@ -13,13 +12,22 @@
   }
 
   .dark {
-    --background: 217 19% 10%;
-    /* #111921 hsl approx */
-    --foreground: 210 40% 98%;
+    --background: 216 65% 11%;
+    /* #0A192F */
+    --foreground: 0 0% 100%;
   }
 
   body {
-    @apply bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen;
+    @apply bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-body min-h-screen;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
   }
 }
 
@@ -65,11 +73,11 @@
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #111921;
+  background: #0A192F;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #2A3B4C;
+  background: #112240;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -77,5 +85,5 @@
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #344d65;
+  background: #233554;
 }
