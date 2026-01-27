@@ -49,20 +49,35 @@ app.set('trust proxy', 1);
 app.use(helmet());
 
 // Parse allowed origins from env var (comma-separated)
+// Parse allowed origins from env var (comma-separated)
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map(url => url.trim());
+
+// Regex for allowed domains (including all subdomains)
+const allowedDomainsRegex = [
+    /^https?:\/\/(?:.+\.)?hermeos\.com$/,
+    /^https?:\/\/(?:.+\.)?hermeosproptech\.com$/,
+    /^http:\/\/localhost:\d+$/
+];
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
+        // Check against static list
         if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            // Optional: Log blocked origin for debugging
-            logger.warn(`Blocked by CORS: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+            return callback(null, true);
         }
+
+        // Check against regex patterns
+        const isAllowedByRegex = allowedDomainsRegex.some(regex => regex.test(origin));
+        if (isAllowedByRegex) {
+            return callback(null, true);
+        }
+
+        // Log blocked origin for debugging
+        logger.warn(`Blocked by CORS: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
     },
     credentials: true
 }));
