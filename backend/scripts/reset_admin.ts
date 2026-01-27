@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -6,8 +9,12 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🔄 Ensuring Super Admin Account...');
 
-    const email = 'admin@hermeos.com';
-    const password = 'HermeosPassword2026';
+    const email = process.env.ADMIN_EMAIL || 'admin@hermeos.com';
+    const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+
+    if (!process.env.ADMIN_PASSWORD) {
+        console.warn('⚠️  Warning: Using default password. Set ADMIN_PASSWORD in .env for production.');
+    }
 
     try {
         const hashedPassword = await bcrypt.hash(password, 12);

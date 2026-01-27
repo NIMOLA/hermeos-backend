@@ -5,7 +5,8 @@ import {
     verifyCardPayment,
     submitBankTransferProof,
     getMyPaymentProofs,
-    getBankDetails
+    getBankDetails,
+    getPaymentReceipt
 } from '../controllers/payment.controller';
 import { bankTransferProofValidation, uuidParamValidation } from '../middleware/validators';
 import { paymentLimiter } from '../middleware/rateLimiter';
@@ -28,6 +29,7 @@ router.use(protect);
 // Card payment routes with rate limiting
 router.post('/card/initialize', paymentLimiter, initializeCardPayment);
 router.get('/card/verify/:reference', paymentLimiter, verifyCardPayment);
+router.get('/receipt/:reference', getPaymentReceipt);
 
 // Bank transfer routes with validation and rate limiting
 router.post('/bank-transfer/submit-proof', paymentLimiter, bankTransferProofValidation, handleValidationErrors, submitBankTransferProof);

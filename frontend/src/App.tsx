@@ -12,7 +12,7 @@ const PropertyDetailsPage = lazy(() => import('./pages/dashboard/PropertyDetails
 const PerformancePage = lazy(() => import('./pages/dashboard/PerformancePage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
 const AdminLayout = lazy(() => import('./layouts/admin/AdminLayout'));
-const AdminDashboardPage = lazy(() => import('./pages/dashboard/DashboardOverviewPage')); // Default dashboard
+
 // Actually admin dashboard is separate
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboardPage'));
 
@@ -40,6 +40,7 @@ const AcquisitionReviewPage = lazy(() => import('./pages/dashboard/AcquisitionRe
 const NotificationsPage = lazy(() => import('./pages/dashboard/NotificationsPage'));
 const ReferralsPage = lazy(() => import('./pages/dashboard/ReferralsPage'));
 const EducationHubPage = lazy(() => import('./pages/dashboard/EducationHubPage'));
+const BlogPostPage = lazy(() => import('./pages/dashboard/BlogPostPage'));
 const PropertyComparisonPage = lazy(() => import('./pages/dashboard/PropertyComparisonPage'));
 const DocumentsPage = lazy(() => import('./pages/dashboard/DocumentsPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
@@ -57,7 +58,11 @@ const CertificatePage = lazy(() => import('./pages/CertificatePage'));
 const EmailPreviewPage = lazy(() => import('./pages/preview/EmailPreviewPage'));
 const UserInboxPage = lazy(() => import('./pages/dashboard/UserInboxPage'));
 const TransactionHistoryPage = lazy(() => import('./pages/dashboard/TransactionHistoryPage'));
+
 const PaymentCallbackPage = lazy(() => import('./pages/payment/PaymentCallbackPage'));
+const PurchaseSuccessPage = lazy(() => import('./pages/payment/PurchaseSuccessPage'));
+const AdminBlogPage = lazy(() => import('./pages/admin/AdminBlogPage'));
+const EditPostPage = lazy(() => import('./pages/admin/EditPostPage'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -93,8 +98,24 @@ function App() {
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:id" element={<AdminUserDetailPage />} />
               <Route path="support" element={<AdminSupportPage />} />
-              <Route path="team" element={<AdminTeamPage />} />
-              <Route path="settings" element={<AdminSettingsPage />} />
+
+              {/* Super Admin Only Routes */}
+              <Route
+                path="team"
+                element={
+                  <AdminRoute allowedRoles={['SUPER_ADMIN']}>
+                    <AdminTeamPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="settings"
+                element={
+                  <AdminRoute allowedRoles={['SUPER_ADMIN']}>
+                    <AdminSettingsPage />
+                  </AdminRoute>
+                }
+              />
 
               {/* Strict Role Protected Routes */}
               <Route
@@ -175,7 +196,9 @@ function App() {
           <Route path="/certificate" element={<CertificatePage />} />
           <Route path="/email-preview" element={<EmailPreviewPage />} />
           <Route path="/support" element={<SupportHubPage />} />
+
           <Route path="/payment/callback" element={<PaymentCallbackPage />} />
+          <Route path="/payment/success" element={<PurchaseSuccessPage />} />
 
           {/* Root App Layout */}
           <Route element={<RootLayout />}>
@@ -285,6 +308,14 @@ function App() {
               }
             />
             <Route
+              path="/education/:slug"
+              element={
+                <ProtectedRoute>
+                  <BlogPostPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/compare"
               element={
                 <ProtectedRoute>
@@ -318,80 +349,87 @@ function App() {
                 </ProtectedRoute>
               }
             />
+          </Route>
 
-            {/* Local Fallback Admin Routes (Mapped to /admin/*) */}
+          {/* Local Fallback Admin Routes (Mapped to /admin/*) - DECUPLED from RootLayout */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="assets" element={<AdminAssetsPage />} />
+            <Route path="assets/new" element={<EditPropertyPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="users/:id" element={<AdminUserDetailPage />} />
+            <Route path="support" element={<AdminSupportPage />} />
+
+            {/* Strict Role Protected Routes */}
             <Route
-              path="/admin"
+              path="financials"
               element={
-                <AdminRoute>
-                  <AdminLayout />
+                <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminFinancialsPage />
                 </AdminRoute>
               }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="assets" element={<AdminAssetsPage />} />
-              <Route path="assets/new" element={<EditPropertyPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="users/:id" element={<AdminUserDetailPage />} />
-              <Route path="support" element={<AdminSupportPage />} />
+            />
+            <Route
+              path="financials/payments"
+              element={
+                <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminPaymentVerificationPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="kyc"
+              element={
+                <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
+                  <AdminKYCPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="exits"
+              element={
+                <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AdminExitRequestsPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="approvals"
+              element={
+                <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
+                  <AdminApprovalsPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="audit-trail"
+              element={
+                <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                  <AuditTrailPage />
+                </AdminRoute>
+              }
+            />
 
-              {/* Strict Role Protected Routes */}
-              <Route
-                path="financials"
-                element={
-                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
-                    <AdminFinancialsPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="financials/payments"
-                element={
-                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
-                    <AdminPaymentVerificationPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="kyc"
-                element={
-                  <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
-                    <AdminKYCPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="exits"
-                element={
-                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
-                    <AdminExitRequestsPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="approvals"
-                element={
-                  <AdminRoute allowedRoles={['MODERATOR', 'ADMIN', 'SUPER_ADMIN']}>
-                    <AdminApprovalsPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="audit-trail"
-                element={
-                  <AdminRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
-                    <AuditTrailPage />
-                  </AdminRoute>
-                }
-              />
+            <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="properties/edit/:id" element={<EditPropertyPage />} />
 
-              <Route path="settings" element={<AdminSettingsPage />} />
-              <Route path="properties/edit/:id" element={<EditPropertyPage />} />
-              <Route path="team" element={<AdminTeamPage />} />
-            </Route>
+            <Route path="team" element={<AdminTeamPage />} />
 
-            <Route path="*" element={<NotFoundPage />} />
+            {/* Blog Management */}
+            <Route path="content" element={<AdminBlogPage />} />
+            <Route path="content/new" element={<EditPostPage />} />
+            <Route path="content/edit/:id" element={<EditPostPage />} />
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </Router>

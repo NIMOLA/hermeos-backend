@@ -49,11 +49,9 @@ export const uploadFile = (req: Request, res: Response, next: NextFunction) => {
             return next(new AppError('No file uploaded', 400));
         }
 
-        // Construct public URL
-        // Assumes static files are served from /uploads
-        const protocol = req.protocol;
-        const host = req.get('host');
-        const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+        // Return relative path to be constructed by frontend
+        // This avoids issues with internal IP/port mismatches behind proxies
+        const url = `/uploads/${req.file.filename}`;
 
         res.status(200).json({
             success: true,

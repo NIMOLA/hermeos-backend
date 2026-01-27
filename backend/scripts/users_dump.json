@@ -1,0 +1,30 @@
+[
+  {
+    "id": "2aec194e-46cd-4413-a772-82653b2774d1",
+    "email": "admin@hermeos.com",
+    "firstName": "Platform",
+    "lastName": "Admin",
+    "role": "ADMIN"
+  },
+  {
+    "id": "d09d658e-8da8-46db-a0c5-36bf57107df4",
+    "email": "moderator@hermeos.com",
+    "firstName": "Platform",
+    "lastName": "Moderator",
+    "role": "MODERATOR"
+  },
+  {
+    "id": "727c267d-5f69-4bbb-addf-4fc060f249c2",
+    "email": "losas294@gmail.com",
+    "firstName": "Izevbizua",
+    "lastName": "Osas",
+    "role": "USER"
+  },
+  {
+    "id": "0b27c4ee-a950-4153-8c8c-18eef72e97e2",
+    "email": "superadmin@hermeos.com",
+    "firstName": "Super",
+    "lastName": "Admin",
+    "role": "SUPER_ADMIN"
+  }
+]

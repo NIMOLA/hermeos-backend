@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { CapabilityService } from '../services/capability.service';
 
-const prisma = new PrismaClient();
+import prisma from '../utils/prisma';
 
 // Get dashboard statistics
 export const getDashboardStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -101,9 +101,11 @@ export const getUserById = async (req: AuthRequest, res: Response, next: NextFun
             where: { id },
             include: {
                 kyc: true,
-                ownerships: { include: { property: { select: { id: true, name: true, location: true } } } },
-                transactions: { orderBy: { createdAt: 'desc' }, take: 10 },
-                transferRequests: { orderBy: { createdAt: 'desc' }, take: 5 }
+                documents: true,
+                ownerships: { include: { property: true } },
+                transactions: { orderBy: { createdAt: 'desc' }, take: 20 },
+                transferRequests: { orderBy: { createdAt: 'desc' }, take: 10 },
+                bankAccounts: true
             }
         });
         if (!user) return next(new AppError('User not found', 404));

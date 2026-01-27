@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect } from '../middleware/auth';
+import { protect, authorize } from '../middleware/auth';
 import {
     initializeSuperAdmin,
     createAdminInvitation,
@@ -25,10 +25,10 @@ router.post('/accept-invitation/:token', acceptAdminInvitation);
 router.use(protect);
 
 // Super admin only routes
-router.post('/create-invitation', createAdminInvitation);
-router.get('/list-admins', listAdmins);
-router.patch('/:adminId/role', updateAdminRole);
-router.delete('/:adminId/revoke', revokeAdminAccess);
+router.post('/create-invitation', authorize('SUPER_ADMIN'), createAdminInvitation);
+router.get('/list-admins', authorize('SUPER_ADMIN'), listAdmins);
+router.patch('/:adminId/role', authorize('SUPER_ADMIN'), updateAdminRole);
+router.delete('/:adminId/revoke', authorize('SUPER_ADMIN'), revokeAdminAccess);
 
 // User Management Routes
 router.get('/users/:userId', getAdminUserDetail);

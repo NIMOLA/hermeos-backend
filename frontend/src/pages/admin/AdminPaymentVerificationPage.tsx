@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getImageUrl } from '../../utils/imageUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -22,6 +23,7 @@ interface PaymentProof {
     depositorName: string;
     transferDate: string;
     transferReference?: string;
+    receiptUrl?: string;
     createdAt: string;
 }
 
@@ -179,8 +181,8 @@ export default function AdminPaymentVerificationPage() {
                                                 key={proof.id}
                                                 onClick={() => setSelectedProof(proof)}
                                                 className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedProof?.id === proof.id
-                                                        ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
-                                                        : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                                                    ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
+                                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
                                                     }`}
                                             >
                                                 <div className="flex justify-between items-start mb-2">
@@ -258,6 +260,30 @@ export default function AdminPaymentVerificationPage() {
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Receipt */}
+                                    {selectedProof.receiptUrl && (
+                                        <div>
+                                            <h3 className="font-semibold mb-2 flex items-center">
+                                                <span className="material-symbols-outlined w-4 h-4 mr-2">receipt_long</span>
+                                                Payment Receipt
+                                            </h3>
+                                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                                                <a href={getImageUrl(selectedProof.receiptUrl)} target="_blank" rel="noreferrer" className="block relative group overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                                                    <img
+                                                        src={getImageUrl(selectedProof.receiptUrl)}
+                                                        alt="Payment Receipt"
+                                                        className="w-full h-48 object-contain bg-slate-200 dark:bg-slate-900"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <span className="text-white text-sm font-medium flex items-center gap-2">
+                                                            <Eye className="w-4 h-4" /> View Full Size
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Rejection Reason */}
                                     <div>

@@ -16,12 +16,16 @@ export const COMPANY_BANK_DETAILS = {
     accountNumber: '0040225641'
 };
 
+const TRANSACTION_FEE_RATE = 0.015;
+
 /**
  * Initialize Paystack card payment
  */
 export const initializeCardPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { propertyId, units, amount } = req.body;
+        const { propertyId } = req.body;
+        const units = Number(req.body.units);
+        const amount = Number(req.body.amount);
         const userId = req.user!.id;
 
         // Enforce KYC verification
@@ -45,9 +49,20 @@ export const initializeCardPayment = async (req: AuthRequest, res: Response, nex
             return next(new AppError('Insufficient units available', 400));
         }
 
-        const expectedAmount = Number(property.pricePerUnit) * units;
-        if (Math.abs(amount - expectedAmount) > 1) {
-            return next(new AppError('Amount mismatch', 400));
+        const baseAmount = Number(property.pricePerUnit) * units;
+        const fee = baseAmount * TRANSACTION_FEE_RATE;
+
+        // Round to 2 decimal places for currency comparison
+        const expectedAmount = Math.round((baseAmount + fee) * 100) / 100;
+        const receivedAmount = Math.round(amount * 100) / 100;
+
+        // Allow for small rounding differences (10 naira buffer)
+        if (Math.abs(receivedAmount - expectedAmount) > 10) {
+            console.error(`[CardPayment] Amount mismatch!`);
+            console.error(`Received: ${receivedAmount}`);
+            console.error(`Expected: ${expectedAmount} (Base: ${baseAmount}, Fee: ${fee})`);
+
+            return next(new AppError(`Amount mismatch: Expected ${expectedAmount}, Got ${receivedAmount}`, 400));
         }
 
         const response = await paymentService.initializePayment(
@@ -139,7 +154,9 @@ export const verifyCardPayment = async (req: AuthRequest, res: Response, next: N
  */
 export const submitBankTransferProof = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { propertyId, units, amount, depositorName, transferDate, transferReference } = req.body;
+        const { propertyId, depositorName, transferDate, transferReference, receiptUrl } = req.body;
+        const units = Number(req.body.units);
+        const amount = Number(req.body.amount);
         const userId = req.user!.id;
 
         // Enforce KYC verification
@@ -157,9 +174,19 @@ export const submitBankTransferProof = async (req: AuthRequest, res: Response, n
             return next(new AppError('Property not found', 404));
         }
 
-        const expectedAmount = Number(property.pricePerUnit) * units;
-        if (Math.abs(amount - expectedAmount) > 1) {
-            return next(new AppError('Amount mismatch', 400));
+        const baseAmount = Number(property.pricePerUnit) * units;
+        const fee = baseAmount * TRANSACTION_FEE_RATE;
+
+        // Round to 2 decimal places
+        const expectedAmount = Math.round((baseAmount + fee) * 100) / 100;
+        const receivedAmount = Math.round(amount * 100) / 100;
+
+        if (Math.abs(receivedAmount - expectedAmount) > 10) {
+            console.error(`[BankTransfer] Amount mismatch!`);
+            console.error(`Received: ${receivedAmount}`);
+            console.error(`Expected: ${expectedAmount}`);
+
+            return next(new AppError(`Amount mismatch: Expected ${expectedAmount}, Got ${receivedAmount}`, 400));
         }
 
         // Create payment proof record
@@ -173,6 +200,7 @@ export const submitBankTransferProof = async (req: AuthRequest, res: Response, n
                 depositorName,
                 transferDate: new Date(transferDate),
                 transferReference: transferReference || null,
+                receiptUrl: receiptUrl || null,
                 status: 'pending'
             }
         });
@@ -260,6 +288,56 @@ export const getBankDetails = async (req: AuthRequest, res: Response, next: Next
         res.json({
             success: true,
             data: COMPANY_BANK_DETAILS
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Get payment receipt details by reference
+ */
+export const getPaymentReceipt = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const { reference } = req.params;
+        const userId = req.user!.id;
+
+        const transaction = await prisma.transaction.findUnique({
+            where: { reference },
+            include: {
+                property: {
+                    select: {
+                        id: true,
+                        name: true,
+                        location: true,
+                        images: true
+                    }
+                },
+                ownership: true
+            }
+        });
+
+        if (!transaction) {
+            return next(new AppError('Transaction not found', 404));
+        }
+
+        // Security check
+        if (transaction.userId !== userId) {
+            return next(new AppError('Unauthorized access to receipt', 403));
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id: transaction.id,
+                reference: transaction.reference,
+                amount: Number(transaction.amount),
+                units: transaction.ownership?.units || 0,
+                status: transaction.status,
+                date: transaction.createdAt,
+                property: transaction.property,
+                paymentMethod: transaction.paymentMethod
+            }
         });
     } catch (error) {
         next(error);

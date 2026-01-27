@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { useFetch } from '../../hooks/useApi';
+import { getImageUrl } from '../../utils/imageUtils';
 
 interface MarketplaceProperty {
     id: string;
@@ -76,8 +77,8 @@ export default function PropertiesListPage() {
                             key={filter.value}
                             onClick={() => setSelectedType(filter.value)}
                             className={`px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap min-h-[44px] transition-colors ${selectedType === filter.value
-                                    ? 'bg-primary text-white'
-                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'
+                                ? 'bg-primary text-white'
+                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'
                                 }`}
                         >
                             {filter.label}
@@ -126,7 +127,7 @@ export default function PropertiesListPage() {
                         <div key={item.id} className="group bg-white dark:bg-[#1a2632] rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col">
                             <div className="relative h-48 bg-gray-200 overflow-hidden">
                                 <img
-                                    src={item.imageUrl}
+                                    src={getImageUrl(item.imageUrl)}
                                     alt={item.name}
                                     loading="lazy"
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

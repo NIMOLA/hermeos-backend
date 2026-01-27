@@ -31,6 +31,8 @@ export default function LandingPage() {
 
     return (
         <div className="flex-grow flex flex-col items-center w-full">
+
+
             {/* Hero Section */}
             <section className="w-full max-w-7xl px-4 md:px-10 py-12 md:py-20">
                 <div className="@container">
@@ -39,7 +41,7 @@ export default function LandingPage() {
                         <div className="flex flex-1 flex-col gap-6 lg:max-w-xl">
                             <div className="flex flex-col gap-4 text-left">
                                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
-                                    Own a Piece of <span className="text-primary">Nigeria’s Future</span>
+                                    Build Wealth, <span className="text-primary dark:text-secondary">Brick by Brick</span>
                                 </h1>
                                 <h2 className="text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                                     Hermeos Proptech simplifies property acquisition and equity participation in premium managed real estate assets across Nigeria.
@@ -51,11 +53,11 @@ export default function LandingPage() {
                                         <span className="truncate">Start Your Journey</span>
                                     </button>
                                 </Link>
-                                <Link to="/properties">
+                                <a href="#live-opportunities">
                                     <button className="flex h-12 w-full sm:w-auto items-center justify-center rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-8 text-base font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                        <span className="truncate">Explore Properties</span>
+                                        <span className="truncate">Explore Opportunities</span>
                                     </button>
-                                </Link>
+                                </a>
                             </div>
                             {/* Trust Indicators */}
                             <div className="flex items-center gap-6 pt-4 opacity-80 flex-wrap">
@@ -76,9 +78,10 @@ export default function LandingPage() {
                         {/* Hero Image */}
                         <div className="flex-1 w-full">
                             <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl bg-slate-200 dark:bg-slate-800">
-                                <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-105 duration-700" style={{ backgroundImage: `url(${heroImage})` }}>
+                                {/* Added scale-110 to zoom in slightly and crop white edges */}
+                                <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-125 duration-700 scale-110" style={{ backgroundImage: `url(${heroImage})` }}>
                                 </div>
-                                <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-md text-xs font-bold shadow-sm flex items-center gap-1 text-slate-900 dark:text-white">
+                                <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-md text-xs font-bold shadow-sm flex items-center gap-1 text-slate-900 dark:text-white z-10">
                                     <span className="material-symbols-outlined text-primary text-[16px]">location_on</span>
                                     <span>Badore, Ajah, Lagos</span>
                                 </div>
@@ -149,31 +152,31 @@ export default function LandingPage() {
                 )}
             </section>
 
-            {/* Important Disclaimer Band */}
-            <section className="w-full bg-primary/10 border-y border-primary/20">
-                <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-center gap-3 text-center sm:text-left">
+            {/* Important Disclaimer Band - Added margin-bottom to separate from footer/features */}
+            <section className="w-full bg-primary/10 border-y border-primary/20 mt-8 mb-4">
+                <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-center gap-3 text-center sm:text-left">
                     <span className="material-symbols-outlined text-primary shrink-0">info</span>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
                         <strong>Disclaimer:</strong> Hermeos Proptech is a property technology platform, not a financial advisory or financial services firm. All asset participation involves risk.
                     </p>
                 </div>
             </section>
 
-            {/* Feature Section */}
-            <section className="w-full max-w-7xl px-4 md:px-10 py-16 md:py-24">
-                <div className="flex flex-col gap-12">
-                    <div className="max-w-2xl">
-                        <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-4">
+            {/* Feature Section - Increased top padding to prevent compression feeling */}
+            <section className="w-full max-w-7xl px-4 md:px-10 py-20 md:py-32">
+                <div className="flex flex-col gap-16">
+                    <div className="max-w-3xl">
+                        <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-6">
                             Why Choose Hermeos?
                         </h2>
-                        <p className="text-lg text-slate-600 dark:text-slate-400">
+                        <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 leading-relaxed">
                             We provide a secure and transparent pathway to real estate ownership, handling the complexities so you can focus on building your portfolio.
                         </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
                         {/* Feature 1 */}
                         <div className="group flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-primary/50 transition-colors shadow-sm hover:shadow-md">
-                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary dark:text-secondary group-hover:bg-primary group-hover:text-white dark:group-hover:text-white transition-colors">
                                 <span className="material-symbols-outlined text-3xl">gavel</span>
                             </div>
                             <div>
@@ -185,7 +188,7 @@ export default function LandingPage() {
                         </div>
                         {/* Feature 2 */}
                         <div className="group flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-primary/50 transition-colors shadow-sm hover:shadow-md">
-                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary dark:text-secondary group-hover:bg-primary group-hover:text-white dark:group-hover:text-white transition-colors">
                                 <span className="material-symbols-outlined text-3xl">apartment</span>
                             </div>
                             <div>
@@ -197,7 +200,7 @@ export default function LandingPage() {
                         </div>
                         {/* Feature 3 */}
                         <div className="group flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 hover:border-primary/50 transition-colors shadow-sm hover:shadow-md">
-                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary dark:text-secondary group-hover:bg-primary group-hover:text-white dark:group-hover:text-white transition-colors">
                                 <span className="material-symbols-outlined text-3xl">policy</span>
                             </div>
                             <div>

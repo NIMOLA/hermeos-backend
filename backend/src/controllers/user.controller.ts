@@ -326,7 +326,8 @@ export const getPortfolioHoldings = async (req: AuthRequest, res: Response, next
                     status: o.status.toLowerCase(),
                     ownershipPercent: Number(ownershipPercent.toFixed(2)),
                     currentValue: Number(o.currentValue || o.acquisitionPrice),
-                    totalYield: Number(totalYield._sum.amount || 0)
+                    totalYield: Number(totalYield._sum.amount || 0),
+                    acquisitionDate: o.acquisitionDate // For Lock-up logic
                 };
             })
         );

@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 import logoFull from '../../assets/logo-full.png';
+import ThemeToggle from '../../components/ThemeToggle';
 
 import { TwoFactorModal } from '../../components/auth/TwoFactorModal';
 
@@ -41,7 +42,12 @@ export default function LoginPage() {
                 navigate('/dashboard');
             }
         } catch (err: any) {
-            setError(err.message || 'Login failed. Please check your credentials.');
+            // Check for network/CORS errors (statusCode 0 indicates network failure)
+            if (err.statusCode === 0) {
+                setError('Unable to connect to the server. Please check your internet connection and try again.');
+            } else {
+                setError(err.message || 'Login failed. Please check your credentials.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -75,6 +81,11 @@ export default function LoginPage() {
                 <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                 <span className="text-sm font-medium">Back to Home</span>
             </Link>
+
+            {/* Theme Toggle within Login Page */}
+            <div className="absolute top-6 right-6 z-50">
+                <ThemeToggle />
+            </div>
 
             {/* Brand Section - Hidden on Mobile */}
             <div className="hidden lg:flex w-1/2 bg-slate-900 relative overflow-hidden items-center justify-center">
@@ -131,7 +142,8 @@ export default function LoginPage() {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="appearance-none block w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white"
+                                    // Removed hardcoded #1a2632, using standard dark classes
+                                    className="appearance-none block w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white"
                                     placeholder="you@example.com"
                                 />
                             </div>
@@ -149,7 +161,7 @@ export default function LoginPage() {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="appearance-none block w-full px-3 py-2.5 pr-10 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-[#1a2632] dark:text-white"
+                                        className="appearance-none block w-full px-3 py-2.5 pr-10 border border-slate-300 dark:border-slate-700 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white"
                                         placeholder="••••••••"
                                     />
                                     <button
@@ -194,19 +206,19 @@ export default function LoginPage() {
                             type="button"
                             disabled
                             onClick={() => handleSocialLogin('google')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                         >
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                            <span className="text-sm font-medium text-slate-500">Google</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Google</span>
                         </button>
                         <button
                             type="button"
                             disabled
                             onClick={() => handleSocialLogin('apple')}
-                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                         >
-                            <span className="material-symbols-outlined text-[20px] text-slate-500">apple</span>
-                            <span className="text-sm font-medium text-slate-500">Apple</span>
+                            <span className="material-symbols-outlined text-[20px] text-slate-700 dark:text-slate-300">apple</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Apple</span>
                         </button>
                     </div>
 

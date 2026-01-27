@@ -1,12 +1,18 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Application, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
+
+// Validate Environment
+import { validateEnv } from './utils/validateEnv';
+validateEnv();
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -31,12 +37,6 @@ import twoFactorRoutes from './routes/twoFactor.routes';
 import uploadRoutes from './routes/upload.routes';
 import bankRoutes from './routes/bank.routes';
 import path from 'path';
-
-dotenv.config();
-
-// Validate Environment
-import { validateEnv } from './utils/validateEnv';
-validateEnv();
 
 const app: Application = express();
 export const prisma = new PrismaClient();
@@ -90,6 +90,15 @@ if (process.env.NODE_ENV === 'development') {
     }));
 }
 
+// Root Route
+app.get('/', (req: Request, res: Response) => {
+    res.status(200).json({
+        message: 'Welcome to Hermeos PropTech API',
+        version: '1.0.0',
+        health: '/health'
+    });
+});
+
 // Health Check
 app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({
@@ -115,8 +124,17 @@ app.get('/api/admin/management/init-super-admin', (req, res, next) => {
     next();
 });
 
+import announcementRoutes from './routes/announcement.routes';
+
+// ... (existing imports)
+
+import blogRoutes from './routes/blog.routes';
+
+// ... (existing imports)
+
 app.use('/api/admin/management', adminManagementRoutes); // MOVED UP: Must be before /api/admin to avoid blanket auth
 app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/admin/announcements', announcementRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatbotRoutes);
 app.use('/api/kyc', kycRoutes);
@@ -127,6 +145,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/2fa', twoFactorRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/bank', bankRoutes);
+app.use('/api/blog', blogRoutes); // CMS Blog Routes
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

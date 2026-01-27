@@ -81,15 +81,24 @@ export const createProperty = async (req: AuthRequest, res: Response, next: Next
             return next(new AppError('Unauthorized', 403));
         }
 
+        // Determine status: If Admin/SuperAdmin and status provided, use it. Else default to DRAFT.
+        const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(req.user?.role || '');
+        const initialStatus = (isAdmin && req.body.status) ? req.body.status : 'DRAFT';
+
         const property = await prisma.property.create({
             data: {
                 ...req.body,
                 availableUnits: req.body.totalUnits,
-                status: 'DRAFT' // Enforced strict start state
+                status: initialStatus
             }
         });
         res.status(201).json({ success: true, data: property });
-    } catch (error) { next(error); }
+    } catch (error: any) {
+        console.error("Create Property Error:", error);
+        const fs = require('fs');
+        fs.writeFileSync('debug_property.log', JSON.stringify(error, null, 2) + '\n' + error.message + '\n' + error.stack);
+        next(error);
+    }
 };
 
 // Update (Moderator/Admin)

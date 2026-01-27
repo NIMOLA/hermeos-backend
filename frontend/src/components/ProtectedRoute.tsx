@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // While auth provider is restoring, don't render protected content (avoids flash)
   if (isLoading) return null;
@@ -16,10 +16,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  // Prevent Admins from accidentally using the User Dashboard
-  if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
-    return <Navigate to="/admin" replace />;
-  }
+  // Code block removed to allow Admins to access User Dashboard
+  // Validation is now handled by Sidebar "Switch to Admin" logic
 
   return children;
 }

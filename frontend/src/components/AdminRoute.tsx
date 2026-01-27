@@ -45,9 +45,8 @@ export default function AdminRoute({ children, allowedRoles }: AdminRouteProps) 
 
   // If specific roles are required, check them
   if (allowedRoles && allowedRoles.length > 0) {
-    if (!allowedRoles.includes(user?.role || '')) {
-      // Role mismatch -> Redirect to Dashboard
-      // Preventing "upward visibility" by strictly booting them out.
+    if (!allowedRoles.includes(effectiveRole)) {
+      // Role mismatch -> Redirect to Dashboard (no upward visibility)
       return <Navigate to={isSubdomain ? "/" : "/admin"} replace />;
     }
   }

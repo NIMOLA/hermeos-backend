@@ -15,15 +15,22 @@ export default function RootLayout() {
     const location = useLocation();
 
     // Define route state variables
+
+    // Define route state variables
     const isLandingPage = location.pathname === '/';
     // Public marketing/info pages that should share the public layout (no sidebar)
-    // Included /properties to ensure it uses public layout
-    const isPublicInfoPage = ['/about', '/support', '/privacy', '/terms', '/contact'].includes(location.pathname) || location.pathname.startsWith('/properties');
+    // Note: /properties is the marketplace, which should show sidebar if logged in
+    const isMarketplace = location.pathname.startsWith('/properties');
+    const isPublicInfoPage = ['/about', '/support', '/privacy', '/terms', '/contact'].includes(location.pathname);
+
     const isAuthPage = ['/login', '/signup', '/forgot-password', '/verify-email', '/password-reset-sent', '/admin/login', '/admin/accept-invitation'].some(path => location.pathname.startsWith(path));
     const isAdminRoute = location.pathname.startsWith('/admin') && !location.pathname.startsWith('/admin/login') && !location.pathname.startsWith('/admin/accept-invitation');
 
     // We want to hide the User Sidebar/Nav for: Landing, Auth, Admin, and Public Info pages
-    const shouldHideNav = isLandingPage || isPublicInfoPage || isAuthPage || isAdminRoute;
+    // Crucially: If on Marketplace (/properties) AND NOT authenticated, hide nav.
+    // If authenticated on marketplace, show nav.
+    const shouldHideNav = isLandingPage || isAuthPage || isAdminRoute || isPublicInfoPage || (isMarketplace && !isAuthenticated);
+
 
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);

@@ -66,20 +66,20 @@ enum KYCStatus {
 
 // MODELS
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  password   String
-  firstName  String
-  lastName   String
-  phone      String?
-  role       UserRole @default(USER)
-  tier       String   @default("Tier 1")
-  isVerified Boolean  @default(false)
-  kycStatus  String?  @default("not_submitted")
-  verificationCode String?
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  password            String
+  firstName           String
+  lastName            String
+  phone               String?
+  role                UserRole  @default(USER)
+  tier                String    @default("Tier 1")
+  isVerified          Boolean   @default(false)
+  kycStatus           String?   @default("not_submitted")
+  verificationCode    String?
   verificationExpires DateTime?
-  resetToken       String?
-  resetTokenExpires DateTime?
+  resetToken          String?
+  resetTokenExpires   DateTime?
 
   // Personal Info
   address     String?
@@ -128,6 +128,8 @@ model User {
   auditLogs               AuditLog[]
   savedProperties         SavedProperty[]
   bankAccounts            BankAccount[]
+  sentAnnouncements       Announcement[]    @relation("SentAnnouncements")
+  BlogPost                BlogPost[]
 
   @@index([email])
   @@index([role])
@@ -165,6 +167,7 @@ model Property {
   floorLevel         String?
   yearBuilt          Int?
   postalCode         String?
+  financialDetails   Json? // Stores scenarios, detailed fees, etc.
 
   status    PropertyStatus @default(LISTED)
   images    String[]
@@ -335,12 +338,12 @@ model SupportTicket {
 }
 
 model TicketMessage {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   ticketId  String
   ticket    SupportTicket @relation(fields: [ticketId], references: [id])
-  sender    String   // 'user', 'bot', 'admin'
+  sender    String // 'user', 'bot', 'admin'
   message   String
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
 
   @@index([ticketId])
 }
@@ -503,4 +506,40 @@ model BankAccount {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  recipient String   @default("all") // all, investors, verified, pending
+  subject   String
+  message   String
+  sentBy    String
+  sender    User     @relation("SentAnnouncements", fields: [sentBy], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// BLOG CMS SYSTEM
+model BlogPost {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?
+  content     String // Markdown or HTML
+  coverImage  String?
+  category    String    @default("General")
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+
+  readTime String? @default("5 min read")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([isPublished])
 }

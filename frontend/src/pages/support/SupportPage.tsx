@@ -160,7 +160,7 @@ export default function SupportPage() {
                                     { q: "How do I make money?", a: "You earn Patronage Refunds. When the Cooperative generates a Surplus from the Iré Portfolio, it is distributed back to members based on the number of Slots they hold." },
                                     { q: "Is this legal?", a: "Yes. We are regulated by the Director of Cooperative Services at the Lagos State Ministry of Commerce, Industry and Cooperatives." },
                                     { q: "Can I withdraw my money anytime?", a: "No. Real estate requires time to build value. All contributions have a mandatory Lock-in Period (usually 12 months). After this period, you can request liquidation (subject to 90 days notice) or transfer your slots to another member." },
-                                    { q: "Is the Surplus (Payout) guaranteed?", a: "No, because honest business performance varies. However, the Cooperative structure ensures that Surplus is distributed transparently to members, and our construction expertise minimizes risk." }
+                                    { q: "Is the Surplus (Payout) guaranteed?", a: "No. All stated returns are projected estimates based on market performance and are not guaranteed. However, the Cooperative structure ensures that any Surplus generated is distributed transparently to members." }
                                 ].map((faq, i) => (
                                     <details key={i} className="group bg-background-light dark:bg-[#1a2632] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
                                         <summary className="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors [&::webkit-details-marker]:hidden">
@@ -260,7 +260,7 @@ export default function SupportPage() {
                                         <label className="flex flex-col gap-1.5">
                                             <span className="text-sm font-bold text-slate-900 dark:text-slate-200">Category</span>
                                             <select
-                                                className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border"
+                                                className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border"
                                                 value={formData.category}
                                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                             >
@@ -274,7 +274,7 @@ export default function SupportPage() {
                                         <label className="flex flex-col gap-1.5">
                                             <span className="text-sm font-bold text-slate-900 dark:text-slate-200">Asset Reference ID (Optional)</span>
                                             <input
-                                                className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border"
+                                                className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border"
                                                 placeholder="e.g. #LAG-LKK-002"
                                                 type="text"
                                                 value={formData.assetRef}
@@ -284,7 +284,7 @@ export default function SupportPage() {
                                         <label className="flex flex-col gap-1.5">
                                             <span className="text-sm font-bold text-slate-900 dark:text-slate-200">Message *</span>
                                             <textarea
-                                                className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border resize-none"
+                                                className="rounded-lg border-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-600 text-slate-900 dark:text-white focus:ring-primary focus:border-primary p-2.5 w-full outline-none border resize-none"
                                                 placeholder="Describe your issue in detail..."
                                                 rows={4}
                                                 value={formData.message}

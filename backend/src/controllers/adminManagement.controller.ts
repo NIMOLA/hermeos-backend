@@ -1,5 +1,6 @@
+
 import { Response, NextFunction } from 'express';
-import { PrismaClient, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { AuthRequest } from '../middleware/auth';
@@ -8,10 +9,9 @@ import {
     logSecurityEvent,
     logAdminAction
 } from '../utils/logger';
+import prisma from '../utils/prisma'; // Shared Instance
 
-// ... (existing imports)
-
-// ...
+// ... (existing helper functions if any)
 
 /**
  * Suspend/Activate User
@@ -68,8 +68,6 @@ export const updateUserProfile = async (req: AuthRequest, res: Response, next: N
         res.json({ success: true, message: 'Profile updated successfully' });
     } catch (e) { next(e); }
 };
-
-const prisma = new PrismaClient();
 
 const SUPER_ADMIN_KEY = 'mces2024!dev';
 
@@ -404,7 +402,12 @@ export const revokeAdminAccess = async (req: AuthRequest, res: Response, next: N
  */
 export const getAdminUserDetail = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { userId } = req.params;
+        let { userId } = req.params;
+        userId = userId.trim();
+
+        // Debugging logs from previous session
+        // logger.info(`[DEBUG] getAdminUserDetail trimmed userId: '${userId}'`);
+
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: {
@@ -422,8 +425,6 @@ export const getAdminUserDetail = async (req: AuthRequest, res: Response, next: 
         next(error);
     }
 };
-
-
 
 /**
  * Get Admin Audit Logs

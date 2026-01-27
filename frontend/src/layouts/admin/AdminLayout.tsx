@@ -1,10 +1,12 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { isAdminDomain } from '../../utils/subdomain';
 import logoFull from '../../assets/logo-full.png';
 
 export default function AdminLayout() {
     const location = useLocation();
+    const { theme, toggleTheme } = useTheme();
     const isSubdomain = isAdminDomain();
     // ...
     // ... in sidebar ...
@@ -41,6 +43,7 @@ export default function AdminLayout() {
             { path: p('/assets'), label: 'Assets', icon: 'apartment' },
             { path: p('/users'), label: 'Users', icon: 'group' },
             { path: p('/support'), label: 'Support', icon: 'support_agent' },
+            { path: p('/content'), label: 'Content Center', icon: 'article' },
         ];
 
         // Moderator Specific
@@ -67,7 +70,7 @@ export default function AdminLayout() {
         return items;
     };
 
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const navItems = getNavItems(user?.role);
 
     return (
@@ -109,13 +112,44 @@ export default function AdminLayout() {
 
                 {/* Footer Section */}
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800 mt-auto">
-                    <Link
-                        to="/"
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors group"
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mb-2 group text-left"
                     >
-                        <span className="material-symbols-outlined">exit_to_app</span>
-                        <p className="text-sm font-medium leading-normal">Exit Admin Panel</p>
-                    </Link>
+                        <span className="material-symbols-outlined group-hover:text-primary">
+                            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                        </span>
+                        <p className="text-sm font-medium leading-normal">
+                            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                        </p>
+                    </button>
+
+                    <div className="mb-4 px-3 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+                            {user?.firstName?.charAt(0) || 'A'}
+                        </div>
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                {user?.firstName} {user?.lastName}
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                                {user?.role?.replace('_', ' ')}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            logout();
+                            // Force hard redirect to clear state completely
+                            window.location.href = isSubdomain ? '/login' : '/portal-access';
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors group text-left"
+                    >
+                        <span className="material-symbols-outlined">logout</span>
+                        <p className="text-sm font-medium leading-normal">Sign Out</p>
+                    </button>
                 </div>
             </aside>
 

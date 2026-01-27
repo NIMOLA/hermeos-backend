@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import logoFull from '../assets/logo-full.png';
 import { useAuth } from '../contexts/AuthContext';
 import {
     LayoutDashboard,
@@ -11,10 +13,8 @@ import {
     ChevronLeft,
     ChevronRight,
     LogOut,
-    Bell,
     Users,
-    GraduationCap,
-    Menu
+    GraduationCap
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import ThemeToggle from './ThemeToggle';
@@ -35,9 +35,10 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
         return location.pathname === path || location.pathname.startsWith(path + '/');
     };
 
+    // Customer Navigation
     const navItems = [
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/properties', label: 'Marketplace', icon: Building2 },
+        { path: '/properties', label: 'Assets', icon: Building2 }, // Renamed to Assets for clarity
         { path: '/portfolio', label: 'Portfolio', icon: Wallet },
         { path: '/transactions', label: 'Transactions', icon: History },
         { path: '/education', label: 'Learn', icon: GraduationCap },
@@ -45,12 +46,38 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
         { path: '/settings', label: 'Settings', icon: Settings },
     ];
 
+    // Admin Navigation - Simplified to avoid duplicates
     const adminItems = [
-        { path: '/admin', label: 'Admin Panel', icon: Users },
+        { path: '/admin', label: 'Overview', icon: LayoutDashboard },
+        { path: '/admin/users', label: 'Users', icon: Users }, // Explicit Users link
+        { path: '/admin/content', label: 'Content', icon: GraduationCap },
+        // { path: '/admin/approvals', label: 'Approvals', icon: CheckSquare }, // Add if needed
     ];
 
-    const allItems = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
-        ? [...navItems, ...adminItems]
+    // Determine which items to show
+    const itemsToShow = (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN')
+        ? adminItems // Admins see ONLY admin items? Or hybrid? Usually hybrid or toggle. 
+        // Based on screenshot, it seems mixed. 
+        // Let's assume admins mostly want Admin + limited user features or Full Admin Sidebar.
+        // Screenshot shows: Dashboard, Assets, Users, Users(dup), Support, Content Center...
+        // This implies a mix.
+        // Let's manually construct the Admin Sidebar to match the screenshot but CLEAN.
+        : navItems;
+
+    // Fixed Admin List matching the screenshot style but corrected
+    const adminSidebar = [
+        { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/admin/properties', label: 'Assets', icon: Building2 },
+        { path: '/admin/users', label: 'Users', icon: Users },
+        { path: '/admin/support', label: 'Support', icon: LifeBuoy },
+        { path: '/admin/content', label: 'Content Center', icon: GraduationCap },
+        { path: '/admin/audit', label: 'Audit Trail', icon: History },
+        // Settings is usually at bottom or specialized
+        { path: '/settings', label: 'Settings', icon: Settings },
+    ];
+
+    const displayedItems = (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN')
+        ? adminSidebar
         : navItems;
 
     return (
@@ -66,7 +93,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
             {/* Sidebar Container */}
             <aside
                 className={`
-                    fixed top-0 left-0 z-50 h-screen bg-white dark:bg-card-dark border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out
+                    fixed top-0 left-0 z-[60] h-screen bg-white dark:bg-card-dark border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out
                     ${isCollapsed ? 'w-20' : 'w-64'}
                     ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                 `}
@@ -74,35 +101,33 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                 {/* Header / Logo */}
                 <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
                     <div className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? 'justify-center w-full' : ''}`}>
-                        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-                            {/* Simple Logo Icon */}
-                            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 21h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18V7H3v2zm0-6v2h18V3H3z" />
-                            </svg>
+                        <div className="h-10 w-auto flex items-center justify-center shrink-0">
+                            <img
+                                src={logoFull}
+                                alt="Hermeos"
+                                className={`h-full w-auto object-contain dark:brightness-0 dark:invert transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100'}`}
+                            />
+                            {isCollapsed && (
+                                <span className="absolute text-xl font-bold text-primary dark:text-white">H</span>
+                            )}
                         </div>
-                        {!isCollapsed && (
-                            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-                                Hermeos
-                            </span>
-                        )}
                     </div>
-                    {/* Desktop Collapse Button - Only show when expanded to avoid clutter in collapsed mode, or position absolute */}
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-3 space-y-1 mt-4 overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar">
-                    {allItems.map((item) => {
+                <nav className="p-3 space-y-1 mt-4 overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
+                    {navItems.map((item) => {
                         const active = isActive(item.path);
                         return (
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                onClick={() => isMobileOpen && toggleMobile()} // Close mobile menu on click
+                                onClick={() => isMobileOpen && toggleMobile()}
                                 className={`
                                     flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group relative
                                     ${active
                                         ? 'bg-primary text-white shadow-md shadow-primary/20'
-                                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                                        : 'text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                                     }
                                     ${isCollapsed ? 'justify-center' : ''}
                                 `}
@@ -113,7 +138,6 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                                     <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
                                 )}
 
-                                {/* Tooltip for collapsed mode */}
                                 {isCollapsed && (
                                     <div className="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
                                         {item.label}
@@ -122,6 +146,26 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                             </Link>
                         );
                     })}
+
+                    {/* Admin Switcher */}
+                    {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                            <Link
+                                to="/admin"
+                                className={`
+                                    flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group relative
+                                    text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium
+                                    ${isCollapsed ? 'justify-center' : ''}
+                                `}
+                                title="Switch to Admin"
+                            >
+                                <Users className="w-5 h-5 shrink-0" />
+                                {!isCollapsed && (
+                                    <span className="text-sm whitespace-nowrap">Switch to Admin</span>
+                                )}
+                            </Link>
+                        </div>
+                    )}
                 </nav>
 
                 {/* Footer / User Profile */}
@@ -133,7 +177,7 @@ export default function Sidebar({ isCollapsed, toggleCollapse, isMobileOpen, tog
                         {!isCollapsed && (
                             <div className="overflow-hidden">
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{user?.firstName} {user?.lastName}</p>
-                                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                                <p className="text-xs text-slate-500 truncate capitalize">{user?.role?.replace('_', ' ').toLowerCase()}</p>
                             </div>
                         )}
                     </div>

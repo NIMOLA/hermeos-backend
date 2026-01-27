@@ -4,7 +4,9 @@ import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFetch } from '../../hooks/useApi';
+
 import DepositModal from '../../components/modals/DepositModal';
+import { WelcomeModal } from '../../components/dashboard/WelcomeModal';
 
 interface DashboardStats {
     portfolioValue: number;
@@ -35,6 +37,7 @@ interface NewOpportunity {
 export default function DashboardOverviewPage() {
     const { user } = useAuth();
     const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+
 
     // Fetch dashboard stats
     const { data: stats, isLoading: statsLoading } = useFetch<DashboardStats>('/user/dashboard/stats');
@@ -98,13 +101,7 @@ export default function DashboardOverviewPage() {
                     </p>
                 </div>
                 <div className="flex flex-row gap-3">
-                    <Button
-                        onClick={() => setIsDepositModalOpen(true)}
-                        className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                        <span className="material-symbols-outlined sm:mr-2">add</span>{' '}
-                        <span className="hidden sm:inline">Fund Wallet</span>
-                    </Button>
+
                     <Link to="/properties" className="flex-1 sm:flex-none">
                         <Button className="w-full touch-target">
                             <span className="material-symbols-outlined sm:mr-2">search</span>{' '}
@@ -116,33 +113,94 @@ export default function DashboardOverviewPage() {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white text-opacity-90 shadow-xl overflow-hidden relative">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white text-opacity-90 shadow-xl overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 transition-opacity group-hover:opacity-20">
                         <span className="material-symbols-outlined text-9xl">account_balance_wallet</span>
                     </div>
-                    <p className="text-sm font-medium opacity-80 mb-1">Total Portfolio Value</p>
-                    {statsLoading ? (
-                        <div className="h-9 bg-white/10 rounded animate-pulse mb-4"></div>
-                    ) : (
-                        <h2 className="text-3xl font-bold mb-4">
-                            {formatCurrency(stats?.portfolioValue || 0)}
-                        </h2>
-                    )}
-                    <div className="flex items-center gap-2 text-sm">
-                        {stats?.portfolioGrowth !== undefined && (
-                            <>
-                                <span className={`px-2 py-0.5 rounded text-xs font-bold flex items-center ${stats.portfolioGrowth >= 0
-                                    ? 'bg-emerald-500/20 text-emerald-300'
-                                    : 'bg-red-500/20 text-red-300'
-                                    }`}>
-                                    <span className="material-symbols-outlined text-sm mr-1">
-                                        {stats.portfolioGrowth >= 0 ? 'trending_up' : 'trending_down'}
-                                    </span>
-                                    {stats.portfolioGrowth >= 0 ? '+' : ''}{stats.portfolioGrowth.toFixed(1)}%
-                                </span>
-                                <span className="opacity-60">vs last month</span>
-                            </>
+
+                    <div className="relative z-10">
+                        <p className="text-sm font-medium opacity-80 mb-1">Total Portfolio Value</p>
+                        {statsLoading ? (
+                            <div className="h-9 bg-white/10 rounded animate-pulse mb-4"></div>
+                        ) : (
+                            <h2 className="text-3xl font-bold mb-4 tracking-tight">
+                                {formatCurrency(stats?.portfolioValue || 0)}
+                            </h2>
                         )}
+
+                        {/* Ultra Simple CSS Bar Chart */}
+                        <div className="flex items-end gap-1 h-12 mb-2 w-full max-w-[200px] opacity-80">
+                            <div className="w-1.5 bg-emerald-400 rounded-t-sm h-[30%]"></div>
+                            <div className="w-1.5 bg-emerald-400 rounded-t-sm h-[45%]"></div>
+                            <div className="w-1.5 bg-emerald-400 rounded-t-sm h-[35%]"></div>
+                            <div className="w-1.5 bg-emerald-400 rounded-t-sm h-[60%]"></div>
+                            <div className="w-1.5 bg-emerald-400 rounded-t-sm h-[50%]"></div>
+                            <div className="w-1.5 bg-emerald-400 rounded-t-sm h-[75%]"></div>
+                            <div className="w-1.5 bg-white rounded-t-sm h-[85%] shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm">
+                            {stats?.portfolioGrowth !== undefined && (
+                                <>
+                                    <span className={`px-2 py-0.5 rounded text-xs font-bold flex items-center ${stats.portfolioGrowth >= 0
+                                        ? 'bg-emerald-500/20 text-emerald-300'
+                                        : 'bg-red-500/20 text-red-300'
+                                        }`}>
+                                        <span className="material-symbols-outlined text-sm mr-1">
+                                            {stats.portfolioGrowth >= 0 ? 'trending_up' : 'trending_down'}
+                                        </span>
+                                        {stats.portfolioGrowth >= 0 ? '+' : ''}{stats.portfolioGrowth.toFixed(1)}%
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Gamification Widget - Dynamic Tier Badge */}
+                <div className={`rounded-2xl p-6 text-white shadow-lg relative overflow-hidden bg-gradient-to-br ${user?.tier === 'Tier 3' ? 'from-slate-900 via-purple-900 to-slate-900 border border-purple-500/50' :
+                        user?.tier === 'Tier 2' ? 'from-amber-600 to-yellow-600' :
+                            'from-blue-600 to-indigo-700'
+                    }`}>
+                    <div className="absolute top-0 right-0 p-3 opacity-20">
+                        <span className="material-symbols-outlined text-8xl">
+                            {user?.tier === 'Tier 3' ? 'security' : user?.tier === 'Tier 2' ? 'star' : 'military_tech'}
+                        </span>
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wider opacity-80">Current Partner Status</p>
+                                <h3 className="text-xl font-bold">
+                                    {user?.tier === 'Tier 3' ? 'Guardian Partner' :
+                                        user?.tier === 'Tier 2' ? 'Contributing Partner' :
+                                            'Yield Partner'}
+                                </h3>
+                                {user?.tier === 'Tier 3' && <span className="text-[10px] bg-purple-500/30 px-2 py-0.5 rounded border border-purple-400/50 mt-1 inline-block">Asset Veto Rights Active</span>}
+                            </div>
+                            <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                                <span className="material-symbols-outlined">
+                                    {user?.tier === 'Tier 3' ? 'shield_lock' : 'emoji_events'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="mb-2">
+                            {/* Simplified Progress Bar for visualisation */}
+                            <div className="flex justify-between text-xs mb-1 opacity-90">
+                                <span>{user?.tier === 'Tier 3' ? 'Elite Status Achieved' : 'Progress to Next Tier'}</span>
+                                <span>{user?.tier === 'Tier 3' ? '100%' : user?.tier === 'Tier 2' ? '500 / 1000 Slots' : '0 / 500 Slots'}</span>
+                            </div>
+                            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+                                <div className={`h-full bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] ${user?.tier === 'Tier 3' ? 'w-full' : user?.tier === 'Tier 2' ? 'w-[50%]' : 'w-[20%]'
+                                    }`}></div>
+                            </div>
+                        </div>
+                        <p className="text-xs opacity-80 mt-3">
+                            {user?.tier === 'Tier 3' ? 'You hold Guardian rights over asset liquidation.' :
+                                user?.tier === 'Tier 2' ? 'Next: Guardian Partner (Asset Protection Rights).' :
+                                    'Unlock Contributing Partner status at 500 Slots.'}
+                        </p>
                     </div>
                 </div>
 
@@ -312,6 +370,7 @@ export default function DashboardOverviewPage() {
             </div>
 
             <DepositModal isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)} />
+            <WelcomeModal />
         </div>
     );
 }

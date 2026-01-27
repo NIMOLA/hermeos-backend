@@ -8,16 +8,16 @@ export default function PaymentCallbackPage() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const reference = searchParams.get('reference');
-    const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
-    const [message, setMessage] = useState('Verifying your payment...');
+    const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(() => {
+        return !reference ? 'error' : 'verifying';
+    });
+    const [message, setMessage] = useState(() => {
+        return !reference ? 'Invalid payment reference used.' : 'Verifying your payment...';
+    });
     const verificationAttempted = useRef(false);
 
     useEffect(() => {
-        if (!reference) {
-            setStatus('error');
-            setMessage('Invalid payment reference used.');
-            return;
-        }
+        if (!reference) return;
 
         if (verificationAttempted.current) return;
         verificationAttempted.current = true;
@@ -25,28 +25,31 @@ export default function PaymentCallbackPage() {
         const verifyPayment = async () => {
             try {
                 // Backend verification endpoint
-                await apiClient.get(`/payment/card/verify/${reference}`);
+                await apiClient.get(`/payments/card/verify/${reference}`);
 
                 setStatus('success');
-                setMessage('Payment successful! Redirecting to your portfolio...');
+                setMessage('Payment successful! Redirecting to your receipt...');
 
                 // Redirect after 3 seconds
                 setTimeout(() => {
-                    navigate('/portfolio');
-                }, 3000);
-            } catch (error: any) {
+                    navigate(`/payment/success?reference=${reference}`);
+                }, 2000);
+            } catch (error) {
                 console.error('Verification failed:', error);
 
                 // If error suggests it was already verified (idempotency), treat as success
-                if (error.message?.includes('already verified') || error.message?.includes('duplicate')) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const err = error as any;
+                if (err.message?.includes('already verified') || err.message?.includes('duplicate') || err.response?.status === 409 || err.message?.includes('Ownership already exists')) {
+                    console.log('Payment already verified, redirecting...');
                     setStatus('success');
-                    setMessage('Payment successful! Redirecting...');
-                    setTimeout(() => navigate('/portfolio'), 3000);
+                    setMessage('Payment already verified! Redirecting to your receipt...');
+                    setTimeout(() => navigate(`/payment/success?reference=${reference}`), 2000);
                     return;
                 }
 
                 setStatus('error');
-                setMessage(error.message || 'Payment verification failed. Please contact support.');
+                setMessage(err.message || 'Payment verification failed. Please contact support.');
             }
         };
 
@@ -72,8 +75,8 @@ export default function PaymentCallbackPage() {
                             </div>
                             <h2 className="text-xl font-bold dark:text-white">Success!</h2>
                             <p className="text-slate-500">{message}</p>
-                            <Button onClick={() => navigate('/portfolio')} className="w-full mt-4">
-                                Go to Portfolio
+                            <Button onClick={() => navigate(`/payment/success?reference=${reference}`)} className="w-full mt-4">
+                                View Receipt
                             </Button>
                         </>
                     )}

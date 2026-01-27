@@ -56,7 +56,7 @@ export default {
                 "border-dark": "#1d2d50", // Adjusted for new bg
 
                 "text-main": "#FFFFFF", // Default to white for dark theme focus
-                "text-secondary": "#94A3B8", // Slate 400
+                "text-secondary": "#cbd5e1", // Slate 300 - Lightened for better readability
 
                 // Legacy/Compat support - mapping to new palette
                 "text-primary-light": "#0e141b",

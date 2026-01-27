@@ -33,7 +33,7 @@ export default function Chatbot() {
     const location = useLocation();
 
     // API Hooks
-    const { mutate: sendMessage, isLoading: isTyping } = useMutation('/api/chatbot/message', 'POST', {
+    const { mutate: sendMessage, isLoading: isTyping } = useMutation('/api/chat/message', 'POST', {
         onSuccess: (data) => {
             const botMsg: Message = {
                 id: Date.now().toString(),
@@ -55,7 +55,7 @@ export default function Chatbot() {
         }
     });
 
-    const { data: broadcasts } = useFetch('/api/chatbot/broadcasts');
+    const { data: broadcasts } = useFetch('/api/chat/broadcasts');
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -134,8 +134,8 @@ export default function Chatbot() {
                         {messages.map((message) => (
                             <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${message.sender === 'user'
-                                        ? 'bg-primary text-white'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
+                                    ? 'bg-primary text-white'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
                                     }`}>
                                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
 

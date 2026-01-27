@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFetch } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
+import { getImageUrl } from '../../utils/imageUtils';
 import { Check, X, MapPin, Home, Layout, Maximize, Layers, Lightbulb } from 'lucide-react';
 
 interface Property {
@@ -62,7 +63,7 @@ export default function PropertyComparisonPage() {
                             className={`flex items-center gap-3 p-2 pr-4 rounded-lg border cursor-pointer transition-all ${selectedIds.includes(p.id) ? 'bg-primary/10 border-primary ring-1 ring-primary' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
                         >
                             <div className="w-12 h-12 bg-slate-200 rounded overflow-hidden">
-                                {p.images && p.images[0] && <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />}
+                                {p.images && p.images[0] && <img src={getImageUrl(p.images[0])} alt={p.name} className="w-full h-full object-cover" />}
                             </div>
                             <div className="flex flex-col text-sm">
                                 <span className="font-bold text-slate-900 dark:text-white truncate max-w-[120px]">{p.name}</span>
@@ -92,7 +93,7 @@ export default function PropertyComparisonPage() {
                                                 <X className="w-4 h-4" />
                                             </button>
                                             <div className="w-full h-40 bg-slate-200 rounded-lg overflow-hidden mb-4">
-                                                {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : null}
+                                                {p.images?.[0] ? <img src={getImageUrl(p.images[0])} alt={p.name} className="w-full h-full object-cover" /> : null}
                                             </div>
                                             <h3 className="font-bold text-lg">{p.name}</h3>
                                             <p className="text-sm text-slate-500 flex items-center gap-1">

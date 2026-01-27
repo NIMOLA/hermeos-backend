@@ -5,7 +5,7 @@ import '@fontsource/montserrat/700.css'
 import '@fontsource/open-sans/400.css'
 import '@fontsource/open-sans/600.css'
 import './index.css'
-import './mobile-optimizations.css'
+
 import App from './App.tsx'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'

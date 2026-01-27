@@ -8,6 +8,7 @@ import {
     Info, MapPin, DollarSign, UploadCloud, Trash2, Plus,
     ChevronRight, Save, LayoutDashboard, Building2, Users, FileText, Settings, ListPlus, Layers
 } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageUtils';
 
 export default function EditPropertyPage() {
     const { id } = useParams<{ id: string }>();
@@ -118,14 +119,17 @@ export default function EditPropertyPage() {
                 finalTotalUnits = Math.floor(formData.totalValue / formData.pricePerUnit);
             }
 
+            const { minInvestment, ...restFormData } = formData; // Destructure minInvestment
             const payload = {
-                ...formData,
+                ...restFormData,
                 totalUnits: finalTotalUnits || 1,
                 expectedReturn: parseFloat(String(formData.expectedReturn).match(/(\d+(\.\d+)?)/)?.[0] || '0'),
                 location: `${formData.city}, ${formData.state}`,
-                startDate: new Date(),
                 // Arrays are already in formData
             };
+
+            // Remove startDate as it's not in the schema
+            // console.log("Payload:", payload);
 
             if (isNew) {
                 await apiClient.post('/properties', payload);
@@ -137,7 +141,9 @@ export default function EditPropertyPage() {
             }
         } catch (error: any) {
             console.error("Save failed", error);
-            alert(error.response?.data?.message || "Failed to save property.");
+            const msg = error.message;
+            const validationErrors = error.errors?.map((e: any) => e.msg || e.message).join(', ');
+            alert(msg || validationErrors || "Failed to save property.");
         } finally {
             setSaving(false);
         }
@@ -153,12 +159,10 @@ export default function EditPropertyPage() {
             formData.append('file', file);
 
             try {
-                const res = await apiClient.post<any>('/upload', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                const res = await apiClient.upload<any>('/upload', formData);
 
-                if (res.success) {
-                    return res.data.url;
+                if (res && res.url) {
+                    return res.url;
                 }
                 return null;
             } catch (error) {
@@ -269,7 +273,7 @@ export default function EditPropertyPage() {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {formData.images.map((img, idx) => (
                                         <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                                            <img src={img} alt={`Property ${idx}`} className="w-full h-full object-cover" />
+                                            <img src={getImageUrl(img)} alt={`Property ${idx}`} className="w-full h-full object-cover" />
                                             <button
                                                 onClick={() => removeImage(idx)}
                                                 className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"

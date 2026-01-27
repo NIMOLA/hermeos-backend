@@ -108,7 +108,7 @@ class ApiClient {
 
             // Fix: Check if response is wrapped in { success: true, data: ... }
             if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
-                 return data.data as T;
+                return data.data as T;
             }
 
             return data;
@@ -118,9 +118,23 @@ class ApiClient {
                 throw error;
             }
 
-            // Network or other errors
+            // Improved network error detection
+            const err = error as Error;
+            let message = 'Network error. Please check your connection.';
+
+            // Check for CORS errors (typically TypeError with specific message)
+            if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+                // This often indicates a CORS issue or backend not reachable
+                message = 'Unable to connect to server. This may be a CORS or network configuration issue. Please check browser console for details.';
+                console.error('[API Client] Possible CORS/Network error:', {
+                    url,
+                    origin: window.location.origin,
+                    error: err.message
+                });
+            }
+
             throw {
-                message: 'Network error. Please check your connection.',
+                message,
                 statusCode: 0,
             } as ApiError;
         }
@@ -214,7 +228,7 @@ class ApiClient {
 
         // Fix: Check if response is wrapped in { success: true, data: ... }
         if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
-             return data.data as T;
+            return data.data as T;
         }
 
         return data;

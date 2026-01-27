@@ -33,13 +33,31 @@ export default function AdminDashboardPage() {
         });
     }, []);
 
-    const handleSendAnnouncement = () => {
-        // Mock send functionality
-        console.log('Sending announcement:', announcementData);
-        alert(`Announcement "${announcementData.subject}" broadcasted to ${announcementData.recipient} users!`);
-        setShowAnnouncementModal(false);
-        setAnnouncementData({ recipient: 'all', subject: '', message: '' });
-        // In a real app, this would call an API like /api/admin/announcements
+    const handleSendAnnouncement = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/admin/announcements', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(announcementData)
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert(`Announcement "${announcementData.subject}" broadcasted successfully!`);
+                setShowAnnouncementModal(false);
+                setAnnouncementData({ recipient: 'all', subject: '', message: '' });
+            } else {
+                alert(`Failed to send announcement: ${data.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error sending announcement:', error);
+            alert('An error occurred while sending the announcement.');
+        }
     };
 
     const kpiData = kpis ? [
@@ -141,14 +159,20 @@ export default function AdminDashboardPage() {
                                 <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">add_home</span>
                                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">New Asset</span>
                             </Link>
-                            <Link to="/admin/users" className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col items-center gap-2 text-center group">
-                                <span className="material-symbols-outlined text-emerald-500 group-hover:scale-110 transition-transform">person_add</span>
-                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Invite User</span>
-                            </Link>
+
+                            {/* Invite User - ADMIN & SUPER_ADMIN only */}
+                            {['ADMIN', 'SUPER_ADMIN'].includes(localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).role : '') && (
+                                <Link to="/admin/users" className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col items-center gap-2 text-center group">
+                                    <span className="material-symbols-outlined text-emerald-500 group-hover:scale-110 transition-transform">person_add</span>
+                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Invite User</span>
+                                </Link>
+                            )}
+
                             <Link to="/admin/audit-trail" className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col items-center gap-2 text-center group">
                                 <span className="material-symbols-outlined text-purple-500 group-hover:scale-110 transition-transform">upload_file</span>
                                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Upload Doc</span>
                             </Link>
+
                             <button
                                 onClick={() => setShowAnnouncementModal(true)}
                                 className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col items-center gap-2 text-center group"

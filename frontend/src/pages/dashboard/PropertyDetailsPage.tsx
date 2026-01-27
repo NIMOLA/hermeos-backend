@@ -1,29 +1,64 @@
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { useFetch } from '../../hooks/useApi';
+import { getImageUrl } from '../../utils/imageUtils';
 
 interface Property {
     id: string;
     name: string;
     location: string;
     description: string;
-    totalValuation: number;
+    totalValue: number; // Corrected from totalValuation
     projectedYield: number;
     holdingPeriod: number;
     riskProfile: string;
-    totalUnits: number;
+    totalUnits: number; // Renamed to "Total Slots" in UI
     availableUnits: number;
     pricePerUnit: number;
     images: string[];
-    // Add other fields as needed based on backend response
+    financialDetails?: {
+        scenarios?: {
+            conservative: { label: string; appreciation: number; rentGrowth: number; result: number };
+            marketTrend: { label: string; appreciation: number; rentGrowth: number; result: number };
+        };
+    };
 }
 
 export default function PropertyDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const { data: property, isLoading, error } = useFetch<Property>(id ? `/properties/${id}` : '');
 
-    if (isLoading) return <div className="p-8 text-center">Loading property details...</div>;
+    // State for interactive calculator
+    const [slots, setSlots] = useState<number>(50); // Default 50 Slots (5M)
+    const pricePerSlot = property?.pricePerUnit || 100000;
+
+    const investmentAmount = slots * pricePerSlot;
+
+    const handleSlotsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseInt(e.target.value) || 0;
+        setSlots(val);
+    };
+
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseInt(e.target.value);
+        setSlots(val);
+    };
+
+    // Range Calculations
+    const conservativeReturn = property?.financialDetails?.scenarios?.conservative
+        ? investmentAmount * ((property.financialDetails.scenarios.conservative.appreciation + property.financialDetails.scenarios.conservative.rentGrowth) / 100)
+        : investmentAmount * 0.22; // Fallback
+
+    const targetReturn = property?.financialDetails?.scenarios?.marketTrend
+        ? investmentAmount * ((property.financialDetails.scenarios.marketTrend.appreciation + property.financialDetails.scenarios.marketTrend.rentGrowth) / 100)
+        : investmentAmount * 0.31; // Fallback
+
+    const ownershipShare = property ? (slots / property.totalUnits) * 100 : 0;
+
+
+    if (isLoading) return <div className="p-8 text-center animate-pulse">Loading property details...</div>;
     if (error || !property) return <div className="p-8 text-center text-red-500">Error loading property</div>;
 
     return (
@@ -63,19 +98,19 @@ export default function PropertyDetailsPage() {
                             <div className="md:col-span-2 md:row-span-2 relative group rounded-xl overflow-hidden">
                                 <div
                                     className="w-full h-full bg-center bg-cover bg-no-repeat transition-transform duration-500 group-hover:scale-105"
-                                    style={{ backgroundImage: `url('${property.images?.[0] || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwlJIuJXNqlfuXy1JejpudfFLBhkxl_gVvWIKFAOyzcdj9MBWt2yx_58QPln1ooif1nz-ifQdvlcF9mWLodyxgvfMYiJvEqle1-4dFNPWwYSgVMM6GVMdvTD7Qlx2i-wxpUk-ubK-GiQ6r60_hdZi8jBk6HXkE6Kqfn-pEXgOPmN8G0oT-OzDX7-zDtgB82tMw6YCSjUO4XIOnHbLIJeHjHksOmCuvjolfIFLkqQgRv16thQKBidjecK2QYKm-HoE5PhoRlle4SqMx'}')` }}
+                                    style={{ backgroundImage: `url('${getImageUrl(property.images?.[0])}')` }}
                                 ></div>
                             </div>
                             <div className="relative group rounded-xl overflow-hidden hidden md:block">
                                 <div
                                     className="w-full h-full bg-center bg-cover bg-no-repeat transition-transform duration-500 group-hover:scale-105"
-                                    style={{ backgroundImage: `url('${property.images?.[1] || 'https://lh3.googleusercontent.com/aida-public/AB6AXuD8RfIgUnna4if2aQlP1S1ckTWQq-o5LYnadiMAHaJDEDtV9sNw879mg4LOd5b_mZtkh9QUcwxpKM7jB7yBzMCGMN-29nrKoJdRUDUz9jIODt46Hie7nkNJi_1BwXS8Y1SlqGzxbZJmGyoEAh5w47dnbov7QGIhqMYmvatNu4P_hYVpndulof75g0hG7vV3SNqvbUJm8aiGUBAwi-tjts_rPRCJoXHZXkn3maXJ1UaYbPehDq_QzTAqqR0yFYr7InTsAOkjUHYaaPPW'}')` }}
+                                    style={{ backgroundImage: `url('${getImageUrl(property.images?.[1])}')` }}
                                 ></div>
                             </div>
                             <div className="relative group rounded-xl overflow-hidden hidden md:block">
                                 <div
                                     className="w-full h-full bg-center bg-cover bg-no-repeat transition-transform duration-500 group-hover:scale-105"
-                                    style={{ backgroundImage: `url('${property.images?.[2] || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCjIM1IuUaedXBubhvLbohr97MD98nJ9S8wmmSs3oguZhNPGeW_vVRQHr2QdFS4oWbSEWirjtjSNkDmVz53sjJtwjzM2eG9igbgBPXOkgUUv9mU7B0J2Js1bJmNVvlxymxaCf_3VoaUKH0Ki_eRMh1XW-JvasLS4XjA48rzL4ZoMT_03VCQmdnyIj0PcRPk00GWmjfOkNi3VrVT7zvvvmeBzy6b4NBbch_Ji-NTZ2sSOCgvYIYFQqekWcr-LsnWc8bqdgrBwPAd2zId'}')` }}
+                                    style={{ backgroundImage: `url('${getImageUrl(property.images?.[2])}')` }}
                                 ></div>
                             </div>
                         </div>
@@ -84,7 +119,7 @@ export default function PropertyDetailsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-white dark:bg-card-dark border border-gray-200 dark:border-card-border p-5 rounded-lg">
                             <p className="text-gray-500 dark:text-[#93adc8] text-sm font-medium mb-1">Total Valuation</p>
-                            <p className="text-primary text-xl md:text-2xl font-bold tracking-tight">₦ {(property.totalValuation / 1000000).toFixed(0)}M</p>
+                            <p className="text-primary text-xl md:text-2xl font-bold tracking-tight">₦ {((property.totalValue || 0) / 1000000).toFixed(0)}M</p>
                         </div>
                         <div className="bg-white dark:bg-card-dark border border-gray-200 dark:border-card-border p-5 rounded-lg">
                             <p className="text-gray-500 dark:text-[#93adc8] text-sm font-medium mb-1">Projected Yield</p>
@@ -135,7 +170,7 @@ export default function PropertyDetailsPage() {
                                     <div>
                                         <p className="text-base font-bold text-gray-900 dark:text-white">₦ {(property.pricePerUnit * 100).toLocaleString()}</p>
                                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                            Total ownership equity available in this tranche. Remaining capital secured via financing.
+                                            Total participation value available in this tranche. Remaining capital secured via financing.
                                         </p>
                                     </div>
                                 </div>
@@ -165,38 +200,81 @@ export default function PropertyDetailsPage() {
                         <Card className="shadow-xl overflow-hidden p-0">
                             <div className="p-6 flex flex-col gap-6">
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Acquire Equity</h3>
-                                    <label className="flex flex-col gap-2">
-                                        <span className="text-sm font-medium text-gray-500 dark:text-[#93adc8]">Enter Purchase Contribution (₦)</span>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <span className="text-gray-400 font-bold">₦</span>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Acquire Co-ownership</h3>
+
+                                    {/* Range Calculator */}
+                                    <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 mb-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Projected Portfolio Growth</span>
+                                            <span className="text-xs font-bold text-emerald-500 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                                                Target: ~31%
+                                            </span>
+                                        </div>
+
+                                        {/* Scenario A (Floor) */}
+                                        <div className="flex gap-4 items-center mb-2 opacity-70">
+                                            <div className="w-1/3">
+                                                <p className="text-[10px] text-slate-400 uppercase font-bold">Conservative</p>
+                                                <p className="text-xs text-slate-500">12% Appr + 10% Rent</p>
                                             </div>
-                                            <input
-                                                className="block w-full pl-8 pr-12 py-3 bg-gray-50 dark:bg-[#111921] border-gray-200 dark:border-[#344d65] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent font-bold text-lg"
-                                                placeholder="5,000,000"
-                                                type="text"
-                                                defaultValue="5,000,000"
-                                            />
-                                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                <span className="text-gray-400 text-xs">NGN</span>
+                                            <div className="flex-1 border-b-2 border-dotted border-slate-300 dark:border-slate-700 relative h-4">
+                                                <div className="absolute right-0 bottom-1 font-bold text-slate-600 dark:text-slate-400 text-sm">₦ {(investmentAmount + conservativeReturn).toLocaleString()}</div>
                                             </div>
                                         </div>
+
+                                        {/* Scenario B (Target) */}
+                                        <div className="flex gap-4 items-center mb-4">
+                                            <div className="w-1/3">
+                                                <p className="text-[10px] text-primary uppercase font-bold">Market Trend</p>
+                                                <p className="text-xs text-primary/80">16% Appr + 15% Rent</p>
+                                            </div>
+                                            <div className="flex-1 border-b-2 border-solid border-primary relative h-4">
+                                                <div className="absolute right-0 bottom-1 font-bold text-emerald-600 text-lg">₦ {(investmentAmount + targetReturn).toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <label className="flex flex-col gap-2">
+                                        <span className="text-sm font-medium text-gray-500 dark:text-[#93adc8]">Enter Number of Slots</span>
+                                        <div className="relative">
+                                            <input
+                                                className="block w-full px-4 py-3 bg-gray-50 dark:bg-[#111921] border-gray-200 dark:border-[#344d65] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent font-bold text-lg"
+                                                placeholder="50"
+                                                type="number"
+                                                value={slots === 0 ? '' : slots}
+                                                onChange={handleSlotsChange}
+                                            />
+                                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span className="text-gray-400 text-xs font-bold">SLOTS</span>
+                                            </div>
+                                        </div>
+                                        <div className="px-1 mt-2">
+                                            <input
+                                                type="range"
+                                                min="5"
+                                                max="500"
+                                                step="5"
+                                                value={slots}
+                                                onChange={handleSliderChange}
+                                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
+                                            />
+                                        </div>
                                         <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                            <span>Min: ₦500,000</span>
-                                            <span>Max: ₦25,000,000</span>
+                                            <span>Min: 5 Slots</span>
+                                            <span>Max: 500 Slots</span>
                                         </div>
                                     </label>
                                 </div>
 
                                 <div className="bg-background-light dark:bg-[#111921] rounded-lg p-4 border border-gray-200 dark:border-[#344d65]">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm text-gray-500 dark:text-[#93adc8]">Purchase Contribution</span>
-                                        <span className="text-sm font-bold text-gray-900 dark:text-white">₦ 5,000,000</span>
+                                        <span className="text-sm text-gray-500 dark:text-[#93adc8]">Total Contribution</span>
+                                        <span className="text-sm font-bold text-gray-900 dark:text-white">₦ {investmentAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-[#344d65]">
-                                        <span className="text-sm text-gray-500 dark:text-[#93adc8]">Estimated Ownership Share</span>
-                                        <span className="text-lg font-bold text-primary">1.11%</span>
+                                        <span className="text-sm text-gray-500 dark:text-[#93adc8]">Your Portfolio Share</span>
+                                        <span className="text-lg font-bold text-primary">{ownershipShare.toFixed(3)}%</span>
                                     </div>
                                 </div>
 
@@ -210,17 +288,17 @@ export default function PropertyDetailsPage() {
                                         </span>
                                     </div>
                                     <span className="text-xs text-gray-500 dark:text-gray-400 leading-snug group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                                        I understand that resale or exit is not guaranteed and may be processed manually. I have read the <a href="#" className="text-primary underline">Prospectus</a>.
+                                        I accept the <b>12-Month Lock-up Period</b> and the <a href="#" className="text-primary underline">Cooperative Constitution</a> (Electronic Deed of Adherence).
                                     </span>
                                 </label>
-                                <Link to={`/properties/${property.id}/review`}>
+                                <Link to={`/properties/${property.id}/review?slots=${slots}`}>
                                     <Button className="w-full h-auto py-4 text-lg shadow-lg shadow-primary/20">
                                         <span className="material-symbols-outlined mr-2">account_balance_wallet</span>
-                                        Acquire Equity
+                                        Secure {slots} Slots
                                     </Button>
                                 </Link>
                                 <p className="text-center text-xs text-gray-400 dark:text-gray-500">
-                                    Secure transaction processed by Hermeos
+                                    Funds held in escrow by First Trustees
                                 </p>
                             </div>
                         </Card>
@@ -237,11 +315,11 @@ export default function PropertyDetailsPage() {
                         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-card-dark border-t border-gray-200 dark:border-card-border p-4 z-40 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
                             <div className="flex flex-col">
                                 <p className="text-xs text-gray-500">Ownership Share</p>
-                                <p className="font-bold text-primary">₦ 5,000,000 (1.11%)</p>
+                                <p className="font-bold text-primary">₦ {investmentAmount.toLocaleString()} ({ownershipShare.toFixed(2)}%)</p>
                             </div>
                             <Link to={`/properties/${property.id}/review`} className="flex-shrink-0">
                                 <Button size="sm" className="px-6">
-                                    Acquire Equity
+                                    Secure Slots
                                 </Button>
                             </Link>
                         </div>

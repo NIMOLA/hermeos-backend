@@ -1,15 +1,15 @@
 
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../../utils/imageUtils';
+
 import { useFetch } from '../../hooks/useApi';
 import { Button } from '../../components/ui/button';
 
 export default function AdminAssetsPage() {
     const { data: responseData, isLoading: loading } = useFetch<any>('/properties'); // Fetch all properties (public endpoint lists all? verify) 
     // If public only lists active, we need an admin endpoint. But let's try strict property listing first.
-    // If /properties only returns active, we might miss others.
-    // However, looking at property.controller previously, getAllProperties might list all.
-    // Let's assume response structure { success: true, data: [...] }
-    const assets = responseData?.data || [];
+    // apiClient unwraps the response, so responseData is the array itself.
+    const assets = Array.isArray(responseData) ? responseData : responseData?.data || [];
 
     return (
         <div className="flex flex-col gap-6">
@@ -38,6 +38,7 @@ export default function AdminAssetsPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Image</th>
                                 <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Property Name</th>
                                 <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type</th>
                                 <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Valuation</th>
@@ -53,7 +54,20 @@ export default function AdminAssetsPage() {
                                 assets.map((asset: any) => (
                                     <tr key={asset.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                         <td className="p-4">
+                                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                                <img
+                                                    src={getImageUrl(asset.images?.[0])}
+                                                    alt={asset.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image';
+                                                    }}
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
                                             <div className="flex flex-col">
+
                                                 <span className="text-sm font-semibold text-slate-900 dark:text-white">{asset.name}</span>
                                                 <span className="text-xs text-slate-500">{asset.location}</span>
                                             </div>

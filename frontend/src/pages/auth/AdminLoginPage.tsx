@@ -51,7 +51,13 @@ export default function AdminLoginPage() {
             }
         } catch (err: any) {
             console.error('Login error:', err);
-            setError(err.message || 'Login failed. Please check your credentials.');
+
+            // Check for network/CORS errors (statusCode 0 indicates network failure)
+            if (err.statusCode === 0) {
+                setError('Unable to connect to the server. Please ensure the admin subdomain is properly configured and try again.');
+            } else {
+                setError(err.message || 'Login failed. Please check your credentials.');
+            }
             setIsLoading(false);
         }
     };
@@ -97,8 +103,9 @@ export default function AdminLoginPage() {
                                     className="h-32 w-auto brightness-0 invert"
                                 />
                             </div>
+                            <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">Administration Portal</h1>
                             <p className="text-slate-400 text-sm">
-                                Restricted access. Authorized personnel only.
+                                Secure gateway for platform management.
                             </p>
                         </div>
 

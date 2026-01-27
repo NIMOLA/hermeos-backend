@@ -1,9 +1,75 @@
-import React from 'react';
-import { Search, CheckCircle, Home, Wallet, FileText, ChevronDown, Phone, MessageCircle, Mail, MapPin, Lock } from 'lucide-react';
+
+import React, { useState } from 'react';
+import { Search, CheckCircle, Home, Wallet, FileText, ChevronDown, Phone, MessageCircle, Mail, MapPin, Lock, AlertCircle, Check } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useMutation } from '../hooks/useApi';
 
 const SupportHubPage: React.FC = () => {
+    const { user } = useAuth();
+    const [formData, setFormData] = useState({
+        fullName: `${user?.firstName || ''} ${user?.lastName || ''}`,
+        email: user?.email || '',
+        category: 'Account Verification',
+        assetRef: '',
+        message: '',
+        subject: '' // Derived or explicit
+    });
+
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [ticketData, setTicketData] = useState<any>(null);
+
+    const { mutate, isLoading, error } = useMutation('/support', 'POST', {
+        onSuccess: (data) => {
+            setTicketData(data);
+            setShowSuccess(true);
+            setFormData(prev => ({ ...prev, message: '', assetRef: '' }));
+        }
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Auto-generate subject if not provided (simple logic)
+        const subject = `${formData.category} Request from ${formData.fullName}`;
+
+        mutate({
+            ...formData,
+            subject
+        });
+    };
+
+    const isVIP = user?.tier === 'Tier 3' || user?.tier === 'Institutional' || user?.tier === 'Gold';
+
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-gray-100 antialiased overflow-x-hidden">
+        <div className="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-gray-100 antialiased overflow-x-hidden relative">
+
+            {/* Success Modal */}
+            {showSuccess && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+                            <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+                        </div>
+                        <h3 className="text-2xl font-bold mb-2">Ticket Created!</h3>
+                        <p className="text-slate-600 dark:text-slate-400 mb-6">
+                            Reference: <span className="font-mono font-bold bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">#{ticketData?.id.slice(0, 8)}</span>
+                        </p>
+
+                        {ticketData?.vipStatus === 'Active' && (
+                            <div className="mb-6 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-700 dark:text-amber-400 text-sm font-bold flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm">star</span>
+                                VIP Priority Active - 24h SLA
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => setShowSuccess(false)}
+                            className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-xl transition-all w-full"
+                        >
+                            Got it
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Search Section */}
             <section className="relative w-full">
@@ -198,7 +264,15 @@ const SupportHubPage: React.FC = () => {
                 <div className="max-w-[960px] mx-auto w-full">
                     <div className="flex flex-col lg:flex-row gap-8 items-start">
                         {/* Contact Info */}
-                        <div className="flex-1 w-full lg:w-auto bg-primary rounded-2xl p-8 text-white shadow-lg">
+                        <div className="flex-1 w-full lg:w-auto bg-primary rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+                            {/* VIP Decoration */}
+                            {isVIP && (
+                                <div className="absolute top-0 right-0 bg-amber-400 text-primary px-4 py-1.5 rounded-bl-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-base">star</span>
+                                    Priority Line Active
+                                </div>
+                            )}
+
                             <h3 className="text-2xl font-bold mb-6">Still need help?</h3>
                             <p className="mb-8 text-blue-100">Our Lagos-based support team is available Mon-Fri, 8am - 6pm WAT to assist with your inquiries.</p>
                             <div className="flex flex-col gap-6">
@@ -208,7 +282,7 @@ const SupportHubPage: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-xs text-blue-200 font-bold uppercase tracking-wider">Phone Support</p>
-                                        <p className="font-bold text-lg">+234 201 330 6309</p>
+                                        <p className="font-bold text-lg">0201 330 6309</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -242,22 +316,48 @@ const SupportHubPage: React.FC = () => {
                         </div>
 
                         {/* Contact Form */}
-                        <div className="flex-[1.5] w-full lg:w-auto bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <h3 className="text-xl font-bold text-text-main dark:text-white mb-6">Submit a Request</h3>
-                            <form className="flex flex-col gap-5">
+                        <div className="flex-[1.5] w-full lg:w-auto bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative">
+                            {error && (
+                                <div className="absolute top-0 left-0 w-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-6 py-3 text-sm font-semibold rounded-t-2xl flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {error ? (error as any).message || 'Something went wrong.' : 'Error'}
+                                </div>
+                            )}
+
+                            <h3 className="text-xl font-bold text-text-main dark:text-white mb-6 mt-2">Submit a Request</h3>
+                            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <label className="flex flex-col gap-1.5">
                                         <span className="text-sm font-bold text-text-main dark:text-slate-200">Full Name</span>
-                                        <input className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Enter your full name" type="text" />
+                                        <input
+                                            className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                            placeholder="Enter your full name"
+                                            type="text"
+                                            value={formData.fullName}
+                                            onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                                            disabled={isLoading}
+                                        />
                                     </label>
                                     <label className="flex flex-col gap-1.5">
                                         <span className="text-sm font-bold text-text-main dark:text-slate-200">Email Address</span>
-                                        <input className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="you@example.com" type="email" />
+                                        <input
+                                            className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                            placeholder="you@example.com"
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                            disabled={isLoading}
+                                        />
                                     </label>
                                 </div>
                                 <label className="flex flex-col gap-1.5">
                                     <span className="text-sm font-bold text-text-main dark:text-slate-200">Category</span>
-                                    <select className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                    <select
+                                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        value={formData.category}
+                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                        disabled={isLoading}
+                                    >
                                         <option>Account Verification</option>
                                         <option>Wallet Funding / Withdrawal</option>
                                         <option>Property Ownership / Deeds</option>
@@ -267,18 +367,36 @@ const SupportHubPage: React.FC = () => {
                                 </label>
                                 <label className="flex flex-col gap-1.5">
                                     <span className="text-sm font-bold text-text-main dark:text-slate-200">Asset Reference ID (Optional)</span>
-                                    <input className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="e.g. #LAG-LKK-002" type="text" />
+                                    <input
+                                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                        placeholder="e.g. #LAG-LKK-002"
+                                        type="text"
+                                        value={formData.assetRef}
+                                        onChange={e => setFormData({ ...formData, assetRef: e.target.value })}
+                                        disabled={isLoading}
+                                    />
                                 </label>
                                 <label className="flex flex-col gap-1.5">
                                     <span className="text-sm font-bold text-text-main dark:text-slate-200">Message</span>
-                                    <textarea className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary resize-none outline-none" placeholder="Describe your issue in detail..." rows={4}></textarea>
+                                    <textarea
+                                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary resize-none outline-none"
+                                        placeholder="Describe your issue in detail..."
+                                        rows={4}
+                                        value={formData.message}
+                                        onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                        disabled={isLoading}
+                                    ></textarea>
                                 </label>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Lock className="text-green-500 w-4 h-4" />
                                     <span className="text-xs text-slate-500 dark:text-slate-400">Your data is transmitted securely via SSL encryption.</span>
                                 </div>
-                                <button className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-lg transition-colors shadow-sm" type="button">
-                                    Submit Ticket
+                                <button
+                                    className={`w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    type="submit"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? 'Submitting...' : 'Submit Ticket'}
                                 </button>
                             </form>
                         </div>

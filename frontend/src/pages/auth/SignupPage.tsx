@@ -43,6 +43,12 @@ export default function SignupPage() {
             return;
         }
 
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            setError('Password must contain at least 8 characters, one uppercase, one lowercase, one number, and one special character.');
+            return;
+        }
+
         setError(null);
         setLoading(true);
 
@@ -63,9 +69,14 @@ export default function SignupPage() {
             navigate('/kyc/info');
         } catch (err: any) {
             let errorMessage = err.message || 'Something went wrong. Please try again.';
-            if (err.errors && Array.isArray(err.errors) && err.errors.length > 0) {
-                 errorMessage = err.errors[0].msg || err.errors[0].message || errorMessage;
+
+            // Check for network/CORS errors (statusCode 0 indicates network failure)
+            if (err.statusCode === 0) {
+                errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+            } else if (err.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+                errorMessage = err.errors[0].msg || err.errors[0].message || errorMessage;
             }
+
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -78,18 +89,49 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen flex w-full">
-            {/* Brand Section - Hidden on Mobile */}
+        <div className="min-h-screen flex w-full relative">
+            {/* Back to Landing Page */}
+            <Link
+                to="/"
+                className="absolute top-6 left-6 z-50 flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg transition-all hover:shadow-md"
+            >
+                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                <span className="text-sm font-medium">Back to Home</span>
+            </Link>
+            {/* Brand Section - Testimonial Carousel */}
             <div className="hidden lg:flex w-1/2 bg-slate-900 relative overflow-hidden items-center justify-center">
-                <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547")' }}></div>
-                <div className="relative z-10 p-12 text-white max-w-lg">
-                    <div className="mb-8">
-                        <span className="material-symbols-outlined text-[48px] text-primary">apartment</span>
+                <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop")' }}></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
+
+                <div className="relative z-10 p-12 text-white max-w-lg flex flex-col justify-between h-full py-20">
+                    <div>
+                        <div className="flex items-center gap-2 text-primary mb-6">
+                            <span className="material-symbols-outlined text-3xl">apartment</span>
+                            <span className="text-2xl font-bold tracking-tight text-white">Hermeos</span>
+                        </div>
+                        <h1 className="text-4xl font-bold leading-tight mb-4">
+                            Build Wealth, <br />
+                            <span className="text-primary">Brick by Brick.</span>
+                        </h1>
                     </div>
-                    <h1 className="text-4xl font-bold mb-6">Join 2,000+ Equity Partners Building Wealth.</h1>
-                    <p className="text-lg text-slate-300 leading-relaxed">
-                        Create your free account today and start acquiring premium real estate assets with as little as ₦500,000.
-                    </p>
+
+                    <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-xl">
+                        <div className="flex gap-1 text-yellow-400 mb-3">
+                            {[1, 2, 3, 4, 5].map(i => <span key={i} className="material-symbols-outlined text-sm fill-current">star</span>)}
+                        </div>
+                        <p className="text-lg text-slate-200 leading-relaxed italic mb-4">
+                            "I always wanted to invest in Lekki real estate but didn't have ₦50M. Hermeos let me start with ₦500k. The dashboard transparency is unmatched."
+                        </p>
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-full bg-primary flex items-center justify-center font-bold text-white">
+                                OA
+                            </div>
+                            <div>
+                                <p className="font-bold text-white">Oluwaseun A.</p>
+                                <p className="text-xs text-slate-400">Bronze Partner • Joined 2024</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -118,7 +160,7 @@ export default function SignupPage() {
                                 <input type="email" name="email" required value={formData.email} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="you@example.com" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Phone Number <span className="text-slate-400 font-normal">(Optional)</span></label>
                                 <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg dark:bg-[#1a2632] dark:text-white focus:ring-primary focus:border-primary" placeholder="+234..." />
                             </div>
                             <div>

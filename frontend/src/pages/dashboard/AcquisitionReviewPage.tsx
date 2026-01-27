@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useFetch } from '../../hooks/useApi';
 import { apiClient } from '../../lib/api-client';
 import { CheckoutConsent } from '../../components/payment/CheckoutConsent';
+import { getImageUrl } from '../../utils/imageUtils';
 
 // Reusing Property interface or defining a subset
 interface Property {
@@ -16,6 +17,12 @@ interface Property {
     projectedYield: number;
     images: string[];
     // ...
+}
+
+interface BankDetails {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
 }
 
 export default function AcquisitionReviewPage() {
@@ -32,25 +39,103 @@ export default function AcquisitionReviewPage() {
 
     // State for payment processing
     const [isProcessing, setIsProcessing] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank'>('card');
+
+    // Bank Transfer State
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
+    const [depositorName, setDepositorName] = useState('');
+    const [transferDate, setTransferDate] = useState(new Date().toISOString().split('T')[0]);
+
+    // Fetch bank details on mount or when method changes
+    const fetchBankDetails = async () => {
+        try {
+            const res = await apiClient.get<{ success: boolean, data: BankDetails }>('/bank/details');
+            if (res.data) setBankDetails(res.data);
+        } catch (err) {
+            console.error("Failed to fetch bank details", err);
+            // Fallback
+            setBankDetails({
+                bankName: 'Premium Trust Bank',
+                accountName: 'Hermeos Proptech',
+                accountNumber: '0040225641'
+            });
+        }
+    };
+
+    if (paymentMethod === 'bank' && !bankDetails) {
+        fetchBankDetails();
+    }
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setReceiptFile(e.target.files[0]);
+        }
+    };
+
+    const handleBankTransferSubmit = async () => {
+        if (!receiptFile || !depositorName) {
+            alert("Please provide depositor name and upload receipt.");
+            return;
+        }
+        setIsProcessing(true);
+        try {
+            // 1. Upload Receipt
+            const formData = new FormData();
+            formData.append('file', receiptFile);
+            const uploadRes = await apiClient.upload<{ url: string }>('/upload', formData);
+
+            // 2. Submit Proof
+            await apiClient.post('/payments/bank-transfer/submit-proof', {
+                propertyId: property!.id,
+                units: quantity,
+                amount: totalAmount,
+                depositorName,
+                transferDate,
+                receiptUrl: uploadRes.url
+            });
+
+            alert("Payment proof submitted! Pending admin confirmation.");
+            setShowUploadModal(false);
+            // Redirect or show success state
+            window.location.href = '/dashboard';
+
+        } catch (err) {
+            alert((err as Error).message || "Failed to submit proof");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     const handlePayment = async () => {
         if (!property) return;
+
+        if (paymentMethod === 'bank') {
+            setShowUploadModal(true);
+            return;
+        }
+
         setIsProcessing(true);
         try {
-            const response = await apiClient.post<{ authorizationUrl: string; reference: string }>('/payment/card/initialize', {
+            // Wallet/Card flow
+            const endpoint = '/payments/card/initialize'; // Corrected route
+            const response = await apiClient.post<{ authorizationUrl: string; reference: string }>(endpoint, {
                 propertyId: property.id,
                 units: quantity,
                 amount: totalAmount
             });
 
-            // Redirect to Paystack
+            // Open Paystack in a new tab
             if (response.authorizationUrl) {
-                window.location.href = response.authorizationUrl;
+                window.open(response.authorizationUrl, '_blank');
+                // Optional: Show a message in the current tab explaining what to do next
+                alert('Payment page opened in a new tab. Please complete the payment there.');
             } else {
                 alert('Payment initialization failed: No authorization URL returned.');
             }
-        } catch (err: any) {
-            alert(err.message || 'Failed to initialize payment');
+        } catch (err) {
+            alert((err as Error).message || 'Failed to initialize payment');
         } finally {
             setIsProcessing(false);
         }
@@ -71,7 +156,13 @@ export default function AcquisitionReviewPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex gap-4">
-                                <div className="w-24 h-24 bg-slate-200 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url('${property.images?.[0] || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDKqm_3hafcwEcIR-Qmz-d51w8bXcoC9yeG04p41z5x-YlQUTefqqy9NfGBtY-u6Bo2XxxvmHJpX_NtYSuDUJmC1l_YovzXDAdG8OXsBQhw9qCDrRUoIAwDnnqKjwnz8MLimhjfEoWN8SJnsDeNZpS8a0JCpY8wzDYkwei5Ki8dpLZGRuYGV-Cnpe3NEyzMZX3WVoZC-1V-n1zMzDVtbMi6ca5IGSJWnf4qVONysTjHyGgvkCFQv5iuMvfVLEmF14bIlT9FLjNxi547'}')` }}></div>
+                                <div className="size-24 rounded-lg overflow-hidden bg-slate-200">
+                                    <img
+                                        src={getImageUrl(property.images?.[0])}
+                                        alt={property.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
                                 <div>
                                     <h3 className="font-bold text-lg text-slate-900 dark:text-white">{property.name}</h3>
                                     <p className="text-slate-500 text-sm">Residential • {property.location}</p>
@@ -118,22 +209,47 @@ export default function AcquisitionReviewPage() {
                             <CardTitle>Payment Method</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex items-center gap-3 p-3 border border-primary bg-blue-50 dark:bg-blue-900/20 rounded-lg cursor-pointer">
-                                <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
+                            <div
+                                onClick={() => setPaymentMethod('card')}
+                                className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-primary bg-blue-50 dark:bg-blue-900/20 ring-1 ring-primary' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            >
+                                <span className="material-symbols-outlined text-primary">credit_card</span>
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">Hermeos Wallet</p>
-                                    <p className="text-xs text-slate-500">Balance: ₦2,500,000.00</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">Debit/Credit Card</p>
+                                    <p className="text-xs text-slate-500">Secured by Paystack</p>
                                 </div>
+                                {paymentMethod === 'card' && <div className="ml-auto text-primary"><span className="material-symbols-outlined">check_circle</span></div>}
                             </div>
-                            <div className="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 opacity-50">
-                                <span className="material-symbols-outlined text-slate-500">credit_card</span>
+
+                            <div
+                                onClick={() => setPaymentMethod('bank')}
+                                className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'bank' ? 'border-primary bg-blue-50 dark:bg-blue-900/20 ring-1 ring-primary' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                            >
+                                <span className="material-symbols-outlined text-slate-500">account_balance</span>
                                 <div>
                                     <p className="text-sm font-bold text-slate-900 dark:text-white">Bank Transfer</p>
                                     <p className="text-xs text-slate-500">Direct deposit</p>
                                 </div>
+                                {paymentMethod === 'bank' && <div className="ml-auto text-primary"><span className="material-symbols-outlined">check_circle</span></div>}
                             </div>
                         </CardContent>
                     </Card>
+
+                    {paymentMethod === 'bank' && bankDetails && (
+                        <Card className="bg-slate-50 dark:bg-slate-800 border-dashed">
+                            <CardContent className="pt-6 space-y-2">
+                                <h3 className="font-bold text-center text-slate-700 dark:text-slate-300">Make Transfer To:</h3>
+                                <div className="text-center space-y-1">
+                                    <p className="text-2xl font-mono font-bold text-slate-900 dark:text-white copy-text">{bankDetails.accountNumber}</p>
+                                    <p className="font-medium">{bankDetails.bankName}</p>
+                                    <p className="text-sm text-slate-500">{bankDetails.accountName}</p>
+                                </div>
+                                <div className="pt-2 text-center text-xs text-amber-600">
+                                    Use your name as ref/remark.
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <div className="flex flex-col gap-3">
                         {user?.isVerified ? (
@@ -147,7 +263,7 @@ export default function AcquisitionReviewPage() {
                                         <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
                                         Processing...
                                     </span>
-                                ) : 'Confirm Purchase'}
+                                ) : (paymentMethod === 'bank' ? 'I have made payment' : 'Confirm Purchase')}
                             </Button>
                         ) : (
                             <Link to="/kyc/info">
@@ -166,6 +282,59 @@ export default function AcquisitionReviewPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Upload Modal */}
+            {showUploadModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="max-w-md w-full animate-in fade-in zoom-in duration-300">
+                        <CardHeader>
+                            <CardTitle>Submit Payment Proof</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <label htmlFor="depositorName" className="block text-sm font-medium mb-1">Depositor Name</label>
+                                <input
+                                    id="depositorName"
+                                    className="w-full p-2 border rounded bg-transparent"
+                                    placeholder="Name on bank account"
+                                    value={depositorName}
+                                    onChange={e => setDepositorName(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="transferDate" className="block text-sm font-medium mb-1">Transfer Date</label>
+                                <input
+                                    id="transferDate"
+                                    type="date"
+                                    className="w-full p-2 border rounded bg-transparent"
+                                    value={transferDate}
+                                    onChange={e => setTransferDate(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="receiptFile" className="block text-sm font-medium mb-1">Receipt Image</label>
+                                <input
+                                    id="receiptFile"
+                                    type="file"
+                                    accept="image/*"
+                                    className="w-full p-2 border rounded"
+                                    onChange={handleFileUpload}
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <Button variant="outline" className="flex-1" onClick={() => setShowUploadModal(false)}>Cancel</Button>
+                                <Button
+                                    className="flex-1"
+                                    disabled={!receiptFile || !depositorName || isProcessing}
+                                    onClick={handleBankTransferSubmit}
+                                >
+                                    {isProcessing ? 'Uploading...' : 'Submit Proof'}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }
