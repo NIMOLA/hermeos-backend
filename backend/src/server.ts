@@ -42,8 +42,8 @@ const app: Application = express();
 export const prisma = new PrismaClient();
 
 // Trust proxy - required when behind Nginx/reverse proxy
-// Using 1 to indicate exactly one proxy (Nginx) in front of the app
-app.set('trust proxy', 1);
+// Using 'loopback, linklocal, uniquelocal' to correctly identify IPs behind Docker/Nginx
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 
 // Security Middleware
 app.use(helmet());
@@ -86,7 +86,9 @@ app.use(cors({
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    max: 1000, // Increased limit for testing/Docker NAT scenarios
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 app.use('/api/', limiter);
 
