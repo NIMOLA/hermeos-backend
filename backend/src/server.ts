@@ -56,7 +56,8 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split
 const allowedDomainsRegex = [
     /^https?:\/\/(?:.+\.)?hermeos\.com$/,
     /^https?:\/\/(?:.+\.)?hermeosproptech\.com$/,
-    /^http:\/\/localhost:\d+$/
+    /^http:\/\/localhost:\d+$/,
+    /^https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?$/ // Allow raw IP access (e.g. http://45.x.x.x)
 ];
 
 app.use(cors({
