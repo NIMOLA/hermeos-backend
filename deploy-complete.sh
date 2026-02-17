@@ -20,16 +20,22 @@ if [ "$EUID" -eq 0 ]; then
     echo -e "${YELLOW}⚠ Running as root. Ensure you know what you are doing.${NC}"
 fi
 
+# Parse Branch Argument
+BRANCH=${1:-main}
+
 # Get VPS IP
 VPS_IP=$(curl -s ifconfig.me)
 echo -e "${GREEN}📍 Detected VPS IP: $VPS_IP${NC}"
+echo -e "${GREEN}🌿 Target Branch: $BRANCH${NC}"
 echo ""
 
 # Step 1: Pull Latest Code
 echo -e "${YELLOW}📥 Step 1: Pulling latest code...${NC}"
 cd /var/www/hermeos-proptech
-git pull origin main
-echo -e "${GREEN}✓ Code updated${NC}"
+git fetch origin
+git checkout $BRANCH
+git pull origin $BRANCH
+echo -e "${GREEN}✓ Code updated to $BRANCH${NC}"
 echo ""
 
 # Step 2: Backend Setup
